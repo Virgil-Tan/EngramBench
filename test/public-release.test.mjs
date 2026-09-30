@@ -1,10 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, readFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { validateProfile } from '../scripts/run-v2.mjs';
+import { createProcessEvaluator, digestTaskPackagePath } from '../src/task-package-v1.mjs';
+
+test('pinned evaluator override survives the subprocess boundary without forwarding provider secrets', async t => {
+  const temporary = await mkdtemp(join(tmpdir(), 'engrambench-evaluator-env-'));
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  const image = 'sha256:' + 'd'.repeat(64);
+  const keys = ['ENGRAMBENCH_EVALUATOR_IMAGE', 'USER_MODEL_API_KEY'];
+  const original = keys.map(key => process.env[key]);
+  t.after(() => keys.forEach((key, i) => { if (original[i] === undefined) delete process.env[key]; else process.env[key] = original[i]; }));
+  process.env.ENGRAMBENCH_EVALUATOR_IMAGE = image;
+  process.env.USER_MODEL_API_KEY = 'synthetic-must-not-be-forwarded';
+  const workspace = join(temporary, 'workspace');
+  await mkdir(workspace);
+  const entry = join(temporary, 'evaluator.mjs');
+  await writeFile(entry, `import {writeFileSync} from 'node:fs';
+    const output=process.argv[process.argv.indexOf('--result')+1];
+    writeFileSync(output,JSON.stringify({kind:'frontal-evaluation-result',schemaVersion:1,verdict:'passed',
+      publicFeedback:{code:'ok',summary:'fixture'},privateReport:{image:process.env.ENGRAMBENCH_EVALUATOR_IMAGE,
+      secretForwarded:process.env.USER_MODEL_API_KEY!==undefined}}));`);
+  const adapter = createProcessEvaluator({ package: { paths: {}, digests: { package: 'a'.repeat(64) },
+    evaluator: { command: ['node', entry], taskRoot: temporary, task: { id: 'fixture' } } }, runRoot: join(temporary, 'evaluation') });
+  await adapter.run({ operationId: 'fixture', submission: { path: workspace, digest: await digestTaskPackagePath(workspace) } });
+  const report = JSON.parse(await readFile(adapter.artifacts.privateReport));
+  assert.deepEqual(report, { image, secretForwarded: false });
+});
 
 test('native evaluator image override changes only historical image/platform arguments', async t => {
   const temporary = await mkdtemp(join(tmpdir(), 'engrambench-wrapper-'));

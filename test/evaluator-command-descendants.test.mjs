@@ -13,8 +13,11 @@ function alive(pid) {
   } catch { return false; }
 }
 
-function fixture({ exitCode = 23, wait = false, detached = true, scrubEnvironment = false } = {}) {
+function fixture({ exitCode = 23, wait = false, detached = true, scrubEnvironment = false, startupDelayMs = 0 } = {}) {
   return `
+    // Reproduce slow process scheduling without changing the cleanup behavior.
+    const readyAt = Date.now() + ${startupDelayMs};
+    while (Date.now() < readyAt) {}
     const { spawn } = require('node:child_process');
     const children = ['inherit', 'ignore'].map(stderr => spawn(process.execPath,
       ['-e', 'setTimeout(() => process.exit(0), 4000)'], {
@@ -32,7 +35,9 @@ for (const exitCode of [0, 23]) test(`detached descendants cannot hang or pass a
   const unrelated = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 6000)'], { stdio: 'ignore' });
   t.after(() => unrelated.kill('SIGKILL'));
   let error;
-  await assert.rejects(runCommand(process.execPath, ['-e', fixture({ exitCode })], { timeoutMs: 200 }), value => {
+  // This test measures post-exit cleanup, not startup speed. A 200 ms command
+  // timeout could kill a scheduled child before it emitted its PID evidence.
+  await assert.rejects(runCommand(process.execPath, ['-e', fixture({ exitCode, startupDelayMs: 300 })]), value => {
     error = value;
     return value instanceof CommandError;
   });

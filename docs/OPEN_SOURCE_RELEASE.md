@@ -34,6 +34,10 @@ separate from audits of the preserved per-task dependency trees.
 Public-release additions include a baseline/native-only Codex image recipe,
 a pinned evaluator-image override for new hosts, and credential-free example
 profiles. Historical `FRONTAL_*` and serialized schema names remain compatible.
+The image override is explicitly forwarded across the evaluator subprocess
+boundary without forwarding provider credentials. A process-cleanup regression
+also removes an unrelated 200 ms startup deadline from the test fixture; the
+production cleanup behavior and benchmark case assertions are unchanged.
 
 Evaluator fixtures are publicly inspectable but excluded from development
 workspace exports. This is not a claim of secrecy from researchers, immunity
