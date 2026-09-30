@@ -1,5 +1,9 @@
 # EngramBench
 
+<p align="left">
+  <img src="assets/memorax-logo.png" alt="MemoraX AI" width="200">
+</p>
+
 **Long-horizon software engineering, from historical experience to transferable skills.**
 
 EngramBench evaluates whether experience from past projects helps a coding agent build a different, complete software system. Tasks go beyond isolated functions: agents must connect public APIs, persistent state, background workers, recovery, OpenAPI, and browser interfaces under explicit business constraints.
@@ -9,6 +13,10 @@ The benchmark contains **30 Learning tasks** and **13 Transfer tasks**. This is 
 **Design principle: capability overlap without solution overlap.** Learning and Transfer projects exercise related engineering mechanisms in different business settings. Skill banks should carry reusable procedures—not project-specific solutions or test answers—between them.
 
 [Task catalog](TASKS.md) · [Task specification](docs/task-package-v2.zh-CN.md) · [Environment setup](environments/README.md) · [Evaluation](docs/EVALUATION.md) · [MIT license](LICENSE)
+
+![Learning experiences distilled into a shared skill bank and reused across transfer tasks](assets/capability-transfer.svg)
+
+*Illustrative capability relationships—not direct reuse of project-specific code. Click the figure to view it at full size.*
 
 ## What is included
 
@@ -90,6 +98,8 @@ Baseline and native-skills runs **do not require MemoraX**. The repository inclu
 ## Tasks
 
 [`learning-tasks.json`](learning-tasks.json) and [`transfer-tasks.json`](transfer-tasks.json) are the ordered inventories. [TASKS.md](TASKS.md) describes all 43 projects, intended transferable mechanisms, and engineering challenges.
+
+![The 30 Learning tasks span six business domains with recurring engineering capabilities](assets/learning-domains.svg)
 
 | Transfer task | Setting | Main challenge | Group |
 | --- | --- | --- | --- |
