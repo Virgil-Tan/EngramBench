@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "personaId": "billforge-delivery-lead",
+  "taskId": "billforge",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, worker, dispatcher, and production UI using only published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"contract-and-billing","category":"correctness","requirement":"OpenAPI, validation, frozen price/tax/discount/exchange-rate versions, deterministic proration, and Invoice totals agree with the public contract.","weight":10,"testGates":["H-02","H-03","H-04"]},
+    {"id":"payment-uncertainty","category":"correctness","requirement":"Payment capture is durably idempotent; UNKNOWN outcomes are reconciled without a second charge; duplicate and reordered provider events converge.","weight":13,"testGates":["H-05","H-06","H-07"]},
+    {"id":"refund-conservation","category":"correctness","requirement":"Concurrent partial refunds never exceed captured amount and every successful payment or refund creates one balanced immutable posting.","weight":12,"testGates":["H-08","H-09"]},
+    {"id":"settlement-recovery","category":"correctness","requirement":"Monthly settlement freezes membership, survives leased-worker death, posts once, and keeps CLOSED periods immutable.","weight":13,"testGates":["H-10","H-11"]},
+    {"id":"manager-disputes","category":"correctness","requirement":"Manager disputes, chargebacks, and adjustments preserve the shared refund bound, balanced postings, audit history, and V1 compatibility.","weight":12,"testGates":["H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three fixed sustained scenarios meet their published throughput, latency, recovery, and post-load conservation requirements.","weight":12,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The repository owns meaningful unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance commands.","weight":8,"testGates":["H-13"]},
+    {"id":"security-isolation","category":"correctness","requirement":"Tenant boundaries, provider secrets, idempotency material, and private paths are never crossed or exposed.","weight":7,"testGates":["H-02","H-06","H-12"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains ownership, state, money flow, atomic boundaries, failure handling, and review findings clearly.","weight":3},
+    {"id":"evidence-quality","category":"persona","requirement":"Every stage and final handoff reports actual commands, results, risks, and checks not run accurately.","weight":5}
+  ]
+}

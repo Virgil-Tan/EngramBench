@@ -1,0 +1,1 @@
+export type OperationId = "createTenant" | "createSchema" | "createSchemaRevision" | "createImport" | "getImport" | "putChunk" | "completeImport" | "commitImport" | "cancelImport" | "getFindings" | "getErrorReport" | "downloadErrorReport" | "listRecords" | "createBundle" | "addBundleMember" | "stageBundle" | "publishBundle" | "snapshot" | "health" | "openapi" | "productionUi";

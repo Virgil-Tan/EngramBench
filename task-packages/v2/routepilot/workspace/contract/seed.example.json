@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "seedVersion": "public-routepilot-v2",
+  "importedAt": "2026-01-01T00:00:00.000Z",
+  "tenants": [
+    {
+      "tenantId": "00000000-0000-4000-8000-000000000001",
+      "name": "Public Gateway Tenant"
+    }
+  ],
+  "backends": [
+    {
+      "backendId": "00000000-0000-4000-8000-000000000002",
+      "tenantId": "00000000-0000-4000-8000-000000000001",
+      "name": "Public Local Backend",
+      "origin": "http://127.0.0.1:4012",
+      "state": "ACTIVE"
+    }
+  ],
+  "routeDefinitions": [
+    {
+      "routeId": "00000000-0000-4000-8000-000000000003",
+      "tenantId": "00000000-0000-4000-8000-000000000001",
+      "name": "Public Health Route",
+      "priority": 10
+    }
+  ],
+  "routeRevisions": [
+    {
+      "routeRevisionId": "00000000-0000-4000-8000-000000000006",
+      "routeId": "00000000-0000-4000-8000-000000000003",
+      "revision": 1,
+      "pathPattern": "/public/*",
+      "methods": [
+        "GET"
+      ],
+      "headerMatches": {},
+      "backends": [
+        {
+          "backendId": "00000000-0000-4000-8000-000000000002",
+          "version": "1",
+          "weight": 10000
+        }
+      ],
+      "rateLimitPolicyId": "00000000-0000-4000-8000-000000000004",
+      "circuitPolicyId": "00000000-0000-4000-8000-000000000005",
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "rateLimitPolicies": [
+    {
+      "rateLimitPolicyId": "00000000-0000-4000-8000-000000000004",
+      "tenantId": "00000000-0000-4000-8000-000000000001",
+      "revision": 1,
+      "windowSeconds": 60,
+      "limit": 1000
+    }
+  ],
+  "circuitPolicies": [
+    {
+      "circuitPolicyId": "00000000-0000-4000-8000-000000000005",
+      "tenantId": "00000000-0000-4000-8000-000000000001",
+      "revision": 1,
+      "sampleSize": 10,
+      "failureThresholdPercent": 50,
+      "openSeconds": 5,
+      "halfOpenMax": 1
+    }
+  ],
+  "configReleases": [
+    {
+      "configReleaseId": "00000000-0000-4000-8000-000000000007",
+      "tenantId": "00000000-0000-4000-8000-000000000001",
+      "version": 1,
+      "state": "ACTIVE",
+      "routeRevisionIds": [
+        "00000000-0000-4000-8000-000000000006"
+      ],
+      "priorReleaseId": null,
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "activatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "gatewayRequests": [],
+  "upstreamAttempts": [],
+  "rateWindows": [],
+  "circuitWindows": []
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion":1,"personaId":"moderationflow-trust-lead","taskId":"moderationflow",
+  "items":[
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, worker, dispatcher, and production UI using only published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"contract-and-isolation","category":"correctness","requirement":"OpenAPI, strict validation, public shapes, stable errors, browser behavior, and tenant isolation match the complete public contract.","weight":9,"testGates":["H-02","H-04"]},
+    {"id":"evidence-and-policy-freeze","category":"correctness","requirement":"Evidence is append-only and every stage freezes the exact contiguous evidence head and immutable policy version it used.","weight":13,"testGates":["H-03","H-04","H-06"]},
+    {"id":"review-concurrency","category":"correctness","requirement":"Multi-level review, leases, escalation, and competing terminal decisions produce one valid stage and decision lineage.","weight":12,"testGates":["H-03","H-06","H-07"]},
+    {"id":"appeal-lineage","category":"correctness","requirement":"Appeals are timely, unique, independently reviewed, and append a superseding outcome without rewriting the challenged decision.","weight":10,"testGates":["H-03","H-06"]},
+    {"id":"idempotency-recovery","category":"correctness","requirement":"Unknown response, replay, process death, and outbox unknown ACK preserve one effect, stable identities, and terminal Work.","weight":11,"testGates":["H-05","H-07","H-08","H-09"]},
+    {"id":"audit-immutability","category":"correctness","requirement":"Every moderation transition appends one secret-free immutable tenant AuditEntry with a verifiable contiguous digest chain.","weight":10,"testGates":["H-03","H-07","H-09","H-12"]},
+    {"id":"manager-policy-recall","category":"correctness","requirement":"Manager Recall freezes eligible cases, appends one reconsideration per case, preserves all history, and survives cancel and worker races.","weight":12,"testGates":["H-09","H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three sustained scenarios meet throughput, latency, recovery, and post-load lineage and audit invariants.","weight":8,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The project owns meaningful unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance commands.","weight":5,"testGates":["H-13"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains evidence, policy, review, appeal, audit, recovery, and findings clearly.","weight":2},
+    {"id":"evidence-quality","category":"persona","requirement":"Every stage and final handoff reports actual commands, results, risks, and checks not run accurately.","weight":3}
+  ]
+}

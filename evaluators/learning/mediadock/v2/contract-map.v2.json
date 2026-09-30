@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "mediadock",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "MD-MULTIPART",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Upload ranges, immutable parts, resume, and confinement are exact."
+      },
+      "privateFailureCodePrefix": "MD_A01_",
+      "publicFeedbackCategory": "upload-multipart-ranges"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "MD-COMPLETE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Completion atomically promotes exact bytes and creates one asset and scan."
+      },
+      "privateFailureCodePrefix": "MD_A02_",
+      "publicFeedbackCategory": "upload-atomic-complete"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "MD-SCAN-GATE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Scan outcomes gate access and converge without duplicate semantic jobs."
+      },
+      "privateFailureCodePrefix": "MD_A03_",
+      "publicFeedbackCategory": "scan-gate-reconcile"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "MD-TRANSCODE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Frozen profile revisions deterministically produce exact rendition bytes."
+      },
+      "privateFailureCodePrefix": "MD_A04_",
+      "publicFeedbackCategory": "transcode-frozen-renditions"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "MD-GRANT",
+        "source": "workspace/docs/requirements.md",
+        "summary": "HMAC capabilities enforce eligibility, range semantics, expiry, and revoke."
+      },
+      "privateFailureCodePrefix": "MD_A05_",
+      "publicFeedbackCategory": "grant-range-capability"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "MD-PART-REPLAY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Request replay and part semantic identity have the correct precedence."
+      },
+      "privateFailureCodePrefix": "MD_B01_",
+      "publicFeedbackCategory": "part-identity-precedence"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "MD-DEDUP-ISOLATION",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Concurrent completion and content dedup never disclose or delete another tenant's reference."
+      },
+      "privateFailureCodePrefix": "MD_B02_",
+      "publicFeedbackCategory": "blob-dedup-isolation"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "MD-SCAN-CONVERGENCE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Duplicate and reordered scan results converge to one terminal asset transition."
+      },
+      "privateFailureCodePrefix": "MD_B03_",
+      "publicFeedbackCategory": "scan-result-convergence"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "MD-TRANSCODE-RACE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Concurrent workers publish one verified rendition and READY only after complete fan-out."
+      },
+      "privateFailureCodePrefix": "MD_B04_",
+      "publicFeedbackCategory": "transcode-concurrent-promotion"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "MD-CLEANUP-FREEZE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Cleanup freezes candidates and rechecks all live references before each exact delete."
+      },
+      "privateFailureCodePrefix": "MD_B05_",
+      "publicFeedbackCategory": "cleanup-reference-safety"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "MD-COMPLETE-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Unknown completion outcome and restart never expose partial or missing bytes."
+      },
+      "privateFailureCodePrefix": "MD_C01_",
+      "publicFeedbackCategory": "upload-promotion-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "MD-PIPELINE-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Committed scan/transcode Work survives process replacement and produces exactly one verified rendition; no internal checkpoint required."
+      },
+      "privateFailureCodePrefix": "MD_C02_",
+      "publicFeedbackCategory": "pipeline-worker-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "MD-CLEANUP-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Cleanup delete recovery preserves frozen identity and all reachable bytes."
+      },
+      "privateFailureCodePrefix": "MD_C03_",
+      "publicFeedbackCategory": "cleanup-delete-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "MD-EVENT-DELIVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Pipeline and cleanup events retry stable secret-free bodies after unknown ACK."
+      },
+      "privateFailureCodePrefix": "MD_C04_",
+      "publicFeedbackCategory": "event-delivery-secrecy"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "MD-UI-PIPELINE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Production UI completes the actual upload, scan, rendition, grant, and cleanup pipeline."
+      },
+      "privateFailureCodePrefix": "MD_D01_",
+      "publicFeedbackCategory": "ui-media-pipeline"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "MD-UI-PUBLICATION",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Real Alias create/publish/read/resolve and production browser reload use published surfaces without undisclosed Alias controls."
+      },
+      "privateFailureCodePrefix": "MD_D02_",
+      "publicFeedbackCategory": "ui-publication"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "MD-OPENAPI-SNAPSHOT",
+        "source": "workspace/docs/requirements.md",
+        "summary": "OpenAPI matches runtime and the point-in-time snapshot is sorted, closed, and secret-free."
+      },
+      "privateFailureCodePrefix": "MD_D03_",
+      "publicFeedbackCategory": "snapshot-media-secrecy"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "MD-PUBLICATION-PINNING",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Real Grant downloads remain pinned to immutable publication revisions through republish and cleanup."
+      },
+      "privateFailureCodePrefix": "MD_D04_",
+      "publicFeedbackCategory": "publication-stream"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "MD-DURABLE-RESTART",
+        "source": "workspace/docs/requirements.md",
+        "summary": "One final-system workspace preserves metadata, bytes, saved responses, Work and Events across process restart."
+      },
+      "privateFailureCodePrefix": "MD_E01_",
+      "publicFeedbackCategory": "final-system-durable-restart"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "MD-CARDINALITY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "The exact 10,000-part boundary remains resumable and confined to the managed root."
+      },
+      "privateFailureCodePrefix": "MD_E02_",
+      "publicFeedbackCategory": "upload-max-cardinality"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "MD-STREAM-LEASE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Cleanup preserves blobs held by live streams and removes them only after all references end."
+      },
+      "privateFailureCodePrefix": "MD_E03_",
+      "publicFeedbackCategory": "stream-cleanup-lease"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "MD-PUBLICATION-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Concurrent public publication CAS produces one immutable revision; saved response and Work survive final-system process replacement."
+      },
+      "privateFailureCodePrefix": "MD_E04_",
+      "publicFeedbackCategory": "publication-cas"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "routeweave",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "RW-EVIDENCE-ORDER",
+        "source": "workspace/README.md#invariants-and-projection-rules",
+        "summary": "Journey state is a deterministic replay of immutable scans ordered by observedAt, published type precedence and scannerEventId."
+      },
+      "privateFailureCodePrefix": "RW_A01_",
+      "publicFeedbackCategory": "projection-order"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "RW-ROUTE-AUTHORITY",
+        "source": "workspace/README.md#invariants-and-projection-rules",
+        "summary": "Only scans for the frozen plan, matching leg and hub may satisfy contiguous leg dependencies, and terminal state cannot regress."
+      },
+      "privateFailureCodePrefix": "RW_A02_",
+      "publicFeedbackCategory": "route-authority"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "RW-EXCEPTION-FENCE",
+        "source": "workspace/README.md#invariants-and-projection-rules",
+        "summary": "Loss and found affect one target, while reassignment atomically fences every older-plan movement without deleting evidence."
+      },
+      "privateFailureCodePrefix": "RW_A03_",
+      "publicFeedbackCategory": "exception-fence"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "RW-CONSIGNMENT-CREATE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Consignment creation atomically freezes one valid shared route and one through one hundred stable, unique ParcelPieces."
+      },
+      "privateFailureCodePrefix": "RW_A04_",
+      "publicFeedbackCategory": "consignment-atomicity"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "RW-AGGREGATE-CLOSURE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Consignment state is recomputed from independent pieces and shared reassignment changes every eligible piece or none."
+      },
+      "privateFailureCodePrefix": "RW_A05_",
+      "publicFeedbackCategory": "aggregate-closure"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "RW-SCAN-REPLAY",
+        "source": "workspace/README.md#http-and-openapi",
+        "summary": "Unknown-response, concurrent and restart replay preserves one scan identity, original response and one projection effect."
+      },
+      "privateFailureCodePrefix": "RW_B01_",
+      "publicFeedbackCategory": "identity-replay"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "RW-SCANNER-UNIQUENESS",
+        "source": "workspace/README.md#invariants-and-projection-rules",
+        "summary": "Twenty concurrent identical scanner identities converge while semantic conflicts leave no second evidence, Work or Event."
+      },
+      "privateFailureCodePrefix": "RW_B02_",
+      "publicFeedbackCategory": "scan-uniqueness"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "RW-PROJECTION-COMMUTATIVITY",
+        "source": "workspace/README.md#invariants-and-projection-rules",
+        "summary": "Every fixed arrival permutation yields the same projection as independent total-order replay and retains late early evidence."
+      },
+      "privateFailureCodePrefix": "RW_B03_",
+      "publicFeedbackCategory": "projection-commutativity"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "RW-AUTHORITY-RACE",
+        "source": "workspace/README.md#invariants-and-projection-rules",
+        "summary": "Concurrent loss, found and reassignment accepts only a legal serial order and no old revision or other target crosses the fence."
+      },
+      "privateFailureCodePrefix": "RW_B04_",
+      "publicFeedbackCategory": "authority-race"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "RW-BATCH-LINEARIZATION",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Shared reassignment racing terminal delivery freezes eligible members at one commit point and applies one new revision to all or none."
+      },
+      "privateFailureCodePrefix": "RW_B05_",
+      "publicFeedbackCategory": "batch-linearization"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "RW-PROJECTION-RECOVERY",
+        "source": "workspace/README.md#project-owned-verification",
+        "summary": "JOURNEY_PROJECT Work is retained and reclaimed after a claimed-worker death while the stale owner is fenced."
+      },
+      "privateFailureCodePrefix": "RW_C01_",
+      "publicFeedbackCategory": "projection-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "RW-REBUILD-RECOVERY",
+        "source": "workspace/README.md#project-owned-verification",
+        "summary": "A shuffled duplicate scan storm remains fully replayable after controlled worker deaths and retained Work drains."
+      },
+      "privateFailureCodePrefix": "RW_C02_",
+      "publicFeedbackCategory": "rebuild-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "RW-AGGREGATE-FENCE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "CONSIGNMENT_PROJECT uses consignmentId authority and an old lease cannot revive cancelled or superseded route state."
+      },
+      "privateFailureCodePrefix": "RW_C03_",
+      "publicFeedbackCategory": "aggregate-fence"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "RW-OUTBOX",
+        "source": "workspace/README.md#http-and-openapi",
+        "summary": "Unknown webhook acknowledgement retries the same committed Event identity and canonical body in contiguous aggregate order."
+      },
+      "privateFailureCodePrefix": "RW_C04_",
+      "publicFeedbackCategory": "outbox"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "RW-API-CONTRACT",
+        "source": "workspace/README.md#http-and-openapi",
+        "summary": "Runtime and OpenAPI expose closed V1 and Manager member shapes, published errors, pieceRef sorting and tenant isolation."
+      },
+      "privateFailureCodePrefix": "RW_D01_",
+      "publicFeedbackCategory": "api-contract"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "RW-BROWSER-V1",
+        "source": "workspace/README.md#production-ui",
+        "summary": "Production Chromium completes the real V1 route, scan, loss, found and reassignment flow and distinguishes evidence from projection."
+      },
+      "privateFailureCodePrefix": "RW_D02_",
+      "publicFeedbackCategory": "browser-v1"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "RW-BROWSER-MANAGER",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Production Chromium presents independent piece journeys, exact aggregate states and shared route operations after refresh."
+      },
+      "privateFailureCodePrefix": "RW_D03_",
+      "publicFeedbackCategory": "browser-manager"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "RW-FINAL-SNAPSHOT",
+        "source": "workspace/README.md#seed-and-verification-snapshot",
+        "summary": "The FINAL snapshot is one complete sorted point-in-time view whose V1 and piece projections independently replay from evidence."
+      },
+      "privateFailureCodePrefix": "RW_D04_",
+      "publicFeedbackCategory": "snapshot"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "RW-V1-COMPATIBILITY",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current Shipment and multi-piece Consignment survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "RW_E01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "RW-PERF-PLAN",
+        "source": "workspace/README.md#fixed-performance-contract",
+        "summary": "The exact 50000 four-leg Shipment creation workload reaches 300 per second at p95 400 ms with atomic connected plans."
+      },
+      "privateFailureCodePrefix": "RW_E02_",
+      "publicFeedbackCategory": "ingest-performance"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "RW-PERF-SCANS",
+        "source": "workspace/README.md#fixed-performance-contract",
+        "summary": "The exact 200000-scan shuffled workload with 20 percent replay reaches 600 mutations per second at p95 500 ms and fully deterministic projections."
+      },
+      "privateFailureCodePrefix": "RW_E03_",
+      "publicFeedbackCategory": "projection-performance"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "RW-PERF-RECOVERY",
+        "source": "workspace/README.md#fixed-performance-contract",
+        "summary": "The exact 10000-shipment loss/reroute load survives two claimed-worker deaths and drains through four replacements within 60 seconds."
+      },
+      "privateFailureCodePrefix": "RW_E04_",
+      "publicFeedbackCategory": "recovery-performance"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

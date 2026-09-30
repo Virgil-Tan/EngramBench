@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "personaId": "geopulse-operations-lead",
+  "taskId": "geopulse",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"A clean checkout migrates, atomically seeds, builds, and starts API, workers, dispatcher, and production UI with published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"public-contract","category":"correctness","requirement":"OpenAPI, strict validation, stable errors, pagination, browser flows, and snapshot shapes match the public contract.","weight":8,"testGates":["H-02","H-04"]},
+    {"id":"geometry-versioning","category":"correctness","requirement":"Polygons, immutable RegionVersions, effective intervals, edge classification, and point queries are deterministic.","weight":8,"testGates":["H-02","H-03","H-12"]},
+    {"id":"event-ordering","category":"correctness","requirement":"Device sequence, event time, late replay, watermark, membership revision, and Transition sequence remain consistent under duplicates and reordering.","weight":12,"testGates":["H-03","H-06","H-07"]},
+    {"id":"boundary-hysteresis","category":"correctness","requirement":"Boundary tolerance and dwell rules converge without oscillating or duplicating transitions.","weight":10,"testGates":["H-03","H-06","H-12"]},
+    {"id":"durable-idempotency","category":"correctness","requirement":"Unknown responses, concurrent replay, restart, event identity, and batch atomicity produce one durable effect.","weight":9,"testGates":["H-04","H-05","H-06"]},
+    {"id":"worker-recovery","category":"correctness","requirement":"Leased evaluation and late replay recover after controlled process death without stale commits or duplicate facts.","weight":10,"testGates":["H-07","H-09","H-12"]},
+    {"id":"events-and-dispatch","category":"correctness","requirement":"Transactional Domain Events are ordered, stable across unknown ACK, and exclude sensitive location content.","weight":6,"testGates":["H-08","H-09"]},
+    {"id":"manager-bundles","category":"correctness","requirement":"RegionBundle publication, rollback, migration, revision pinning, cache invalidation, UI, and concurrency never mix revisions.","weight":12,"testGates":["H-09","H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three published sustained scenarios meet throughput, latency, resource, and post-load correctness requirements.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The project owns real unit, PostgreSQL integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance gates.","weight":5,"testGates":["H-13"]},
+    {"id":"tenant-security","category":"correctness","requirement":"Tenants, coordinates, tokens, headers, snapshots, Events, logs, and private paths remain isolated and redacted.","weight":3,"testGates":["H-02","H-08","H-12"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains ownership, ordering, geometry, recovery, and revision boundaries clearly.","weight":1},
+    {"id":"evidence-quality","category":"persona","requirement":"Handoff reports actual commands, results, risks, and unrun checks accurately.","weight":1}
+  ]
+}

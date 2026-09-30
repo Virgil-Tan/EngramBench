@@ -1,0 +1,1 @@
+export type OperationId = "createTenant" | "createRuleSet" | "createVersion" | "validateVersion" | "publishVersion" | "getConflicts" | "createEvaluation" | "getEvaluation" | "getExplanation" | "createReplay" | "getReplay" | "createComparison" | "startComparison" | "cancelComparison" | "promoteComparison" | "getComparison" | "snapshot" | "health" | "openapi" | "productionUi";

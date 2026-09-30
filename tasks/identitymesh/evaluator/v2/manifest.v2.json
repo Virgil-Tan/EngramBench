@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "taskId": "identitymesh",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Identity and security flows", "weight": 30 },
+    "B": { "title": "Identity concurrency and security fences", "weight": 25 },
+    "C": { "title": "Durable work recovery and delivery", "weight": 20 },
+    "D": { "title": "OpenAPI snapshot audit and UI", "weight": 15 },
+    "E": { "title": "Compatibility and security boundaries", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "SECRET_EXPOSURE", "cap": 25, "publicInvariant": "Credentials, refresh tokens outside their direct mutation response, challenge nonces, provider assertions, private keys and private paths never appear on public durable surfaces." },
+    { "id": "IDENTITY_RESURRECTION", "cap": 25, "publicInvariant": "A revoked or expired session, device, user, token family or retired key cannot become usable again." },
+    { "id": "REVOCATION_FAIL_OPEN", "cap": 25, "publicInvariant": "A verifier behind the required revocation fence fails closed and reordered propagation cannot lower effective revocation state." },
+    { "id": "AUDIT_IMMUTABILITY", "cap": 25, "publicInvariant": "Tenant audit history is immutable, continuously chained and detects deletion, insertion, reorder and payload mutation." }
+  ],
+  "specGaps": [
+    { "id": "IM-GAP-01", "summary": "CompromiseIncident and RecoveryApproval shapes, incident states, create/recover request and response wires, epochs, errors and statuses are unpublished." },
+    { "id": "IM-GAP-02", "summary": "No public approval endpoint or approval request/response wire is published." },
+    { "id": "IM-GAP-03", "summary": "No compromise or recovery Domain Event type is published; the evaluator invents none." },
+    { "id": "IM-GAP-04", "summary": "No visible security-console workflow or accessibility contract is published." },
+    { "id": "IM-GAP-05", "summary": "No barrier protocol or internal worker checkpoint wire is published beyond observable Work=LEASED." },
+    { "id": "IM-GAP-06", "summary": "No controllable database-clock seam is published for exact-boundary assertions." }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "LoginAttempt provider callback and UNKNOWN reconcile", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "Refresh single-use rotation reuse family revoke and expiry", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Device fingerprint challenge nonce trust and revoke", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "Signing-key rotation retirement window and JWKS", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-05", "title": "Tenant compromise quarantine atomic security switch", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "IM-A05-QUARANTINE-WIRE", "blockedBy": "IM-GAP-01", "policy": "fail-closed-diagnostic" }] },
+    { "id": "B-01", "title": "Idempotency and provider callback identity precedence", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "Concurrent refresh-token rotation and reuse linearization", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Device revoke versus challenge approval and refresh", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "Monotonic revocation versions reordered propagation and fail-closed verification", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "Concurrent final approval and recover unique transition", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "IM-B05-APPROVAL-WIRE", "blockedBy": "IM-GAP-02", "policy": "fail-closed-diagnostic" }] },
+    { "id": "C-01", "title": "LOGIN_RECONCILIATION recovery after public LEASED", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "IM-C01-INTERNAL-CHECKPOINTS", "blockedBy": "IM-GAP-05", "policy": "fail-closed-diagnostic" }] },
+    { "id": "C-02", "title": "REVOCATION_PROPAGATION recovery after public LEASED", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "IM-C02-INTERNAL-CHECKPOINTS", "blockedBy": "IM-GAP-05", "policy": "fail-closed-diagnostic" }] },
+    { "id": "C-03", "title": "TENANT_QUARANTINE and TENANT_RECOVERY crash fencing", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "IM-C03-INCIDENT-WIRE", "blockedBy": "IM-GAP-01", "policy": "fail-closed-diagnostic" }, { "id": "IM-C03-APPROVAL-WIRE", "blockedBy": "IM-GAP-02", "policy": "fail-closed-diagnostic" }, { "id": "IM-C03-INTERNAL-CHECKPOINTS", "blockedBy": "IM-GAP-05", "policy": "fail-closed-diagnostic" }] },
+    { "id": "C-04", "title": "KEY_RETIREMENT and AUDIT_DELIVERY unknown ACK", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "D-01", "title": "V1 security console identity workflow", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"], "blockedAssertions": [{ "id": "IM-D01-UI-WORKFLOW", "blockedBy": "IM-GAP-04", "policy": "fail-closed-diagnostic" }] },
+    { "id": "D-02", "title": "Compromise and recovery security console", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"], "blockedAssertions": [{ "id": "IM-D02-INCIDENT-WIRE", "blockedBy": "IM-GAP-01", "policy": "fail-closed-diagnostic" }, { "id": "IM-D02-APPROVAL-WIRE", "blockedBy": "IM-GAP-02", "policy": "fail-closed-diagnostic" }, { "id": "IM-D02-UI-WORKFLOW", "blockedBy": "IM-GAP-04", "policy": "fail-closed-diagnostic" }] },
+    { "id": "D-03", "title": "OpenAPI point-in-time snapshot and secret-negative oracle", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "IM-D03-MANAGER-RESOURCES", "blockedBy": "IM-GAP-01", "policy": "fail-closed-diagnostic" }] },
+    { "id": "D-04", "title": "Audit verify checkpoint and tamper detection", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "E-01", "title": "V1 to FINAL identity and audit lossless migration", "dimension": "E", "weight": 2.5, "prerequisites": ["V1", "FINAL"] },
+    { "id": "E-02", "title": "Database-time session key and revocation boundaries", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "IM-E02-EXACT-CLOCK-BOUNDARY", "blockedBy": "IM-GAP-06", "policy": "fail-closed-diagnostic" }] },
+    { "id": "E-03", "title": "Tenant user device and session revocation scope isolation", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "E-04", "title": "Hundred-page audit pagination and full-chain verification", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"] }
+  ]
+}

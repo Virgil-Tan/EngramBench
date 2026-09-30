@@ -1,0 +1,30 @@
+{
+  "seedKeys":["tenants","plans","planRevisions","subscriptions","trialConsumptions","planChanges","refunds","providerEvents","entitlementGrants","revocationFences","auditEntries"],
+  "publicPaths":[
+    "/api/v1/tenants","/api/v1/plans","/api/v1/plans/:planId/revisions","/api/v1/plan-revisions/:planRevisionId/publish",
+    "/api/v1/subscriptions","/api/v1/subscriptions/:subscriptionId","/api/v1/subscriptions/:subscriptionId/change-plan",
+    "/api/v1/subscriptions/:subscriptionId/cancel","/api/v1/subscriptions/:subscriptionId/refunds",
+    "/api/v1/provider/events","/api/v1/refunds/:refundId/reconcile","/api/v1/entitlements/check",
+    "/api/v1/entitlements","/api/v1/admin/expire-due","/api/v1/audit","/api/v1/verification-snapshot",
+    "/api/v1/entitlement-pools","/api/v1/entitlement-pools/:poolId/assignments",
+    "/api/v1/entitlement-pools/:poolId/assignments/:subjectId/revoke"
+  ],
+  "snapshot":{"resources":[
+    {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+    {"key":"plans","shape":"Plan","sort":["planId"]},
+    {"key":"planRevisions","shape":"PlanRevision","sort":["planId","revision"]},
+    {"key":"subscriptions","shape":"Subscription","sort":["subscriptionId"]},
+    {"key":"trialConsumptions","shape":"TrialConsumption","sort":["tenantId","subjectId","planId"]},
+    {"key":"planChanges","shape":"PlanChange","sort":["changeId"]},
+    {"key":"refunds","shape":"Refund","sort":["refundId"]},
+    {"key":"providerEvents","shape":"ProviderEvent","sort":["providerEventId"]},
+    {"key":"entitlementGrants","shape":"EntitlementGrant","sort":["subscriptionId","feature","grantRevision"]},
+    {"key":"revocationFences","shape":"RevocationFence","sort":["tenantId","subjectId"]},
+    {"key":"auditEntries","shape":"AuditEntry","sort":["tenantId","sequence"]}
+  ],"managerResources":[
+    {"key":"entitlementPools","shape":"EntitlementPool","sort":["poolId"]},
+    {"key":"seatAssignments","shape":"SeatAssignment","sort":["poolId","subjectId"]}
+  ]},
+  "workKinds":{"v1":["SUBSCRIPTION_ACTIVATE","PLAN_CHANGE_APPLY","SUBSCRIPTION_EXPIRE","REFUND_RECONCILE","ENTITLEMENT_REVOKE","EVENT_DELIVERY"],"manager":["POOL_RECONCILE","POOL_REVOKE"]},
+  "perfScenarios":[{"id":"entitlement-decision-read"},{"id":"upgrade-refund-race"},{"id":"expiry-revocation-recovery"}]
+}

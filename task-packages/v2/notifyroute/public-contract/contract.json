@@ -1,0 +1,3200 @@
+{
+  "taskId": "notifyroute",
+  "title": "NotifyRoute",
+  "transportErrors": {
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    }
+  },
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "NOTIFYROUTE_WEBHOOK_SIGNING_SECRET"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Recipient"
+          }
+        },
+        "channelEndpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ChannelEndpoint"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Template"
+          }
+        },
+        "templateVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TemplateVersion"
+          }
+        },
+        "routePolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoutePolicy"
+          }
+        },
+        "rateLimitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateLimitPolicy"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Notification"
+          }
+        },
+        "deliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Delivery"
+          }
+        },
+        "deliveryAttempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeliveryAttempt"
+          }
+        },
+        "suppressions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Suppression"
+          }
+        },
+        "providerReceipts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProviderReceipt"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "recipients",
+        "channelEndpoints",
+        "templates",
+        "templateVersions",
+        "routePolicies",
+        "rateLimitPolicies",
+        "notifications",
+        "deliveries",
+        "deliveryAttempts",
+        "suppressions",
+        "providerReceipts"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-v2-notifyroute-1",
+      "importedAt": "2026-09-07T00:00:00.000Z",
+      "tenants": [
+        {
+          "tenantId": "b2000005-0000-4000-8000-000000000001",
+          "name": "Public notifications",
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "recipients": [
+        {
+          "recipientId": "b2000005-0000-4000-8000-000000000002",
+          "tenantId": "b2000005-0000-4000-8000-000000000001",
+          "externalRef": "public-recipient",
+          "locale": "en-US",
+          "timeZone": "UTC",
+          "preferenceRevision": 0,
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "channelEndpoints": [
+        {
+          "endpointId": "b2000005-0000-4000-8000-000000000003",
+          "tenantId": "b2000005-0000-4000-8000-000000000001",
+          "recipientId": "b2000005-0000-4000-8000-000000000002",
+          "channel": "EMAIL",
+          "address": "public@example.com",
+          "state": "ACTIVE",
+          "revision": 1,
+          "createdAt": "2026-09-07T00:00:00.000Z",
+          "terminalAt": null
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "b2000005-0000-4000-8000-000000000004",
+          "tenantId": "b2000005-0000-4000-8000-000000000001",
+          "name": "Public notice",
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "templateVersions": [
+        {
+          "templateVersionId": "b2000005-0000-4000-8000-000000000005",
+          "templateId": "b2000005-0000-4000-8000-000000000004",
+          "version": 1,
+          "channel": "EMAIL",
+          "subject": "Public notice",
+          "body": "This is a public example.",
+          "contentDigest": "8a014adcf1c10d3ba2eab9a2f872346cef13018d7844cc7a27d397458a45ed81",
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "routePolicies": [
+        {
+          "routePolicyId": "b2000005-0000-4000-8000-000000000006",
+          "tenantId": "b2000005-0000-4000-8000-000000000001",
+          "name": "Public email route",
+          "revision": 1,
+          "steps": [
+            {
+              "ordinal": 0,
+              "channel": "EMAIL",
+              "delaySeconds": 0,
+              "maxAttempts": 1,
+              "baseRetrySeconds": 1
+            }
+          ],
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "rateLimitPolicies": [
+        {
+          "rateLimitPolicyId": "b2000005-0000-4000-8000-000000000007",
+          "tenantId": "b2000005-0000-4000-8000-000000000001",
+          "channel": "EMAIL",
+          "revision": 1,
+          "windowSeconds": 60,
+          "tenantLimit": 10,
+          "recipientLimit": 2,
+          "effectiveFrom": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "notifications": [],
+      "deliveries": [],
+      "deliveryAttempts": [],
+      "suppressions": [],
+      "providerReceipts": []
+    }
+  },
+  "schemas": {
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Json"
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "$ref": "#/$defs/JsonObject"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenAPI": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "type": "string",
+          "pattern": "^3\\.1\\."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object"
+        },
+        "components": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "name",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Recipient": {
+      "type": "object",
+      "properties": {
+        "recipientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "timeZone": {
+          "type": "string"
+        },
+        "preferenceRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "recipientId",
+        "tenantId",
+        "externalRef",
+        "locale",
+        "timeZone",
+        "preferenceRevision",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ChannelEndpoint": {
+      "type": "object",
+      "properties": {
+        "endpointId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "recipientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "EMAIL",
+            "SMS",
+            "WEBHOOK"
+          ]
+        },
+        "address": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "UNSUBSCRIBED",
+            "DISABLED",
+            "BOUNCED"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "endpointId",
+        "tenantId",
+        "recipientId",
+        "channel",
+        "address",
+        "state",
+        "revision",
+        "createdAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "Template": {
+      "type": "object",
+      "properties": {
+        "templateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "templateId",
+        "tenantId",
+        "name",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "TemplateVersion": {
+      "type": "object",
+      "properties": {
+        "templateVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "templateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "EMAIL",
+            "SMS",
+            "WEBHOOK"
+          ]
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "body": {
+          "type": "string"
+        },
+        "contentDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "templateVersionId",
+        "templateId",
+        "version",
+        "channel",
+        "subject",
+        "body",
+        "contentDigest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RouteStep": {
+      "type": "object",
+      "properties": {
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "EMAIL",
+            "SMS",
+            "WEBHOOK"
+          ]
+        },
+        "delaySeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "baseRetrySeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "ordinal",
+        "channel",
+        "delaySeconds",
+        "maxAttempts",
+        "baseRetrySeconds"
+      ],
+      "additionalProperties": false
+    },
+    "RoutePolicy": {
+      "type": "object",
+      "properties": {
+        "routePolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RouteStep"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "routePolicyId",
+        "tenantId",
+        "name",
+        "revision",
+        "steps",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RateLimitPolicy": {
+      "type": "object",
+      "properties": {
+        "rateLimitPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "EMAIL",
+            "SMS",
+            "WEBHOOK"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "windowSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "tenantLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "recipientLimit": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "rateLimitPolicyId",
+        "tenantId",
+        "channel",
+        "revision",
+        "windowSeconds",
+        "tenantLimit",
+        "recipientLimit",
+        "effectiveFrom"
+      ],
+      "additionalProperties": false
+    },
+    "Notification": {
+      "type": "object",
+      "properties": {
+        "notificationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "recipientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "category": {
+          "type": "string"
+        },
+        "dedupeKey": {
+          "type": "string"
+        },
+        "templateVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "routePolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "routePolicyRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACCEPTED",
+            "ROUTING",
+            "DELIVERING",
+            "DELIVERED",
+            "PARTIALLY_DELIVERED",
+            "SUPPRESSED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "data": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "acceptedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "notificationId",
+        "tenantId",
+        "recipientId",
+        "category",
+        "dedupeKey",
+        "templateVersionId",
+        "routePolicyId",
+        "routePolicyRevision",
+        "state",
+        "data",
+        "acceptedAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "Delivery": {
+      "type": "object",
+      "properties": {
+        "deliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "notificationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "endpointId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "EMAIL",
+            "SMS",
+            "WEBHOOK"
+          ]
+        },
+        "routeOrdinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "RATE_LIMITED",
+            "SENDING",
+            "ACCEPTED",
+            "DELIVERED",
+            "FAILED",
+            "UNKNOWN",
+            "SUPPRESSED",
+            "CANCELLED"
+          ]
+        },
+        "attemptCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "providerMessageId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "suppressionRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "nextAttemptAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "deliveryId",
+        "notificationId",
+        "endpointId",
+        "channel",
+        "routeOrdinal",
+        "state",
+        "attemptCount",
+        "providerMessageId",
+        "suppressionRevision",
+        "nextAttemptAt",
+        "createdAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "DeliveryAttempt": {
+      "type": "object",
+      "properties": {
+        "attemptId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "attemptNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "providerRequestId": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "ACCEPTED",
+            "REJECTED",
+            "TIMEOUT",
+            "CONNECTION_RESET",
+            "HTTP_ERROR"
+          ]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "attemptId",
+        "deliveryId",
+        "attemptNumber",
+        "providerRequestId",
+        "outcome",
+        "startedAt",
+        "finishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Suppression": {
+      "type": "object",
+      "properties": {
+        "suppressionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "recipientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "EMAIL",
+            "SMS",
+            "WEBHOOK",
+            "ALL"
+          ]
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "RELEASED"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reason": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "releasedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "suppressionId",
+        "tenantId",
+        "recipientId",
+        "channel",
+        "category",
+        "state",
+        "revision",
+        "reason",
+        "createdAt",
+        "releasedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ProviderReceipt": {
+      "type": "object",
+      "properties": {
+        "providerReceiptId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "EMAIL",
+            "SMS",
+            "WEBHOOK"
+          ]
+        },
+        "providerEventId": {
+          "type": "string"
+        },
+        "providerMessageId": {
+          "type": "string"
+        },
+        "deliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "DELIVERED",
+            "BOUNCED",
+            "COMPLAINED",
+            "FAILED"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "providerReceiptId",
+        "channel",
+        "providerEventId",
+        "providerMessageId",
+        "deliveryId",
+        "outcome",
+        "occurredAt",
+        "receivedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Campaign": {
+      "type": "object",
+      "properties": {
+        "campaignId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "templateVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "routePolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "routePolicyRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "category": {
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "PAUSED",
+            "COMPLETED",
+            "CANCELLED"
+          ]
+        },
+        "recipientCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cancelledAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "campaignId",
+        "tenantId",
+        "name",
+        "templateVersionId",
+        "routePolicyId",
+        "routePolicyRevision",
+        "category",
+        "data",
+        "state",
+        "recipientCount",
+        "createdAt",
+        "completedAt",
+        "cancelledAt"
+      ],
+      "additionalProperties": false
+    },
+    "CampaignRecipient": {
+      "type": "object",
+      "properties": {
+        "campaignId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "recipientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "suppressionRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "notificationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "campaignId",
+        "recipientId",
+        "suppressionRevision",
+        "notificationId"
+      ],
+      "additionalProperties": false
+    },
+    "CampaignDetail": {
+      "type": "object",
+      "properties": {
+        "campaign": {
+          "$ref": "#/$defs/Campaign"
+        },
+        "campaignRecipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CampaignRecipient"
+          }
+        }
+      },
+      "required": [
+        "campaign",
+        "campaignRecipients"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "NOTIFICATION_ROUTE",
+            "DELIVERY_SEND",
+            "DELIVERY_RECONCILE",
+            "CAMPAIGN_FANOUT"
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "notification.accepted",
+            "notification.terminal",
+            "delivery.suppressed",
+            "delivery.accepted",
+            "delivery.delivered",
+            "delivery.failed",
+            "delivery.unknown",
+            "recipient.unsubscribed"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/JsonObject"
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Recipient"
+          }
+        },
+        "channelEndpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ChannelEndpoint"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Template"
+          }
+        },
+        "templateVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TemplateVersion"
+          }
+        },
+        "routePolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoutePolicy"
+          }
+        },
+        "rateLimitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateLimitPolicy"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Notification"
+          }
+        },
+        "deliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Delivery"
+          }
+        },
+        "deliveryAttempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeliveryAttempt"
+          }
+        },
+        "suppressions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Suppression"
+          }
+        },
+        "providerReceipts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProviderReceipt"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "recipients",
+        "channelEndpoints",
+        "templates",
+        "templateVersions",
+        "routePolicies",
+        "rateLimitPolicies",
+        "notifications",
+        "deliveries",
+        "deliveryAttempts",
+        "suppressions",
+        "providerReceipts"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Recipient"
+          }
+        },
+        "channelEndpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ChannelEndpoint"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Template"
+          }
+        },
+        "templateVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TemplateVersion"
+          }
+        },
+        "routePolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoutePolicy"
+          }
+        },
+        "rateLimitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateLimitPolicy"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Notification"
+          }
+        },
+        "deliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Delivery"
+          }
+        },
+        "deliveryAttempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeliveryAttempt"
+          }
+        },
+        "suppressions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Suppression"
+          }
+        },
+        "providerReceipts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProviderReceipt"
+          }
+        },
+        "campaigns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Campaign"
+          }
+        },
+        "campaignRecipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CampaignRecipient"
+          }
+        }
+      },
+      "required": [
+        "tenants",
+        "recipients",
+        "channelEndpoints",
+        "templates",
+        "templateVersions",
+        "routePolicies",
+        "rateLimitPolicies",
+        "notifications",
+        "deliveries",
+        "deliveryAttempts",
+        "suppressions",
+        "providerReceipts",
+        "campaigns",
+        "campaignRecipients"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/OpenAPI"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "tenant-create",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-tenant-create"
+        },
+        "body": {
+          "name": "public1"
+        }
+      }
+    },
+    {
+      "id": "recipient-create",
+      "method": "POST",
+      "path": "/api/v1/recipients",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "externalRef": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenantId",
+          "externalRef",
+          "locale",
+          "timeZone"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Recipient"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-recipient-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "externalRef": "public1",
+          "locale": "public1",
+          "timeZone": "public1"
+        }
+      }
+    },
+    {
+      "id": "endpoint-create",
+      "method": "POST",
+      "path": "/api/v1/channel-endpoints",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "recipientId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WEBHOOK"
+            ]
+          },
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenantId",
+          "recipientId",
+          "channel",
+          "address"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ChannelEndpoint"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-endpoint-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "recipientId": "b2000999-0000-4000-8000-000000000001",
+          "channel": "EMAIL",
+          "address": "public1"
+        }
+      }
+    },
+    {
+      "id": "template-create",
+      "method": "POST",
+      "path": "/api/v1/templates",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Template"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-template-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "name": "public1"
+        }
+      }
+    },
+    {
+      "id": "template-version-create",
+      "method": "POST",
+      "path": "/api/v1/template-versions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WEBHOOK"
+            ]
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "templateId",
+          "version",
+          "channel",
+          "subject",
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/TemplateVersion"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-template-version-create"
+        },
+        "body": {
+          "templateId": "b2000999-0000-4000-8000-000000000001",
+          "version": 1,
+          "channel": "EMAIL",
+          "subject": "public1",
+          "body": "public1"
+        }
+      }
+    },
+    {
+      "id": "route-policy-create",
+      "method": "POST",
+      "path": "/api/v1/route-policies",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RouteStep"
+            }
+          }
+        },
+        "required": [
+          "tenantId",
+          "name",
+          "revision",
+          "steps"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RoutePolicy"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-route-policy-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "name": "public1",
+          "revision": 1,
+          "steps": []
+        }
+      }
+    },
+    {
+      "id": "rate-limit-policy-create",
+      "method": "POST",
+      "path": "/api/v1/rate-limit-policies",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WEBHOOK"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "windowSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "tenantLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "recipientLimit": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "channel",
+          "revision",
+          "windowSeconds",
+          "tenantLimit",
+          "recipientLimit",
+          "effectiveFrom"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RateLimitPolicy"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-rate-limit-policy-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "channel": "EMAIL",
+          "revision": 1,
+          "windowSeconds": 1,
+          "tenantLimit": 1,
+          "recipientLimit": 1,
+          "effectiveFrom": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "notification-create",
+      "method": "POST",
+      "path": "/api/v1/notifications",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "recipientId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "category": {
+            "type": "string"
+          },
+          "dedupeKey": {
+            "type": "string"
+          },
+          "templateVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "routePolicyId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "data": {
+            "$ref": "#/$defs/JsonObject"
+          }
+        },
+        "required": [
+          "tenantId",
+          "recipientId",
+          "category",
+          "dedupeKey",
+          "templateVersionId",
+          "routePolicyId",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Notification"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-notification-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "recipientId": "b2000999-0000-4000-8000-000000000001",
+          "category": "public1",
+          "dedupeKey": "public1",
+          "templateVersionId": "b2000999-0000-4000-8000-000000000001",
+          "routePolicyId": "b2000999-0000-4000-8000-000000000001",
+          "data": {}
+        }
+      }
+    },
+    {
+      "id": "notification-get",
+      "method": "GET",
+      "path": "/api/v1/notifications/:notificationId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Notification"
+      },
+      "parameters": [
+        {
+          "name": "notificationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "notificationId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "notification-cancel",
+      "method": "POST",
+      "path": "/api/v1/notifications/:notificationId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Notification"
+      },
+      "parameters": [
+        {
+          "name": "notificationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "notificationId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-notification-cancel"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "recipient-unsubscribe",
+      "method": "POST",
+      "path": "/api/v1/recipients/:recipientId/unsubscribe",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WEBHOOK",
+              "ALL"
+            ]
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedPreferenceRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "channel",
+          "category",
+          "reason",
+          "expectedPreferenceRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Suppression"
+      },
+      "example": {
+        "params": {
+          "recipientId": "b2000005-0000-4000-8000-000000000002"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-recipient-unsubscribe"
+        },
+        "body": {
+          "channel": "EMAIL",
+          "category": null,
+          "reason": "Public opt-out",
+          "expectedPreferenceRevision": 0
+        }
+      },
+      "parameters": [
+        {
+          "name": "recipientId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "recipient-resubscribe",
+      "method": "POST",
+      "path": "/api/v1/recipients/:recipientId/resubscribe",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WEBHOOK",
+              "ALL"
+            ]
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consentReference": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedPreferenceRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "channel",
+          "category",
+          "consentReference",
+          "expectedPreferenceRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Suppression"
+      },
+      "parameters": [
+        {
+          "name": "recipientId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "recipientId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-recipient-resubscribe"
+        },
+        "body": {
+          "channel": "EMAIL",
+          "category": "public1",
+          "consentReference": "public1",
+          "expectedPreferenceRevision": 1
+        }
+      }
+    },
+    {
+      "id": "provider-receipt",
+      "method": "POST",
+      "path": "/api/v1/provider/receipts",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WEBHOOK"
+            ]
+          },
+          "providerEventId": {
+            "type": "string"
+          },
+          "providerMessageId": {
+            "type": "string"
+          },
+          "deliveryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "DELIVERED",
+              "BOUNCED",
+              "COMPLAINED",
+              "FAILED"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "channel",
+          "providerEventId",
+          "providerMessageId",
+          "deliveryId",
+          "outcome",
+          "occurredAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ProviderReceipt"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-provider-receipt"
+        },
+        "body": {
+          "channel": "EMAIL",
+          "providerEventId": "public1",
+          "providerMessageId": "public1",
+          "deliveryId": "b2000999-0000-4000-8000-000000000001",
+          "outcome": "DELIVERED",
+          "occurredAt": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "delivery-reconcile",
+      "method": "POST",
+      "path": "/api/v1/deliveries/:deliveryId/reconcile",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Delivery"
+      },
+      "parameters": [
+        {
+          "name": "deliveryId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deliveryId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-delivery-reconcile"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "campaign-create",
+      "method": "POST",
+      "path": "/api/v1/campaigns",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route and resource)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "routePolicyId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "category": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/$defs/JsonObject"
+          },
+          "recipientIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "name",
+          "templateVersionId",
+          "routePolicyId",
+          "category",
+          "data",
+          "recipientIds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CampaignDetail"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-campaign-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "name": "public1",
+          "templateVersionId": "b2000999-0000-4000-8000-000000000001",
+          "routePolicyId": "b2000999-0000-4000-8000-000000000001",
+          "category": "public1",
+          "data": {},
+          "recipientIds": [
+            "b2000999-0000-4000-8000-000000000001"
+          ]
+        }
+      }
+    },
+    {
+      "id": "campaigns-list",
+      "method": "GET",
+      "path": "/api/v1/campaigns",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Campaign"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {}
+    },
+    {
+      "id": "campaign-get",
+      "method": "GET",
+      "path": "/api/v1/campaigns/:campaignId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route and resource)",
+      "response": {
+        "$ref": "#/$defs/CampaignDetail"
+      },
+      "parameters": [
+        {
+          "name": "campaignId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "campaignId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "campaign-pause",
+      "method": "POST",
+      "path": "/api/v1/campaigns/:campaignId/pause",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Campaign"
+      },
+      "parameters": [
+        {
+          "name": "campaignId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "campaignId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-campaign-pause"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "campaign-resume",
+      "method": "POST",
+      "path": "/api/v1/campaigns/:campaignId/resume",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Campaign"
+      },
+      "parameters": [
+        {
+          "name": "campaignId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "campaignId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-campaign-resume"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "campaign-cancel",
+      "method": "POST",
+      "path": "/api/v1/campaigns/:campaignId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Campaign"
+      },
+      "parameters": [
+        {
+          "name": "campaignId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "campaignId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-campaign-cancel"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer public-example-admin"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "tenants"
+          ],
+          "match": {
+            "tenantId": "b2000005-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "recipients"
+          ],
+          "match": {
+            "recipientId": "b2000005-0000-4000-8000-000000000002",
+            "preferenceRevision": 0
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "channelEndpoints"
+          ],
+          "match": {
+            "endpointId": "b2000005-0000-4000-8000-000000000003",
+            "recipientId": "b2000005-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "templateVersions"
+          ],
+          "match": {
+            "templateVersionId": "b2000005-0000-4000-8000-000000000005",
+            "contentDigest": "8a014adcf1c10d3ba2eab9a2f872346cef13018d7844cc7a27d397458a45ed81"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "routePolicies"
+          ],
+          "match": {
+            "routePolicyId": "b2000005-0000-4000-8000-000000000006",
+            "revision": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "rateLimitPolicies"
+          ],
+          "match": {
+            "rateLimitPolicyId": "b2000005-0000-4000-8000-000000000007"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "recipient-unsubscribe",
+      "params": {
+        "recipientId": "b2000005-0000-4000-8000-000000000002"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-public-unsubscribe"
+      },
+      "body": {
+        "channel": "EMAIL",
+        "category": null,
+        "reason": "Public opt-out",
+        "expectedPreferenceRevision": 0
+      },
+      "expectStatus": 200,
+      "capture": {
+        "suppressionId": [
+          "suppressionId"
+        ]
+      },
+      "expectBody": {
+        "recipientId": "b2000005-0000-4000-8000-000000000002",
+        "channel": "EMAIL",
+        "category": null,
+        "state": "ACTIVE"
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "suppressions"
+          ],
+          "match": {
+            "suppressionId": "${suppressionId}",
+            "recipientId": "b2000005-0000-4000-8000-000000000002",
+            "state": "ACTIVE"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Source authority is the full public README, Manager requirements and AGENTS. No hidden evaluator data or solution code is imported. This V2 contract fixes wire boundaries; state machines, algorithms, isolation, migrations and performance remain implementation work.",
+    "V2 wire clarification: every route has the closed request/success schema published here; only business inputs occur in creation requests. Omitted success status is 200. Health returns {status:\"ok\"}; UI returns HTML. Collection nextCursor is string or null, with null denoting completion. Path/query/header parameters and independent request examples are explicit. Examples validate transport only, not eligibility of referenced resources.",
+    "V2 wire clarification: the authenticated verification snapshot is one point-in-time envelope with complete named resource arrays, typed retained Work and ordered DomainEvents. When the legacy source did not specify event fields, V2 uses eventId,aggregateId,sequence,type,occurredAt,schemaVersion,payload; payload remains a JSON object. No hidden event payload is prescribed.",
+    "The seed uses the exact V1 array names and graph references. Repeated identical seed import is a no-op; another digest under the same seedVersion conflicts. Manager resources are derived by migration or created by public operations, never invented V1 seed members.",
+    "V2 wire clarification: Tenant and Template fields, creation bodies, and consent optimistic-concurrency input expectedPreferenceRevision are newly fixed public transport. Generated identity, state and timestamps are omitted from creation bodies. Unsubscribe/resubscribe return the named Suppression; category:null is the all-category scope and channel:ALL is all channels.",
+    "V2 wire clarification: TemplateVersion.contentDigest is SHA-256 of UTF-8 canonical JSON {channel,subject,body}. This makes the previously unspecified digest reproducible without defining new template syntax. The public seed has no template variables and causes no external send.",
+    "V2 wire clarification: Manager Campaign routes, Campaign/CampaignRecipient fields and snapshot collections are explicitly new, not original V1 definitions. Campaign creation/get return {campaign,campaignRecipients}; pause/resume/cancel return Campaign. Recipient IDs may repeat in the input because the published Manager rule requires deduplicating them. campaignRecipients holds the frozen audience preference revision and eventual Notification link.",
+    "Public signing wire clarification: WEBHOOK deliveries use NOTIFYROUTE_WEBHOOK_SIGNING_SECRET as a nonempty UTF-8 HMAC key. Send X-NotifyRoute-Signature as lowercase hexadecimal HMAC-SHA256 over the exact UTF-8 HTTP request-body bytes. The stable Idempotency-Key and X-NotifyRoute-Delivery-Id still follow the complete product requirements. API and Worker roles receive the same configured secret; it must never enter public resources, snapshots or events. This specifies the missing transport/configuration of the original HMAC requirement, not a provider implementation. Template-variable grammar remains outside hidden assertions unless explicitly specified by the product requirements.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

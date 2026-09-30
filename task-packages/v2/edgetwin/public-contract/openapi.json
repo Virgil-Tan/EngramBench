@@ -1,0 +1,5326 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "EdgeTwin",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "health",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "ok"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "openapi",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "openapi",
+                    "info",
+                    "paths",
+                    "components"
+                  ],
+                  "properties": {
+                    "openapi": {
+                      "type": "string",
+                      "pattern": "^3\\.1\\."
+                    },
+                    "info": {
+                      "type": "object"
+                    },
+                    "paths": {
+                      "type": "object"
+                    },
+                    "components": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "operationId": "production-ui",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "contentMediaType": "text/html"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants": {
+      "get": {
+        "operationId": "list-tenants",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Tenant"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-tenant",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tenant"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices": {
+      "get": {
+        "operationId": "list-devices",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Device"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-device",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "externalRef": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "externalRef"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{deviceId}/shadow": {
+      "get": {
+        "operationId": "read-device-shadow",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceShadow"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{deviceId}/shadow/desired": {
+      "patch": {
+        "operationId": "patch-desired-shadow",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "patch": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/JsonValue"
+                    }
+                  }
+                },
+                "required": [
+                  "expectedVersion",
+                  "patch"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceShadow"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/device-commands": {
+      "post": {
+        "operationId": "create-device-command",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "payload": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/JsonValue"
+                    }
+                  },
+                  "desiredVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "deviceId",
+                  "kind",
+                  "payload",
+                  "desiredVersion",
+                  "expiresAt"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceCommand"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/device-commands/{commandId}": {
+      "get": {
+        "operationId": "read-device-command",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "commandId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceCommand"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/device-commands/{commandId}/cancel": {
+      "post": {
+        "operationId": "cancel-device-command",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "commandId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceCommand"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{deviceId}/connect": {
+      "post": {
+        "operationId": "connect-device",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  }
+                },
+                "required": [
+                  "tenantId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "device": {
+                      "$ref": "#/components/schemas/Device"
+                    },
+                    "connectionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    }
+                  },
+                  "required": [
+                    "device",
+                    "connectionId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{deviceId}/disconnect": {
+      "post": {
+        "operationId": "disconnect-device",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "connectionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "connectionId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{deviceId}/poll": {
+      "post": {
+        "operationId": "poll-device",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "connectionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "connectionId",
+                  "limit"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DeviceCommand"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/command-receipts": {
+      "post": {
+        "operationId": "create-command-receipt",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "commandId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "deliveryIdentity": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "receiptId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "deviceSequence": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "outcome": {
+                    "enum": [
+                      "ACKNOWLEDGED",
+                      "FAILED"
+                    ]
+                  },
+                  "reportedBaseVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "reportedPatch": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/JsonValue"
+                    }
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "deviceId",
+                  "commandId",
+                  "deliveryIdentity",
+                  "receiptId",
+                  "deviceSequence",
+                  "outcome",
+                  "reportedBaseVersion",
+                  "reportedPatch",
+                  "observedAt"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/firmware-releases": {
+      "get": {
+        "operationId": "list-firmware-releases",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FirmwareRelease"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-firmware-release",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "version",
+                  "digest",
+                  "sizeBytes"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmwareRelease"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade-campaigns": {
+      "get": {
+        "operationId": "list-upgrade-campaigns",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UpgradeCampaign"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-upgrade-campaign",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "firmwareReleaseId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "deviceIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "firmwareReleaseId",
+                  "deviceIds"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradeCampaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade-campaigns/{upgradeCampaignId}/pause": {
+      "post": {
+        "operationId": "pause-upgrade-campaign",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "upgradeCampaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradeCampaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade-campaigns/{upgradeCampaignId}/resume": {
+      "post": {
+        "operationId": "resume-upgrade-campaign",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "upgradeCampaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradeCampaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/upgrade-campaigns/{upgradeCampaignId}/cancel": {
+      "post": {
+        "operationId": "cancel-upgrade-campaign",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "upgradeCampaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradeCampaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployment-waves": {
+      "get": {
+        "operationId": "list-deployment-waves",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DeploymentWave"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-deployment-wave",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "upgradeCampaignId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "requestRef": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "waves": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "deviceIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        },
+                        "minimumObservationSeconds": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 86400
+                        },
+                        "maximumFailurePercent": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "deviceIds",
+                        "minimumObservationSeconds",
+                        "maximumFailurePercent"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "upgradeCampaignId",
+                  "requestRef",
+                  "waves"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deploymentWave": {
+                      "$ref": "#/components/schemas/DeploymentWave"
+                    },
+                    "waveDevices": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WaveDevice"
+                      }
+                    }
+                  },
+                  "required": [
+                    "deploymentWave",
+                    "waveDevices"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployment-waves/{deploymentWaveId}": {
+      "get": {
+        "operationId": "read-deployment-wave",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "deploymentWaveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deploymentWave": {
+                      "$ref": "#/components/schemas/DeploymentWave"
+                    },
+                    "waveDevices": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WaveDevice"
+                      }
+                    }
+                  },
+                  "required": [
+                    "deploymentWave",
+                    "waveDevices"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployment-waves/{deploymentWaveId}/pause": {
+      "post": {
+        "operationId": "pause-deployment-wave",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "deploymentWaveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentWave"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployment-waves/{deploymentWaveId}/resume": {
+      "post": {
+        "operationId": "resume-deployment-wave",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "deploymentWaveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentWave"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployment-waves/{deploymentWaveId}/cancel": {
+      "post": {
+        "operationId": "cancel-deployment-wave",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "deploymentWaveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentWave"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deployment-waves/{deploymentWaveId}/rollback": {
+      "post": {
+        "operationId": "rollback-deployment-wave",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "deploymentWaveId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentWave"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-snapshot": {
+      "get": {
+        "operationId": "verification-snapshot",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JsonValue": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          }
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/JsonValue"
+                }
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "details"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "Tenant": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "AuditCheckpoint": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "sequence",
+          "digest",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "AuditEntry": {
+        "type": "object",
+        "properties": {
+          "auditEntryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "eventType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "payloadDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "priorDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "auditEntryId",
+          "tenantId",
+          "sequence",
+          "eventType",
+          "subjectRef",
+          "payloadDigest",
+          "priorDigest",
+          "digest",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "Work": {
+        "type": "object",
+        "properties": {
+          "workId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "kind": {
+            "enum": [
+              "COMMAND_DISPATCH",
+              "COMMAND_EXPIRE",
+              "UPGRADE_FANOUT",
+              "RECEIPT_PROJECT",
+              "DEPLOYMENT_WAVE_ADVANCE"
+            ]
+          },
+          "aggregateId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "LEASED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "terminal": {
+            "type": "boolean"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "leaseOwner": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leaseExpiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "workId",
+          "kind",
+          "aggregateId",
+          "state",
+          "terminal",
+          "attempt",
+          "leaseOwner",
+          "leaseExpiresAt"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "const": "LEASED"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "leaseOwner": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "leaseExpiresAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "leaseOwner": {
+                  "type": "null"
+                },
+                "leaseExpiresAt": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "enum": [
+                    "SUCCEEDED",
+                    "FAILED",
+                    "CANCELLED"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "terminal": {
+                  "const": true
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "terminal": {
+                  "const": false
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DomainEvent": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "aggregateId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "type": {
+            "enum": [
+              "shadow.desired_updated",
+              "shadow.reported_updated",
+              "command.created",
+              "command.delivered",
+              "command.acknowledged",
+              "command.failed",
+              "command.expired",
+              "upgrade.created",
+              "upgrade.target_terminal",
+              "upgrade.terminal"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "schemaVersion": {
+            "const": 1
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          }
+        },
+        "required": [
+          "eventId",
+          "aggregateId",
+          "sequence",
+          "type",
+          "occurredAt",
+          "schemaVersion",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "externalRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "enum": [
+              "ONLINE",
+              "OFFLINE",
+              "RETIRED"
+            ]
+          },
+          "lastSeenAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "deviceId",
+          "tenantId",
+          "externalRef",
+          "state",
+          "lastSeenAt",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "DeviceShadow": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "desiredVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "desired": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          "reportedVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reported": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "deviceId",
+          "desiredVersion",
+          "desired",
+          "reportedVersion",
+          "reported",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "DeviceCommand": {
+        "type": "object",
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          "desiredVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "deliveryIdentity": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "DELIVERED",
+              "ACKNOWLEDGED",
+              "FAILED",
+              "EXPIRED",
+              "CANCELLED"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "commandId",
+          "tenantId",
+          "deviceId",
+          "kind",
+          "payload",
+          "desiredVersion",
+          "deliveryIdentity",
+          "state",
+          "expiresAt",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "CommandReceipt": {
+        "type": "object",
+        "properties": {
+          "receiptId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "commandId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "outcome": {
+            "enum": [
+              "ACKNOWLEDGED",
+              "FAILED"
+            ]
+          },
+          "reportedPatch": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "receiptId",
+          "tenantId",
+          "deviceId",
+          "commandId",
+          "deviceSequence",
+          "outcome",
+          "reportedPatch",
+          "observedAt",
+          "receivedAt"
+        ],
+        "additionalProperties": false
+      },
+      "FirmwareRelease": {
+        "type": "object",
+        "properties": {
+          "firmwareReleaseId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "enum": [
+              "READY",
+              "REVOKED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "firmwareReleaseId",
+          "tenantId",
+          "version",
+          "digest",
+          "sizeBytes",
+          "state",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "UpgradeCampaign": {
+        "type": "object",
+        "properties": {
+          "upgradeCampaignId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "firmwareReleaseId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "PAUSED",
+              "COMPLETED",
+              "CANCELLED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "upgradeCampaignId",
+          "tenantId",
+          "firmwareReleaseId",
+          "state",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "UpgradeTarget": {
+        "type": "object",
+        "properties": {
+          "upgradeCampaignId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "priorFirmwareDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "COMMAND_CREATED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED",
+              "CANCELLED"
+            ]
+          },
+          "commandId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "upgradeCampaignId",
+          "deviceId",
+          "priorFirmwareDigest",
+          "state",
+          "commandId"
+        ],
+        "additionalProperties": false
+      },
+      "DeploymentWave": {
+        "type": "object",
+        "properties": {
+          "deploymentWaveId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "upgradeCampaignId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "requestRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "PAUSED",
+              "COMPLETED",
+              "CANCELLED",
+              "ROLLED_BACK"
+            ]
+          },
+          "currentWaveOrdinal": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "waves": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ordinal": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "state": {
+                  "enum": [
+                    "PENDING",
+                    "RUNNING",
+                    "PAUSED",
+                    "SUCCEEDED",
+                    "FAILED",
+                    "ROLLED_BACK"
+                  ]
+                },
+                "minimumObservationSeconds": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 86400
+                },
+                "maximumFailurePercent": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "ordinal",
+                "name",
+                "state",
+                "minimumObservationSeconds",
+                "maximumFailurePercent"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "deploymentWaveId",
+          "tenantId",
+          "upgradeCampaignId",
+          "requestRef",
+          "state",
+          "currentWaveOrdinal",
+          "waves",
+          "createdAt",
+          "updatedAt",
+          "sequence"
+        ],
+        "additionalProperties": false
+      },
+      "WaveDevice": {
+        "type": "object",
+        "properties": {
+          "deploymentWaveId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "waveOrdinal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "priorFirmwareReleaseId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetFirmwareReleaseId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "COMMAND_CREATED",
+              "SUCCEEDED",
+              "FAILED",
+              "ROLLBACK_PENDING",
+              "ROLLED_BACK"
+            ]
+          },
+          "commandId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rollbackTargetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confirmedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "deploymentWaveId",
+          "waveOrdinal",
+          "deviceId",
+          "priorFirmwareReleaseId",
+          "targetFirmwareReleaseId",
+          "state",
+          "commandId",
+          "rollbackTargetId",
+          "confirmedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ReceiptResult": {
+        "type": "object",
+        "properties": {
+          "receiptId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "commandId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "outcome": {
+            "enum": [
+              "ACKNOWLEDGED",
+              "FAILED"
+            ]
+          },
+          "reportedPatch": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "projectionStatus": {
+            "enum": [
+              "APPLIED",
+              "STALE",
+              "TERMINAL"
+            ]
+          }
+        },
+        "required": [
+          "receiptId",
+          "tenantId",
+          "deviceId",
+          "commandId",
+          "deviceSequence",
+          "outcome",
+          "reportedPatch",
+          "observedAt",
+          "receivedAt",
+          "projectionStatus"
+        ],
+        "additionalProperties": false
+      },
+      "CompensationUpgradeTarget": {
+        "type": "object",
+        "properties": {
+          "upgradeCampaignId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "priorFirmwareDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "COMMAND_CREATED",
+              "SUCCEEDED",
+              "FAILED",
+              "EXPIRED",
+              "CANCELLED"
+            ]
+          },
+          "commandId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "upgradeTargetId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "upgradeCampaignId",
+          "deviceId",
+          "priorFirmwareDigest",
+          "state",
+          "commandId",
+          "upgradeTargetId"
+        ],
+        "additionalProperties": false
+      },
+      "FinalUpgradeTarget": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/UpgradeTarget"
+          },
+          {
+            "$ref": "#/components/schemas/CompensationUpgradeTarget"
+          }
+        ]
+      },
+      "Seed": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "seedVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "importedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tenant"
+            }
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            }
+          },
+          "deviceShadows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceShadow"
+            }
+          },
+          "deviceCommands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceCommand"
+            }
+          },
+          "commandReceipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommandReceipt"
+            }
+          },
+          "firmwareReleases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FirmwareRelease"
+            }
+          },
+          "upgradeCampaigns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpgradeCampaign"
+            }
+          },
+          "upgradeTargets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpgradeTarget"
+            }
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "seedVersion",
+          "importedAt",
+          "tenants",
+          "devices",
+          "deviceShadows",
+          "deviceCommands",
+          "commandReceipts",
+          "firmwareReleases",
+          "upgradeCampaigns",
+          "upgradeTargets"
+        ],
+        "additionalProperties": false
+      },
+      "SnapshotResources": {
+        "type": "object",
+        "properties": {
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tenant"
+            }
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            }
+          },
+          "deviceShadows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceShadow"
+            }
+          },
+          "deviceCommands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceCommand"
+            }
+          },
+          "commandReceipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommandReceipt"
+            }
+          },
+          "firmwareReleases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FirmwareRelease"
+            }
+          },
+          "upgradeCampaigns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpgradeCampaign"
+            }
+          },
+          "upgradeTargets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FinalUpgradeTarget"
+            }
+          },
+          "deploymentWaves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentWave"
+            }
+          },
+          "waveDevices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WaveDevice"
+            }
+          }
+        },
+        "required": [
+          "tenants",
+          "devices",
+          "deviceShadows",
+          "deviceCommands",
+          "commandReceipts",
+          "firmwareReleases",
+          "upgradeCampaigns",
+          "upgradeTargets",
+          "deploymentWaves",
+          "waveDevices"
+        ],
+        "additionalProperties": false
+      },
+      "VerificationSnapshot": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "resources": {
+            "$ref": "#/components/schemas/SnapshotResources"
+          },
+          "work": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Work"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "asOf",
+          "resources",
+          "work",
+          "events"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

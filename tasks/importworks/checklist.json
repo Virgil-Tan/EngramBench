@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "personaId": "importworks-delivery-owner",
+  "taskId": "importworks",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean install, repeatable migration, atomic seed, build, API, worker, dispatcher, and production UI operate through published commands.","weight":6,"testGates":["H-01"]},
+    {"id":"contract-validation","category":"correctness","requirement":"OpenAPI, strict validation, frozen schema revision, stable errors, tenant isolation, pagination, and snapshot match the public contract.","weight":9,"testGates":["H-02","H-03"]},
+    {"id":"resume-integrity","category":"correctness","requirement":"Out-of-order chunks, replay, conflicts, restart resume, byte coverage, and whole-file digest remain correct and atomic.","weight":12,"testGates":["H-03","H-04","H-05"]},
+    {"id":"commit-conservation","category":"correctness","requirement":"Both commit modes preserve row counts, exactly-once external identity, deterministic findings, and no partial rejected writes under concurrency.","weight":14,"testGates":["H-04","H-06"]},
+    {"id":"recovery-events","category":"correctness","requirement":"Leased validation/commit/report work and byte-identical outbox delivery recover after controlled process death.","weight":12,"testGates":["H-07","H-08"]},
+    {"id":"compatible-migration","category":"correctness","requirement":"V1 data, source identities, reports, pending work, events, and durable replays survive FINAL migration.","weight":8,"testGates":["H-09"]},
+    {"id":"manager-bundles","category":"correctness","requirement":"ImportBundle stages frozen members and publishes all members atomically under replay, contention, and recovery without rewriting V1 history.","weight":14,"testGates":["H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three published sustained-load scenarios meet thresholds and all post-load import invariants.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"Project-owned unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance gates are substantive.","weight":7,"testGates":["H-13"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains ownership, state, atomic boundaries, compatibility, and findings clearly without overstating evidence.","weight":3},
+    {"id":"evidence-quality","category":"persona","requirement":"Each stage and handoff reports actual commands, results, risks, and unrun checks accurately.","weight":5}
+  ]
+}

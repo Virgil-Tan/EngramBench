@@ -1,0 +1,2818 @@
+{
+  "taskId": "capacitylease",
+  "title": "CapacityLease",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  },
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "INVALID_REVIEW_POLICY",
+            "APPLICATION_REVISION_CHANGED",
+            "REVIEW_SLOT_UNAVAILABLE",
+            "REVIEW_LEASE_LOST",
+            "APPLICATION_TERMINAL",
+            "INVALID_REVIEW_STAGES",
+            "REVIEW_STAGE_CHANGED",
+            "IDEMPOTENCY_CONFLICT",
+            "INVALID_CURSOR"
+          ],
+          "maxLength": 64
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacityOwner"
+          }
+        },
+        "capacityPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacityPool"
+          }
+        },
+        "capacityLeases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyCapacityLease"
+          }
+        },
+        "admissionEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AdmissionEntry"
+          }
+        },
+        "capacitySlices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacitySlice"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "owners",
+        "capacityPools",
+        "capacityLeases",
+        "admissionEntries",
+        "capacitySlices"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-v2-capacitylease-1",
+      "owners": [
+        {
+          "ownerId": "b2000103-0000-4000-8000-000000000001",
+          "name": "Public capacity owner"
+        }
+      ],
+      "capacityPools": [
+        {
+          "poolId": "b2000103-0000-4000-8000-000000000002",
+          "name": "Public pool A",
+          "capacityUnits": 10,
+          "revision": 1
+        },
+        {
+          "poolId": "b2000103-0000-4000-8000-000000000003",
+          "name": "Public pool B",
+          "capacityUnits": 10,
+          "revision": 1
+        }
+      ],
+      "capacityLeases": [
+        {
+          "leaseId": "b2000103-0000-4000-8000-000000000004",
+          "poolId": "b2000103-0000-4000-8000-000000000002",
+          "ownerId": "b2000103-0000-4000-8000-000000000001",
+          "startAt": "2099-01-01T00:00:00.000Z",
+          "endAt": "2099-01-01T01:00:00.000Z",
+          "units": 2,
+          "priority": 0,
+          "state": "CONFIRMED",
+          "holdExpiresAt": null,
+          "revision": 1,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "terminalAt": null,
+          "sequence": 0
+        }
+      ],
+      "admissionEntries": [],
+      "capacitySlices": [
+        {
+          "poolId": "b2000103-0000-4000-8000-000000000002",
+          "startAt": "2099-01-01T00:00:00.000Z",
+          "endAt": "2099-01-01T01:00:00.000Z",
+          "capacityUnits": 10,
+          "heldUnits": 0,
+          "confirmedUnits": 2,
+          "activeUnits": 0,
+          "availableUnits": 8
+        }
+      ]
+    },
+    "replay": true
+  },
+  "schemas": {
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Json"
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "examples": [
+                "INVALID_LEASE_INTERVAL",
+                "CAPACITY_UNAVAILABLE",
+                "HOLD_EXPIRED",
+                "LEASE_REVISION_CHANGED",
+                "LEASE_NOT_RELEASABLE",
+                "INVALID_GANG_MEMBERS",
+                "GANG_CAPACITY_UNAVAILABLE",
+                "GANG_STATE_CONFLICT",
+                "IDEMPOTENCY_CONFLICT",
+                "INVALID_CURSOR"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenAPI": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "type": "string",
+          "pattern": "^3\\.1\\."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object"
+        },
+        "components": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "CapacityOwner": {
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "CapacityPool": {
+      "type": "object",
+      "properties": {
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "capacityUnits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "poolId",
+        "name",
+        "capacityUnits",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyCapacityLease": {
+      "type": "object",
+      "properties": {
+        "leaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "units": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "HELD",
+            "CONFIRMED",
+            "ACTIVE",
+            "RELEASED",
+            "EXPIRED"
+          ]
+        },
+        "holdExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "leaseId",
+        "poolId",
+        "ownerId",
+        "startAt",
+        "endAt",
+        "units",
+        "priority",
+        "state",
+        "holdExpiresAt",
+        "revision",
+        "createdAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionEntry": {
+      "type": "object",
+      "properties": {
+        "admissionEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "units": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "CANCELLED"
+          ]
+        },
+        "promotedLeaseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "admissionEntryId",
+        "poolId",
+        "ownerId",
+        "startAt",
+        "endAt",
+        "units",
+        "priority",
+        "state",
+        "promotedLeaseId",
+        "requestedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "CapacitySlice": {
+      "type": "object",
+      "properties": {
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "capacityUnits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "heldUnits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "confirmedUnits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "activeUnits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "availableUnits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "poolId",
+        "startAt",
+        "endAt",
+        "capacityUnits",
+        "heldUnits",
+        "confirmedUnits",
+        "activeUnits",
+        "availableUnits"
+      ],
+      "additionalProperties": false
+    },
+    "GangLeaseMember": {
+      "type": "object",
+      "properties": {
+        "memberId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "leaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "units": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "memberId",
+        "leaseId",
+        "ordinal",
+        "poolId",
+        "units"
+      ],
+      "additionalProperties": false
+    },
+    "CapacityLease": {
+      "type": "object",
+      "properties": {
+        "leaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "units": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "HELD",
+            "CONFIRMED",
+            "ACTIVE",
+            "RELEASED",
+            "EXPIRED"
+          ]
+        },
+        "holdExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GangLeaseMember"
+          },
+          "minItems": 1,
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "leaseId",
+        "poolId",
+        "ownerId",
+        "startAt",
+        "endAt",
+        "units",
+        "priority",
+        "state",
+        "holdExpiresAt",
+        "revision",
+        "createdAt",
+        "terminalAt",
+        "sequence",
+        "members"
+      ],
+      "additionalProperties": false
+    },
+    "LeaseResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LegacyCapacityLease"
+        },
+        {
+          "$ref": "#/$defs/CapacityLease"
+        }
+      ]
+    },
+    "HeldLease": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "leaseId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "poolId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "ownerId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "startAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "endAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "units": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "HELD",
+                "CONFIRMED",
+                "ACTIVE",
+                "RELEASED",
+                "EXPIRED"
+              ]
+            },
+            "holdExpiresAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "terminalAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "holdToken": {
+              "type": "string",
+              "minLength": 1,
+              "examples": [
+                "INVALID_LEASE_INTERVAL",
+                "CAPACITY_UNAVAILABLE",
+                "HOLD_EXPIRED",
+                "LEASE_REVISION_CHANGED",
+                "LEASE_NOT_RELEASABLE",
+                "INVALID_GANG_MEMBERS",
+                "GANG_CAPACITY_UNAVAILABLE",
+                "GANG_STATE_CONFLICT",
+                "IDEMPOTENCY_CONFLICT",
+                "INVALID_CURSOR"
+              ]
+            }
+          },
+          "required": [
+            "leaseId",
+            "poolId",
+            "ownerId",
+            "startAt",
+            "endAt",
+            "units",
+            "priority",
+            "state",
+            "holdExpiresAt",
+            "revision",
+            "createdAt",
+            "terminalAt",
+            "sequence",
+            "holdToken"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "leaseId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "poolId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "ownerId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "startAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "endAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "units": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "HELD",
+                "CONFIRMED",
+                "ACTIVE",
+                "RELEASED",
+                "EXPIRED"
+              ]
+            },
+            "holdExpiresAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "terminalAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "members": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GangLeaseMember"
+              },
+              "minItems": 1,
+              "maxItems": 10
+            },
+            "holdToken": {
+              "type": "string",
+              "minLength": 1,
+              "examples": [
+                "INVALID_LEASE_INTERVAL",
+                "CAPACITY_UNAVAILABLE",
+                "HOLD_EXPIRED",
+                "LEASE_REVISION_CHANGED",
+                "LEASE_NOT_RELEASABLE",
+                "INVALID_GANG_MEMBERS",
+                "GANG_CAPACITY_UNAVAILABLE",
+                "GANG_STATE_CONFLICT",
+                "IDEMPOTENCY_CONFLICT",
+                "INVALID_CURSOR"
+              ]
+            }
+          },
+          "required": [
+            "leaseId",
+            "poolId",
+            "ownerId",
+            "startAt",
+            "endAt",
+            "units",
+            "priority",
+            "state",
+            "holdExpiresAt",
+            "revision",
+            "createdAt",
+            "terminalAt",
+            "sequence",
+            "members",
+            "holdToken"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "GangAdmissionEntry": {
+      "type": "object",
+      "properties": {
+        "admissionEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "type": "null"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "units": {
+          "type": "null"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "CANCELLED"
+          ]
+        },
+        "promotedLeaseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "poolId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "units": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "poolId",
+              "units"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 2,
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "admissionEntryId",
+        "poolId",
+        "ownerId",
+        "startAt",
+        "endAt",
+        "units",
+        "priority",
+        "state",
+        "promotedLeaseId",
+        "requestedAt",
+        "terminalAt",
+        "members"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AdmissionEntry"
+        },
+        {
+          "$ref": "#/$defs/GangAdmissionEntry"
+        }
+      ]
+    },
+    "CreateLease": {
+      "type": "object",
+      "properties": {
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "units": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "poolId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "units": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "poolId",
+              "units"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "allowWait": {
+          "type": "boolean"
+        },
+        "holdSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "ownerId",
+        "startAt",
+        "endAt",
+        "priority",
+        "allowWait"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "LEASE_EXPIRY",
+            "ADMISSION_PROMOTION"
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "INVALID_LEASE_INTERVAL",
+                  "CAPACITY_UNAVAILABLE",
+                  "HOLD_EXPIRED",
+                  "LEASE_REVISION_CHANGED",
+                  "LEASE_NOT_RELEASABLE",
+                  "INVALID_GANG_MEMBERS",
+                  "GANG_CAPACITY_UNAVAILABLE",
+                  "GANG_STATE_CONFLICT",
+                  "IDEMPOTENCY_CONFLICT",
+                  "INVALID_CURSOR"
+                ]
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "lease.held",
+            "lease.confirmed",
+            "lease.renewed",
+            "lease.released",
+            "lease.expired",
+            "admission.promoted"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "INVALID_REVIEW_POLICY",
+            "APPLICATION_REVISION_CHANGED",
+            "REVIEW_SLOT_UNAVAILABLE",
+            "REVIEW_LEASE_LOST",
+            "APPLICATION_TERMINAL",
+            "INVALID_REVIEW_STAGES",
+            "REVIEW_STAGE_CHANGED",
+            "IDEMPOTENCY_CONFLICT",
+            "INVALID_CURSOR"
+          ],
+          "maxLength": 64
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacityOwner"
+          }
+        },
+        "capacityPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacityPool"
+          }
+        },
+        "capacityLeases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyCapacityLease"
+          }
+        },
+        "admissionEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AdmissionEntry"
+          }
+        },
+        "capacitySlices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacitySlice"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "owners",
+        "capacityPools",
+        "capacityLeases",
+        "admissionEntries",
+        "capacitySlices"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "owners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacityOwner"
+          }
+        },
+        "capacityPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacityPool"
+          }
+        },
+        "capacityLeases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LeaseResponse"
+          }
+        },
+        "admissionEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AdmissionResponse"
+          }
+        },
+        "capacitySlices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CapacitySlice"
+          }
+        },
+        "gangLeaseMembers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GangLeaseMember"
+          }
+        }
+      },
+      "required": [
+        "owners",
+        "capacityPools",
+        "capacityLeases",
+        "admissionEntries",
+        "capacitySlices",
+        "gangLeaseMembers"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/OpenAPI"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "list-leases",
+      "method": "GET",
+      "path": "/api/v1/capacityLeases",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LeaseResponse"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_LEASE_INTERVAL",
+              "CAPACITY_UNAVAILABLE",
+              "HOLD_EXPIRED",
+              "LEASE_REVISION_CHANGED",
+              "LEASE_NOT_RELEASABLE",
+              "INVALID_GANG_MEMBERS",
+              "GANG_CAPACITY_UNAVAILABLE",
+              "GANG_STATE_CONFLICT",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          }
+        }
+      ],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "read-lease-legacy-path",
+      "method": "GET",
+      "path": "/api/v1/capacityLeases/:capacityLeaseId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/LeaseResponse"
+      },
+      "parameters": [
+        {
+          "name": "capacityLeaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "capacityLeaseId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-lease",
+      "method": "POST",
+      "path": "/api/v1/capacity-leases",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "$ref": "#/$defs/CreateLease"
+      },
+      "response": {
+        "$ref": "#/$defs/HeldLease"
+      },
+      "successStatuses": [
+        201,
+        202
+      ],
+      "successResponses": {
+        "202": {
+          "response": {
+            "$ref": "#/$defs/AdmissionResponse"
+          }
+        }
+      },
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-create-lease"
+        },
+        "body": {
+          "members": [
+            {
+              "poolId": "b2000103-0000-4000-8000-000000000002",
+              "units": 2
+            },
+            {
+              "poolId": "b2000103-0000-4000-8000-000000000003",
+              "units": 2
+            }
+          ],
+          "ownerId": "b2000103-0000-4000-8000-000000000001",
+          "startAt": "2099-01-01T00:00:00.000Z",
+          "endAt": "2099-01-01T01:00:00.000Z",
+          "priority": 0,
+          "allowWait": false,
+          "holdSeconds": 120
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "bodyTransportErrors": [
+        {
+          "path": "/units",
+          "when": "unsafe_integer",
+          "status": 400,
+          "code": "INVALID_LEASE_INTERVAL"
+        },
+        {
+          "path": "/priority",
+          "when": "unsafe_integer",
+          "status": 400,
+          "code": "INVALID_LEASE_INTERVAL"
+        },
+        {
+          "path": "/members/*/units",
+          "when": "unsafe_integer",
+          "status": 400,
+          "code": "INVALID_GANG_MEMBERS"
+        }
+      ]
+    },
+    {
+      "id": "confirm-lease",
+      "method": "POST",
+      "path": "/api/v1/capacity-leases/:leaseId/confirm",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "holdToken": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_LEASE_INTERVAL",
+              "CAPACITY_UNAVAILABLE",
+              "HOLD_EXPIRED",
+              "LEASE_REVISION_CHANGED",
+              "LEASE_NOT_RELEASABLE",
+              "INVALID_GANG_MEMBERS",
+              "GANG_CAPACITY_UNAVAILABLE",
+              "GANG_STATE_CONFLICT",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "holdToken",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/LeaseResponse"
+      },
+      "example": {
+        "params": {
+          "leaseId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-confirm-lease"
+        },
+        "body": {
+          "holdToken": "public-example-hold-fence",
+          "expectedRevision": 1
+        }
+      },
+      "parameters": [
+        {
+          "name": "leaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "renew-lease",
+      "method": "POST",
+      "path": "/api/v1/capacity-leases/:leaseId/renew",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "endAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/LeaseResponse"
+      },
+      "example": {
+        "params": {
+          "leaseId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-renew-lease"
+        },
+        "body": {
+          "expectedRevision": 1,
+          "endAt": "2099-01-01T02:00:00.000Z"
+        }
+      },
+      "parameters": [
+        {
+          "name": "leaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "release-lease",
+      "method": "POST",
+      "path": "/api/v1/capacity-leases/:leaseId/release",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/LeaseResponse"
+      },
+      "example": {
+        "params": {
+          "leaseId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-release-lease"
+        },
+        "body": {
+          "expectedRevision": 1,
+          "reason": "Public early release"
+        }
+      },
+      "parameters": [
+        {
+          "name": "leaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "cancel-admission",
+      "method": "DELETE",
+      "path": "/api/v1/admission-entries/:admissionEntryId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/AdmissionResponse"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "admissionEntryId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "admissionEntryId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-cancel-admission"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "pool-timeline",
+      "method": "GET",
+      "path": "/api/v1/capacity-pools/:poolId/timeline",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CapacitySlice"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "poolId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "from",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "to",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "poolId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "query": {
+          "from": "2099-01-01T00:00:00.000Z",
+          "to": "2099-01-01T01:00:00.000Z"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "read-lease",
+      "method": "GET",
+      "path": "/api/v1/capacity-leases/:leaseId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/LeaseResponse"
+      },
+      "parameters": [
+        {
+          "name": "leaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "leaseId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "read-members",
+      "method": "GET",
+      "path": "/api/v1/capacity-leases/:leaseId/members",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/GangLeaseMember"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "leaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "leaseId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_LEASE_INTERVAL",
+              "CAPACITY_UNAVAILABLE",
+              "HOLD_EXPIRED",
+              "LEASE_REVISION_CHANGED",
+              "LEASE_NOT_RELEASABLE",
+              "INVALID_GANG_MEMBERS",
+              "GANG_CAPACITY_UNAVAILABLE",
+              "GANG_STATE_CONFLICT",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer public-example-admin"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "capacityPools"
+          ],
+          "match": {
+            "poolId": "b2000103-0000-4000-8000-000000000002",
+            "capacityUnits": 10
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "capacityLeases"
+          ],
+          "match": {
+            "leaseId": "b2000103-0000-4000-8000-000000000004",
+            "ownerId": "b2000103-0000-4000-8000-000000000001",
+            "state": "CONFIRMED",
+            "units": 2
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "capacitySlices"
+          ],
+          "match": {
+            "poolId": "b2000103-0000-4000-8000-000000000002",
+            "startAt": "2099-01-01T00:00:00.000Z",
+            "endAt": "2099-01-01T01:00:00.000Z",
+            "confirmedUnits": 2,
+            "availableUnits": 8
+          }
+        }
+      ],
+      "capture": {
+        "publicClock": [
+          "asOf"
+        ]
+      }
+    },
+    {
+      "operationId": "create-lease",
+      "body": {
+        "members": [
+          {
+            "poolId": "b2000103-0000-4000-8000-000000000002",
+            "units": 2
+          },
+          {
+            "poolId": "b2000103-0000-4000-8000-000000000003",
+            "units": 2
+          }
+        ],
+        "ownerId": "b2000103-0000-4000-8000-000000000001",
+        "startAt": "${publicClock+3600000ms}",
+        "endAt": "${publicClock+7200000ms}",
+        "priority": 0,
+        "allowWait": false,
+        "holdSeconds": 120
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-gang-create"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "state": "HELD",
+        "poolId": null,
+        "units": null
+      },
+      "capture": {
+        "createdLeaseId": [
+          "leaseId"
+        ],
+        "createdHoldToken": [
+          "holdToken"
+        ],
+        "createdRevision": [
+          "revision"
+        ]
+      }
+    },
+    {
+      "operationId": "read-members",
+      "params": {
+        "leaseId": "${createdLeaseId}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "leaseId": "${createdLeaseId}",
+            "ordinal": 1,
+            "poolId": "b2000103-0000-4000-8000-000000000002",
+            "units": 2
+          }
+        },
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "leaseId": "${createdLeaseId}",
+            "ordinal": 2,
+            "poolId": "b2000103-0000-4000-8000-000000000003",
+            "units": 2
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "confirm-lease",
+      "params": {
+        "leaseId": "${createdLeaseId}"
+      },
+      "body": {
+        "holdToken": "${createdHoldToken}",
+        "expectedRevision": "${createdRevision}"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-gang-confirm"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "leaseId": "${createdLeaseId}",
+        "state": "CONFIRMED"
+      }
+    },
+    {
+      "operationId": "read-lease",
+      "params": {
+        "leaseId": "${createdLeaseId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "leaseId": "${createdLeaseId}",
+        "state": "CONFIRMED",
+        "poolId": null,
+        "units": null
+      },
+      "expectContains": [
+        {
+          "path": [
+            "members"
+          ],
+          "match": {
+            "leaseId": "${createdLeaseId}",
+            "poolId": "b2000103-0000-4000-8000-000000000002",
+            "units": 2
+          }
+        },
+        {
+          "path": [
+            "members"
+          ],
+          "match": {
+            "leaseId": "${createdLeaseId}",
+            "poolId": "b2000103-0000-4000-8000-000000000003",
+            "units": 2
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "capacityLeases"
+          ],
+          "match": {
+            "leaseId": "${createdLeaseId}",
+            "state": "CONFIRMED"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "gangLeaseMembers"
+          ],
+          "match": {
+            "leaseId": "${createdLeaseId}",
+            "poolId": "b2000103-0000-4000-8000-000000000003",
+            "units": 2
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-lease",
+      "body": {
+        "members": [
+          {
+            "poolId": "b2000103-0000-4000-8000-000000000002",
+            "units": 2
+          },
+          {
+            "poolId": "b2000103-0000-4000-8000-000000000003",
+            "units": 2
+          }
+        ],
+        "ownerId": "b2000103-0000-4000-8000-000000000001",
+        "startAt": "${publicClock+3600000ms}",
+        "endAt": "${publicClock+7200000ms}",
+        "priority": 0,
+        "allowWait": false,
+        "holdSeconds": 120,
+        "unknown": true
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-gang-unknown"
+      },
+      "expectStatus": 400,
+      "expectBody": {
+        "error": {
+          "code": "UNKNOWN_FIELD"
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Source authority is the full public README, Manager requirements and AGENTS. No hidden evaluator data or solution code is imported. This V2 contract fixes wire boundaries; state machines, algorithms, isolation, migrations and performance remain implementation work.",
+    "V2 wire clarification: every route has the closed request/success schema published here; only business inputs occur in creation requests. Omitted success status is 200. Health returns {status:\"ok\"}; UI returns HTML. Collection nextCursor is string or null, with null denoting completion. Path/query/header parameters and independent request examples are explicit. Examples validate transport only, not eligibility of referenced resources.",
+    "V2 wire clarification: the authenticated verification snapshot is one point-in-time envelope with complete named resource arrays, typed retained Work and ordered DomainEvents. When the legacy source did not specify event fields, V2 uses eventId,aggregateId,sequence,type,occurredAt,schemaVersion,payload; payload remains a JSON object. No hidden event payload is prescribed.",
+    "The seed uses the exact V1 array names and graph references. Repeated identical seed import is a no-op; another digest under the same seedVersion conflicts. Manager resources are derived by migration or created by public operations, never invented V1 seed members.",
+    "V2 wire clarification: the literally documented camelCase collection/detail read paths and kebab-case detail path remain available. The bounded Pool timeline returns {items:[CapacitySlice]} in startAt order and accepts exactly from/to; it does not invent cursor paging for a fixed interval.",
+    "Successful Hold creation is a top-level Lease with holdToken, never a wrapper; confirm/renew/release and detail never expose holdToken. Closed legacy responses remain valid for one-Pool clients and saved replay. Manager Lease responses add immutable members; multi-Pool poolId and units are null.",
+    "V2 wire clarification: a WAITING Gang Admission Entry is the AdmissionEntry with poolId:null,units:null,members:[{poolId,units}] in poolId order. It preserves owner, interval, priority, requestedAt, state, promotedLeaseId and terminalAt. This publishes captured admission wire only; atomic admission and promotion remain business work.",
+    "Create must choose legacy poolId+units or 2..10 members, never both. INVALID_GANG_MEMBERS and INVALID_LEASE_INTERVAL govern member/count/sign/mixed-field and cross-time validity after wire type checks. holdSeconds defaults to 120 at the business boundary and must be 1..120; no default is silently added to the idempotency fingerprint by the scaffold.",
+    "The exact V1 seed links an Owner, two Pools, one stable confirmed one-Pool Lease and its conserved CapacitySlice. Manager migration creates one matching member; Manager-only seed collections remain forbidden.",
+    "Public smoke derives start/end from snapshot.asOf so start is after the Hold expiry and duration remains below thirty days. Gang locks, all-or-none transitions, overlap ordering, Work fences, migration, UI and unchanged performance thresholds remain implementation obligations."
+  ],
+  "httpHost": "127.0.0.1",
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1"
+}

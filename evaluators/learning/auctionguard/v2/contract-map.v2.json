@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 2,
+  "taskId": "auctionguard",
+  "cases": [
+    {
+      "caseId": "BID-01",
+      "requirement": {
+        "id": "AG-BID-VALUE",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Reserve, increments and every money boundary use positive safe integers and rejected Bids leave no state."
+      },
+      "privateFailureCodePrefix": "AG_BID01_",
+      "publicFeedbackCategory": "bid-value-contract"
+    },
+    {
+      "caseId": "BID-02",
+      "requirement": {
+        "id": "AG-COMMIT-ORDER",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Serialized committedSequence is contiguous and chooses exactly one highest accepted leading Bid."
+      },
+      "privateFailureCodePrefix": "AG_BID02_",
+      "publicFeedbackCategory": "bid-commit-order"
+    },
+    {
+      "caseId": "BID-03",
+      "requirement": {
+        "id": "AG-ANTI-SNIPING",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Public bids outside the window preserve the deadline; bids strictly inside extend to acceptedAt plus 120 seconds. Exact database timestamp equality is not forced."
+      },
+      "privateFailureCodePrefix": "AG_BID03_",
+      "publicFeedbackCategory": "anti-sniping-window",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "BID-04",
+      "requirement": {
+        "id": "AG-DEADLINE-FENCE",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "A bid-free OPEN auction rejects bids after its effective deadline; SCHEDULED and CANCELLED auctions reject bids. No accepted bid can accidentally extend this expiry fixture."
+      },
+      "privateFailureCodePrefix": "AG_BID04_",
+      "publicFeedbackCategory": "effective-deadline-fence",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "BID-05",
+      "requirement": {
+        "id": "AG-CANCEL-BID-RACE",
+        "source": "workspace/README.md#domain-and-v1-behavior",
+        "summary": "Cancel and the first accepted Bid linearize to one legal outcome with no terminal contradiction."
+      },
+      "privateFailureCodePrefix": "AG_BID05_",
+      "publicFeedbackCategory": "cancel-first-bid-race"
+    },
+    {
+      "caseId": "CLEAR-01",
+      "requirement": {
+        "id": "AG-MULTI-UNIT-INPUT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Unit count, Bid quantity and amount-times-quantity obey exact integer and safe-total limits."
+      },
+      "privateFailureCodePrefix": "AG_CLEAR01_",
+      "publicFeedbackCategory": "multi-unit-input-boundaries"
+    },
+    {
+      "caseId": "CLEAR-02",
+      "requirement": {
+        "id": "AG-ALLOCATION-ORDER",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Publicly reachable accepted-price ranking and settlement. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "AG_CLEAR02_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "CLEAR-03",
+      "requirement": {
+        "id": "AG-UNIFORM-PRICE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Awards use the lowest winning unit price and may partially allocate the final winning Bid."
+      },
+      "privateFailureCodePrefix": "AG_CLEAR03_",
+      "publicFeedbackCategory": "uniform-clearing-price"
+    },
+    {
+      "caseId": "CLEAR-04",
+      "requirement": {
+        "id": "AG-ATOMIC-AWARDS",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "One immutable canonical Award set and outcome commit atomically and never over-allocate Units."
+      },
+      "privateFailureCodePrefix": "AG_CLEAR04_",
+      "publicFeedbackCategory": "atomic-award-outcome"
+    },
+    {
+      "caseId": "CLEAR-05",
+      "requirement": {
+        "id": "AG-WIRE-VARIANT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Legacy one-unit and Manager multi-unit Auctions retain their distinct exact runtime, OpenAPI and UI shapes."
+      },
+      "privateFailureCodePrefix": "AG_CLEAR05_",
+      "publicFeedbackCategory": "one-multi-unit-wire"
+    },
+    {
+      "caseId": "RACE-01",
+      "requirement": {
+        "id": "AG-DURABLE-IDEMPOTENCY",
+        "source": "workspace/README.md#durable-idempotency",
+        "summary": "Unknown Bid and cancel outcomes replay their original status and semantic body with one effect."
+      },
+      "privateFailureCodePrefix": "AG_RACE01_",
+      "publicFeedbackCategory": "durable-mutation-replay"
+    },
+    {
+      "caseId": "RACE-02",
+      "requirement": {
+        "id": "AG-BID-CLOSE-LINEARIZATION",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "A Bid committed before the effective deadline is included when a claimed Close Task rechecks the aggregate."
+      },
+      "privateFailureCodePrefix": "AG_RACE02_",
+      "publicFeedbackCategory": "bid-close-linearization"
+    },
+    {
+      "caseId": "RACE-03",
+      "requirement": {
+        "id": "AG-CLOSE-RECOVERY",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Expired Close leases are reclaimable and stale owners cannot commit a second or divergent outcome."
+      },
+      "privateFailureCodePrefix": "AG_RACE03_",
+      "publicFeedbackCategory": "close-lease-fencing"
+    },
+    {
+      "caseId": "RACE-04",
+      "requirement": {
+        "id": "AG-OUTBOX-IDENTITY",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Dispatcher recovery preserves event identity, semantic body and increasing aggregate delivery order."
+      },
+      "privateFailureCodePrefix": "AG_RACE04_",
+      "publicFeedbackCategory": "outbox-unknown-ack"
+    },
+    {
+      "caseId": "MIGRATE-01",
+      "requirement": {
+        "id": "AG-V1-AWARD-MAPPING",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current Auction history and create replay survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "AG_MIGRATE01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-02",
+      "requirement": {
+        "id": "AG-INFLIGHT-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current leased Close Work and deadline survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "AG_MIGRATE02_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-03",
+      "requirement": {
+        "id": "AG-SEED-COMPATIBILITY",
+        "source": "workspace/README.md#seed-contract",
+        "summary": "FINAL still imports the exact V1 seed atomically and preserves version-digest replay and conflict semantics."
+      },
+      "privateFailureCodePrefix": "AG_MIGRATE03_",
+      "publicFeedbackCategory": "seed-replay-compatibility"
+    },
+    {
+      "caseId": "MIGRATE-04",
+      "requirement": {
+        "id": "AG-COMPATIBLE-UI",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "OpenAPI, live HTTP, snapshot and production UI agree for both old and new Auction variants."
+      },
+      "privateFailureCodePrefix": "AG_MIGRATE04_",
+      "publicFeedbackCategory": "cross-layer-compatibility"
+    },
+    {
+      "caseId": "LOAD-01",
+      "requirement": {
+        "id": "AG-PERFORMANCE-BID",
+        "source": "workspace/README.md#scenario-hot-auction-bids",
+        "summary": "The fixed twenty-producer hot-Auction workload meets throughput and latency while preserving commit order."
+      },
+      "privateFailureCodePrefix": "AG_LOAD01_",
+      "publicFeedbackCategory": "performance-hot-bids"
+    },
+    {
+      "caseId": "LOAD-02",
+      "requirement": {
+        "id": "AG-PERFORMANCE-READ",
+        "source": "workspace/README.md#scenario-live-auction-read",
+        "summary": "The fixed sixty-four-client read workload meets throughput and latency without mixed aggregate revisions."
+      },
+      "privateFailureCodePrefix": "AG_LOAD02_",
+      "publicFeedbackCategory": "performance-live-read"
+    },
+    {
+      "caseId": "LOAD-03",
+      "requirement": {
+        "id": "AG-PERFORMANCE-RECOVERY",
+        "source": "workspace/README.md#scenario-auction-close-recovery",
+        "summary": "Two replacement workers drain two thousand due Auctions after controlled lease loss within forty-five seconds."
+      },
+      "privateFailureCodePrefix": "AG_LOAD03_",
+      "publicFeedbackCategory": "performance-close-recovery"
+    },
+    {
+      "caseId": "LOAD-04",
+      "requirement": {
+        "id": "AG-POST-LOAD-CLEARING",
+        "source": "workspace/README.md#project-owned-verification",
+        "summary": "Every fixed workload ends with cross-layer reconciliation of sequences, deadlines, Awards, Work and Events."
+      },
+      "privateFailureCodePrefix": "AG_LOAD04_",
+      "publicFeedbackCategory": "post-load-reconciliation"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

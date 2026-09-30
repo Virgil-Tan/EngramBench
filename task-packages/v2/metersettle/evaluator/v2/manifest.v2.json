@@ -1,0 +1,476 @@
+{
+  "schemaVersion": 2,
+  "taskId": "metersettle",
+  "profile": "transfer-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Public contract and lifecycle coverage",
+      "weight": 30
+    },
+    "B": {
+      "title": "Rating correction and concurrency correctness",
+      "weight": 25
+    },
+    "C": {
+      "title": "Worker recovery and persistence",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI browser and cross-layer closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration performance and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "CLEAN_BUILD_MIGRATION_BOOT",
+      "cap": 25,
+      "publicInvariant": "The published install, migration, build and production boot path must complete non-interactively and leave no owned process behind."
+    },
+    {
+      "id": "RATING_CONSERVATION",
+      "cap": 35,
+      "publicInvariant": "Every immutable Usage Event and accepted Correction contributes exactly once using the source occurredAt Rate Plan and safe integer arithmetic."
+    },
+    {
+      "id": "CORRECTION_REVISION_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Correction batches are atomic, preserve safe non-negative quantities and serialize each finalized Statement into one continuous Revision chain."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Unknown and concurrent retries preserve one saved response and one business Work and Event effect."
+    },
+    {
+      "id": "EVENT_TRANSACTIONALITY",
+      "cap": 40,
+      "publicInvariant": "Successful transitions commit exactly one stable Domain Event with business state, while rolled-back transitions commit none."
+    },
+    {
+      "id": "STALE_WORK_OR_LOST_WORK",
+      "cap": 40,
+      "publicInvariant": "Lease recovery retains all Rating Work and stale owners cannot commit a second or partial Statement effect."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "V1 identity replay Work Event Watermark and Statement history survive FINAL migration unchanged."
+    }
+  ],
+  "specGaps": [],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Published commands and production boot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Repeatable populated migration",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Atomic deterministic seed",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "OpenAPI 3.1 exact public contract",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Common errors and scalar boundaries",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-06",
+      "title": "Pagination and point-in-time snapshot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-07",
+      "title": "Atomic Usage Batch and tenant-scoped dedupe",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-08",
+      "title": "Occurred-at Rate Plan and UTC month assignment",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-09",
+      "title": "Watermark scheduling and Statement finalization",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-10",
+      "title": "Late usage and rollback",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-11",
+      "title": "Statement, meter usage and Watermark reads",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-12",
+      "title": "Domain Event query and V1 transition coverage",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-13",
+      "title": "Pre-finalization Correction behavior",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-14",
+      "title": "Finalized Statement Revisions and public APIs",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Independent rating arithmetic oracle",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Batch-wide semantic atomicity",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Immutable dedupe scope under terminal history",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Unknown-response durable replay",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Same-key contention across API processes",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-06",
+      "title": "Ingest versus Watermark finalization race",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-07",
+      "title": "Correction negative and overflow atomicity",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-08",
+      "title": "Correction versus base-finalization race",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-09",
+      "title": "Concurrent correction batches and pending Revision",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-10",
+      "title": "Multi-Statement correction batch grouping",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Work lifecycle, shape and retention",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "SIGKILL after worker.claimed",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "SIGKILL after worker.effect-complete",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "SIGKILL at worker.before-commit",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-05",
+      "title": "Expired lease fencing",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-06",
+      "title": "Watermark backlog ordering and obsolete Work",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-07",
+      "title": "Unknown Domain Event webhook ACK",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-08",
+      "title": "Transactional event and revision recovery",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "OpenAPI validates live traffic",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production-browser V1 lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production-browser corrections and revisions",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Loading, empty, validation, conflict, offline and permission",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-05",
+      "title": "Keyboard, labels, focus and mobile",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-06",
+      "title": "Project-owned gates are not fake green",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-07",
+      "title": "README-to-evidence cross-layer closure",
+      "weight": 3,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1→FINAL migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved idempotency and event identity across migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Work and Watermark continuity",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "HTTP sustained performance",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-05",
+      "title": "Rating recovery performance and operability",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "formalReady": false,
+  "alignmentNotes": [
+    "V2 author contract closes revision detail, unrestricted reason text, request-order accepted/duplicate IDs and half-open usage filters. Business and recovery assertions remain; no real submission evaluation has certified this revision."
+  ]
+}

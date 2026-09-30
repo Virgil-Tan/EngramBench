@@ -1,0 +1,42 @@
+# GeoPulse Manager 需求
+
+在 V1 已完成并通过 Review 后，Manager 只发布下面这一条需求：
+
+> 【Product Manager】新增 RegionBundle 原子发布。
+>
+> `RegionBundle = {bundleId,tenantId,name,currentRevision,currentBundleRevisionId,createdAt}`。
+> `RegionBundleRevision = {bundleRevisionId,bundleId,tenantId,revision,
+> regionVersionIds,effectiveFrom,createdAt}`。`regionVersionIds` 必须来自同一租户、去重并按 UUID 升序保存，
+> 数量为 1..10,000。Revision 不可变；`RegionBundle.currentBundleRevisionId` 是唯一 active revision。
+>
+> 新增以下 HTTP 合同，所有 mutation 仍要求 `Idempotency-Key`，未知字段仍须拒绝：
+>
+> ```text
+> POST /api/v1/region-bundles
+>   request  {tenantId,name}
+>   response {bundle:RegionBundle}
+> POST /api/v1/region-bundles/:bundleId/publish
+>   request  {expectedRevision,effectiveFrom,regionVersionIds}
+>   response {bundle:RegionBundle,revision:RegionBundleRevision}
+> POST /api/v1/region-bundles/:bundleId/rollback
+>   request  {expectedRevision,targetRevision,effectiveFrom}
+>   response {bundle:RegionBundle,revision:RegionBundleRevision}
+> GET /api/v1/region-bundles/:bundleId
+>   response {bundle:RegionBundle,revisions:[RegionBundleRevision,...]}
+> ```
+>
+> `publish` 使用 `expectedRevision` CAS 创建新 revision。`rollback` 也创建新 revision，并复制
+> `targetRevision` 的成员集合，绝不能改写旧 revision。CAS 失败返回 `409 BUNDLE_REVISION_CONFLICT`；
+> 跨租户、空成员、未知 RegionVersion 或重叠有效时间返回稳定 400/409 语义错误且无部分副作用。
+>
+> LocationEvent 接受时冻结唯一 `bundleRevisionId`，之后的 Worker、迟到重放和 Transition 都必须沿用该
+> revision。Membership 公开 `bundleRevisionId`。`POST /api/v1/regions/query` 的响应扩展为
+> `{bundleRevisionId,items:[{queryId,matches:[{regionId,regionVersionId}]}]}`；items 保持输入顺序，单个响应
+> 不得混用 revision。所有 API 必须在 publication/rollback 可观察后失效旧缓存。
+>
+> 新增 `BUNDLE_REEVALUATION` Work 与 `region_bundle.published`、`region_bundle.rolled_back` Events。
+> 迁移必须保留 V1 的 Event、LocationEvent、Membership、Transition、幂等 replay 和 pending lease。
+> UI 增加 composition、publish、rollback 和 revision-consistent query。本轮只做影响分析和计划，
+> 不要立即编码。
+
+该正文由 Harness 固定注入一次，DS 不得提前泄露、改写或补充实现提示。

@@ -1,0 +1,2981 @@
+{
+  "taskId": "permitforge",
+  "title": "PermitForge",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  },
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "INVALID_ESCROW_TOTAL",
+            "MILESTONE_NOT_CURRENT",
+            "MILESTONE_NOT_SUBMITTED",
+            "ESCROW_DISPUTED",
+            "ESCROW_TERMINAL",
+            "INVALID_BENEFICIARY_ALLOCATION",
+            "BENEFICIARY_PAYOUT_CONFLICT",
+            "IDEMPOTENCY_CONFLICT",
+            "INVALID_CURSOR"
+          ],
+          "maxLength": 64
+        },
+        "applicants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Applicant"
+          }
+        },
+        "reviewers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reviewer"
+          }
+        },
+        "permitApplications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyPermitApplication"
+          }
+        },
+        "applicationRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApplicationRevision"
+          }
+        },
+        "reviewClaims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewClaim"
+          }
+        },
+        "reviewDecisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewDecision"
+          }
+        },
+        "approvedPermits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApprovedPermit"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "applicants",
+        "reviewers",
+        "permitApplications",
+        "applicationRevisions",
+        "reviewClaims",
+        "reviewDecisions",
+        "approvedPermits"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-v2-permitforge-1",
+      "applicants": [
+        {
+          "applicantId": "b2000102-0000-4000-8000-000000000001",
+          "name": "Public applicant"
+        }
+      ],
+      "reviewers": [
+        {
+          "reviewerId": "b2000102-0000-4000-8000-000000000002",
+          "name": "Public reviewer",
+          "roles": [
+            "safety"
+          ]
+        }
+      ],
+      "permitApplications": [
+        {
+          "applicationId": "b2000102-0000-4000-8000-000000000003",
+          "applicantId": "b2000102-0000-4000-8000-000000000001",
+          "permitType": "CANOPY",
+          "currentRevision": 1,
+          "state": "APPROVED",
+          "decisionRevision": 1,
+          "submittedAt": "2026-01-01T00:00:00.000Z",
+          "deadlineAt": "2026-01-02T00:00:00.000Z",
+          "terminalAt": "2026-01-01T01:00:00.000Z",
+          "sequence": 0
+        }
+      ],
+      "applicationRevisions": [
+        {
+          "applicationId": "b2000102-0000-4000-8000-000000000003",
+          "revision": 1,
+          "fields": {
+            "project": "Public canopy"
+          },
+          "canonicalDigest": "25cde7e54d446537b88f8b786267009ea0329cdbf5c15ae475183b699b8e7e9c",
+          "policy": {
+            "roles": [
+              {
+                "role": "safety",
+                "eligibleReviewerIds": [
+                  "b2000102-0000-4000-8000-000000000002"
+                ],
+                "requiredApprovals": 1,
+                "veto": false
+              }
+            ],
+            "requiredTotalApprovals": 1
+          },
+          "createdAt": "2026-01-01T00:00:00.000Z"
+        }
+      ],
+      "reviewClaims": [
+        {
+          "claimId": "b2000102-0000-4000-8000-000000000004",
+          "applicationId": "b2000102-0000-4000-8000-000000000003",
+          "revision": 1,
+          "reviewerId": "b2000102-0000-4000-8000-000000000002",
+          "role": "safety",
+          "state": "DECIDED",
+          "attempt": 1,
+          "leaseExpiresAt": null
+        }
+      ],
+      "reviewDecisions": [
+        {
+          "decisionId": "b2000102-0000-4000-8000-000000000005",
+          "applicationId": "b2000102-0000-4000-8000-000000000003",
+          "revision": 1,
+          "reviewerId": "b2000102-0000-4000-8000-000000000002",
+          "role": "safety",
+          "decision": "APPROVE",
+          "reason": "Public seeded approval",
+          "decidedAt": "2026-01-01T01:00:00.000Z"
+        }
+      ],
+      "approvedPermits": [
+        {
+          "permitId": "b2000102-0000-4000-8000-000000000006",
+          "applicationId": "b2000102-0000-4000-8000-000000000003",
+          "revision": 1,
+          "canonicalDigest": "25cde7e54d446537b88f8b786267009ea0329cdbf5c15ae475183b699b8e7e9c",
+          "issuedAt": "2026-01-01T01:00:00.000Z"
+        }
+      ]
+    },
+    "replay": true
+  },
+  "schemas": {
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Json"
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "examples": [
+                "INVALID_REVIEW_POLICY",
+                "APPLICATION_REVISION_CHANGED",
+                "REVIEW_SLOT_UNAVAILABLE",
+                "REVIEW_LEASE_LOST",
+                "APPLICATION_TERMINAL",
+                "INVALID_REVIEW_STAGES",
+                "REVIEW_STAGE_CHANGED",
+                "IDEMPOTENCY_CONFLICT",
+                "INVALID_CURSOR"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenAPI": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "type": "string",
+          "pattern": "^3\\.1\\."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object"
+        },
+        "components": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Applicant": {
+      "type": "object",
+      "properties": {
+        "applicantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "applicantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Reviewer": {
+      "type": "object",
+      "properties": {
+        "reviewerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "reviewerId",
+        "name",
+        "roles"
+      ],
+      "additionalProperties": false
+    },
+    "ReviewPolicy": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string"
+              },
+              "eligibleReviewerIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                }
+              },
+              "requiredApprovals": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "veto": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "role",
+              "eligibleReviewerIds",
+              "requiredApprovals",
+              "veto"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "requiredTotalApprovals": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "roles",
+        "requiredTotalApprovals"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyPermitApplication": {
+      "type": "object",
+      "properties": {
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "applicantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "permitType": {
+          "type": "string"
+        },
+        "currentRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "SUBMITTED",
+            "UNDER_REVIEW",
+            "APPROVED",
+            "REJECTED",
+            "CHANGES_REQUIRED",
+            "EXPIRED"
+          ]
+        },
+        "decisionRevision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "submittedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "deadlineAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "applicationId",
+        "applicantId",
+        "permitType",
+        "currentRevision",
+        "state",
+        "decisionRevision",
+        "submittedAt",
+        "deadlineAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ApplicationRevision": {
+      "type": "object",
+      "properties": {
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "fields": {
+          "$ref": "#/$defs/Json"
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policy": {
+          "$ref": "#/$defs/ReviewPolicy"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "applicationId",
+        "revision",
+        "fields",
+        "canonicalDigest",
+        "policy",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ReviewClaim": {
+      "type": "object",
+      "properties": {
+        "claimId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reviewerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "role": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "LEASED",
+            "DECIDED",
+            "EXPIRED"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "claimId",
+        "applicationId",
+        "revision",
+        "reviewerId",
+        "role",
+        "state",
+        "attempt",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "ReviewDecision": {
+      "type": "object",
+      "properties": {
+        "decisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reviewerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "role": {
+          "type": "string"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVE",
+            "REJECT",
+            "REQUEST_CHANGES"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "decisionId",
+        "applicationId",
+        "revision",
+        "reviewerId",
+        "role",
+        "decision",
+        "reason",
+        "decidedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ApprovedPermit": {
+      "type": "object",
+      "properties": {
+        "permitId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "permitId",
+        "applicationId",
+        "revision",
+        "canonicalDigest",
+        "issuedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ReviewStage": {
+      "type": "object",
+      "properties": {
+        "stageId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Must contain a non-whitespace character. Duplicate names are allowed; preserve the supplied name."
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "ACTIVE",
+            "COMPLETED",
+            "TERMINAL"
+          ]
+        },
+        "policy": {
+          "$ref": "#/$defs/ReviewPolicy"
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "stageId",
+        "applicationId",
+        "revision",
+        "ordinal",
+        "name",
+        "state",
+        "policy",
+        "activatedAt",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "PermitApplication": {
+      "type": "object",
+      "properties": {
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "applicantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "permitType": {
+          "type": "string"
+        },
+        "currentRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "SUBMITTED",
+            "UNDER_REVIEW",
+            "APPROVED",
+            "REJECTED",
+            "CHANGES_REQUIRED",
+            "EXPIRED"
+          ]
+        },
+        "decisionRevision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "submittedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "deadlineAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currentStageOrdinal": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewStage"
+          }
+        }
+      },
+      "required": [
+        "applicationId",
+        "applicantId",
+        "permitType",
+        "currentRevision",
+        "state",
+        "decisionRevision",
+        "submittedAt",
+        "deadlineAt",
+        "terminalAt",
+        "sequence",
+        "currentStageOrdinal",
+        "stages"
+      ],
+      "additionalProperties": false
+    },
+    "StageEvidence": {
+      "type": "object",
+      "properties": {
+        "stageId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "claimIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "decisionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "stageId",
+        "claimIds",
+        "decisionIds"
+      ],
+      "additionalProperties": false
+    },
+    "ApplicationResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LegacyPermitApplication"
+        },
+        {
+          "$ref": "#/$defs/PermitApplication"
+        }
+      ]
+    },
+    "ClaimResponse": {
+      "type": "object",
+      "properties": {
+        "claimId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reviewerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "role": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "LEASED",
+            "DECIDED",
+            "EXPIRED"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "claimToken": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "INVALID_REVIEW_POLICY",
+            "APPLICATION_REVISION_CHANGED",
+            "REVIEW_SLOT_UNAVAILABLE",
+            "REVIEW_LEASE_LOST",
+            "APPLICATION_TERMINAL",
+            "INVALID_REVIEW_STAGES",
+            "REVIEW_STAGE_CHANGED",
+            "IDEMPOTENCY_CONFLICT",
+            "INVALID_CURSOR"
+          ]
+        }
+      },
+      "required": [
+        "claimId",
+        "applicationId",
+        "revision",
+        "reviewerId",
+        "role",
+        "state",
+        "attempt",
+        "leaseExpiresAt",
+        "claimToken"
+      ],
+      "additionalProperties": false
+    },
+    "ApplicationDetail": {
+      "type": "object",
+      "properties": {
+        "permitApplication": {
+          "$ref": "#/$defs/ApplicationResponse"
+        },
+        "applicationRevision": {
+          "$ref": "#/$defs/ApplicationRevision"
+        },
+        "reviewPolicy": {
+          "$ref": "#/$defs/ReviewPolicy"
+        },
+        "reviewClaims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewClaim"
+          }
+        },
+        "reviewDecisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewDecision"
+          }
+        },
+        "approvedPermit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ApprovedPermit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "permitApplication",
+        "applicationRevision",
+        "reviewPolicy",
+        "reviewClaims",
+        "reviewDecisions",
+        "approvedPermit"
+      ],
+      "additionalProperties": false
+    },
+    "CreateApplication": {
+      "type": "object",
+      "properties": {
+        "applicantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "permitType": {
+          "type": "string"
+        },
+        "fields": {
+          "$ref": "#/$defs/Json"
+        },
+        "deadlineAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "reviewPolicy": {
+          "$ref": "#/$defs/ReviewPolicy"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Must contain a non-whitespace character. Duplicate names are allowed; preserve the supplied name."
+              },
+              "reviewPolicy": {
+                "$ref": "#/$defs/ReviewPolicy"
+              }
+            },
+            "required": [
+              "name",
+              "reviewPolicy"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "applicantId",
+        "permitType",
+        "fields",
+        "deadlineAt"
+      ],
+      "additionalProperties": false
+    },
+    "ReplaceRevision": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "fields": {
+          "$ref": "#/$defs/Json"
+        },
+        "deadlineAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "reviewPolicy": {
+          "$ref": "#/$defs/ReviewPolicy"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Must contain a non-whitespace character. Duplicate names are allowed; preserve the supplied name."
+              },
+              "reviewPolicy": {
+                "$ref": "#/$defs/ReviewPolicy"
+              }
+            },
+            "required": [
+              "name",
+              "reviewPolicy"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "expectedRevision",
+        "fields",
+        "deadlineAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "PERMIT_DEADLINE"
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "INVALID_REVIEW_POLICY",
+                  "APPLICATION_REVISION_CHANGED",
+                  "REVIEW_SLOT_UNAVAILABLE",
+                  "REVIEW_LEASE_LOST",
+                  "APPLICATION_TERMINAL",
+                  "INVALID_REVIEW_STAGES",
+                  "REVIEW_STAGE_CHANGED",
+                  "IDEMPOTENCY_CONFLICT",
+                  "INVALID_CURSOR"
+                ]
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "application.submitted",
+            "review.claimed",
+            "review.decided",
+            "application.changes-requested",
+            "application.approved",
+            "application.rejected",
+            "application.expired"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "INVALID_ESCROW_TOTAL",
+            "MILESTONE_NOT_CURRENT",
+            "MILESTONE_NOT_SUBMITTED",
+            "ESCROW_DISPUTED",
+            "ESCROW_TERMINAL",
+            "INVALID_BENEFICIARY_ALLOCATION",
+            "BENEFICIARY_PAYOUT_CONFLICT",
+            "IDEMPOTENCY_CONFLICT",
+            "INVALID_CURSOR"
+          ],
+          "maxLength": 64
+        },
+        "applicants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Applicant"
+          }
+        },
+        "reviewers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reviewer"
+          }
+        },
+        "permitApplications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyPermitApplication"
+          }
+        },
+        "applicationRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApplicationRevision"
+          }
+        },
+        "reviewClaims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewClaim"
+          }
+        },
+        "reviewDecisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewDecision"
+          }
+        },
+        "approvedPermits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApprovedPermit"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "applicants",
+        "reviewers",
+        "permitApplications",
+        "applicationRevisions",
+        "reviewClaims",
+        "reviewDecisions",
+        "approvedPermits"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "applicants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Applicant"
+          }
+        },
+        "reviewers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reviewer"
+          }
+        },
+        "permitApplications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApplicationResponse"
+          }
+        },
+        "applicationRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApplicationRevision"
+          }
+        },
+        "reviewClaims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewClaim"
+          }
+        },
+        "reviewDecisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewDecision"
+          }
+        },
+        "approvedPermits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApprovedPermit"
+          }
+        },
+        "reviewStages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReviewStage"
+          }
+        }
+      },
+      "required": [
+        "applicants",
+        "reviewers",
+        "permitApplications",
+        "applicationRevisions",
+        "reviewClaims",
+        "reviewDecisions",
+        "approvedPermits",
+        "reviewStages"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/OpenAPI"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "list-applications",
+      "method": "GET",
+      "path": "/api/v1/permitApplications",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ApplicationResponse"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_REVIEW_POLICY",
+              "APPLICATION_REVISION_CHANGED",
+              "REVIEW_SLOT_UNAVAILABLE",
+              "REVIEW_LEASE_LOST",
+              "APPLICATION_TERMINAL",
+              "INVALID_REVIEW_STAGES",
+              "REVIEW_STAGE_CHANGED",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          }
+        }
+      ],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "read-application-legacy-path",
+      "method": "GET",
+      "path": "/api/v1/permitApplications/:permitApplicationId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ApplicationDetail"
+      },
+      "parameters": [
+        {
+          "name": "permitApplicationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "permitApplicationId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-application",
+      "method": "POST",
+      "path": "/api/v1/permit-applications",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "$ref": "#/$defs/CreateApplication"
+      },
+      "response": {
+        "$ref": "#/$defs/ApplicationResponse"
+      },
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-create-application"
+        },
+        "body": {
+          "applicantId": "b2000102-0000-4000-8000-000000000001",
+          "permitType": "CANOPY",
+          "fields": {
+            "project": "Public new canopy"
+          },
+          "deadlineAt": "2026-01-02T00:00:00.000Z",
+          "stages": [
+            {
+              "name": "Public review",
+              "reviewPolicy": {
+                "roles": [
+                  {
+                    "role": "safety",
+                    "eligibleReviewerIds": [
+                      "b2000102-0000-4000-8000-000000000002"
+                    ],
+                    "requiredApprovals": 1,
+                    "veto": false
+                  }
+                ],
+                "requiredTotalApprovals": 1
+              }
+            },
+            {
+              "name": "Public review",
+              "reviewPolicy": {
+                "roles": [
+                  {
+                    "role": "safety",
+                    "eligibleReviewerIds": [
+                      "b2000102-0000-4000-8000-000000000002"
+                    ],
+                    "requiredApprovals": 1,
+                    "veto": false
+                  }
+                ],
+                "requiredTotalApprovals": 1
+              }
+            }
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "bodyTransportErrors": [
+        {
+          "path": "/stages/*/name",
+          "status": 400,
+          "code": "INVALID_REVIEW_STAGES"
+        }
+      ]
+    },
+    {
+      "id": "claim-review",
+      "method": "POST",
+      "path": "/api/v1/permit-applications/:applicationId/review-claims",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reviewerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewerId",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ClaimResponse"
+      },
+      "example": {
+        "params": {
+          "applicationId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-claim-review"
+        },
+        "body": {
+          "reviewerId": "b2000102-0000-4000-8000-000000000002",
+          "role": "safety"
+        }
+      },
+      "parameters": [
+        {
+          "name": "applicationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "decide-review",
+      "method": "POST",
+      "path": "/api/v1/review-claims/:claimId/decisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "claimToken": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_REVIEW_POLICY",
+              "APPLICATION_REVISION_CHANGED",
+              "REVIEW_SLOT_UNAVAILABLE",
+              "REVIEW_LEASE_LOST",
+              "APPLICATION_TERMINAL",
+              "INVALID_REVIEW_STAGES",
+              "REVIEW_STAGE_CHANGED",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVE",
+              "REJECT",
+              "REQUEST_CHANGES"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "claimToken",
+          "decision",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ApplicationResponse"
+      },
+      "example": {
+        "params": {
+          "claimId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-decide-review"
+        },
+        "body": {
+          "claimToken": "public-example-fence",
+          "decision": "APPROVE",
+          "reason": "Public evidence accepted"
+        }
+      },
+      "parameters": [
+        {
+          "name": "claimId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "replace-revision",
+      "method": "POST",
+      "path": "/api/v1/permit-applications/:applicationId/revisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "$ref": "#/$defs/ReplaceRevision"
+      },
+      "response": {
+        "$ref": "#/$defs/ApplicationRevision"
+      },
+      "example": {
+        "params": {
+          "applicationId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-replace-revision"
+        },
+        "body": {
+          "expectedRevision": 1,
+          "fields": {
+            "project": "Public revised canopy"
+          },
+          "deadlineAt": "2026-01-02T00:00:00.000Z",
+          "reviewPolicy": {
+            "roles": [
+              {
+                "role": "safety",
+                "eligibleReviewerIds": [
+                  "b2000102-0000-4000-8000-000000000002"
+                ],
+                "requiredApprovals": 1,
+                "veto": false
+              }
+            ],
+            "requiredTotalApprovals": 1
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "applicationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "bodyTransportErrors": [
+        {
+          "path": "/stages/*/name",
+          "status": 400,
+          "code": "INVALID_REVIEW_STAGES"
+        }
+      ]
+    },
+    {
+      "id": "read-application",
+      "method": "GET",
+      "path": "/api/v1/permit-applications/:applicationId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ApplicationDetail"
+      },
+      "parameters": [
+        {
+          "name": "applicationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "applicationId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "read-revision",
+      "method": "GET",
+      "path": "/api/v1/permit-applications/:applicationId/revisions/:revision",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ApplicationRevision"
+      },
+      "parameters": [
+        {
+          "name": "applicationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "revision",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "applicationId": "b2000999-0000-4000-8000-000000000001",
+          "revision": 1
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "read-stages",
+      "method": "GET",
+      "path": "/api/v1/permit-applications/:applicationId/stages",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ReviewStage"
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/StageEvidence"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "applicationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "applicationId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_REVIEW_POLICY",
+              "APPLICATION_REVISION_CHANGED",
+              "REVIEW_SLOT_UNAVAILABLE",
+              "REVIEW_LEASE_LOST",
+              "APPLICATION_TERMINAL",
+              "INVALID_REVIEW_STAGES",
+              "REVIEW_STAGE_CHANGED",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer public-example-admin"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "permitApplications"
+          ],
+          "match": {
+            "applicationId": "b2000102-0000-4000-8000-000000000003",
+            "state": "APPROVED",
+            "decisionRevision": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "applicationRevisions"
+          ],
+          "match": {
+            "applicationId": "b2000102-0000-4000-8000-000000000003",
+            "revision": 1,
+            "canonicalDigest": "25cde7e54d446537b88f8b786267009ea0329cdbf5c15ae475183b699b8e7e9c"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "approvedPermits"
+          ],
+          "match": {
+            "permitId": "b2000102-0000-4000-8000-000000000006",
+            "applicationId": "b2000102-0000-4000-8000-000000000003",
+            "canonicalDigest": "25cde7e54d446537b88f8b786267009ea0329cdbf5c15ae475183b699b8e7e9c"
+          }
+        }
+      ],
+      "capture": {
+        "publicClock": [
+          "asOf"
+        ]
+      }
+    },
+    {
+      "operationId": "create-application",
+      "body": {
+        "applicantId": "b2000102-0000-4000-8000-000000000001",
+        "permitType": "CANOPY",
+        "fields": {
+          "project": "Public new canopy"
+        },
+        "deadlineAt": "${publicClock+3600000ms}",
+        "stages": [
+          {
+            "name": "Public review",
+            "reviewPolicy": {
+              "roles": [
+                {
+                  "role": "safety",
+                  "eligibleReviewerIds": [
+                    "b2000102-0000-4000-8000-000000000002"
+                  ],
+                  "requiredApprovals": 1,
+                  "veto": false
+                }
+              ],
+              "requiredTotalApprovals": 1
+            }
+          },
+          {
+            "name": "Public review",
+            "reviewPolicy": {
+              "roles": [
+                {
+                  "role": "safety",
+                  "eligibleReviewerIds": [
+                    "b2000102-0000-4000-8000-000000000002"
+                  ],
+                  "requiredApprovals": 1,
+                  "veto": false
+                }
+              ],
+              "requiredTotalApprovals": 1
+            }
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-create"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "currentRevision": 1,
+        "currentStageOrdinal": 1,
+        "state": "SUBMITTED"
+      },
+      "capture": {
+        "createdApplicationId": [
+          "applicationId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-application",
+      "params": {
+        "applicationId": "${createdApplicationId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "permitApplication": {
+          "applicationId": "${createdApplicationId}",
+          "currentRevision": 1
+        },
+        "applicationRevision": {
+          "applicationId": "${createdApplicationId}",
+          "fields": {
+            "project": "Public new canopy"
+          }
+        }
+      }
+    },
+    {
+      "operationId": "read-stages",
+      "params": {
+        "applicationId": "${createdApplicationId}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "applicationId": "${createdApplicationId}",
+            "ordinal": 1,
+            "state": "ACTIVE",
+            "name": "Public review"
+          }
+        },
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "applicationId": "${createdApplicationId}",
+            "ordinal": 2,
+            "state": "PENDING",
+            "name": "Public review"
+          }
+        }
+      ],
+      "capture": {
+        "firstStageId": [
+          "items",
+          0,
+          "stageId"
+        ],
+        "secondStageId": [
+          "items",
+          1,
+          "stageId"
+        ]
+      }
+    },
+    {
+      "operationId": "claim-review",
+      "params": {
+        "applicationId": "${createdApplicationId}"
+      },
+      "body": {
+        "reviewerId": "b2000102-0000-4000-8000-000000000002",
+        "role": "safety"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-first-claim"
+      },
+      "expectStatus": 200,
+      "capture": {
+        "firstClaimId": [
+          "claimId"
+        ],
+        "firstClaimToken": [
+          "claimToken"
+        ]
+      }
+    },
+    {
+      "operationId": "decide-review",
+      "params": {
+        "claimId": "${firstClaimId}"
+      },
+      "body": {
+        "claimToken": "${firstClaimToken}",
+        "decision": "APPROVE",
+        "reason": "Public Stage 1 approval"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-first-decision"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "applicationId": "${createdApplicationId}",
+        "currentStageOrdinal": 2
+      }
+    },
+    {
+      "operationId": "read-stages",
+      "params": {
+        "applicationId": "${createdApplicationId}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "stageId": "${firstStageId}",
+            "state": "COMPLETED"
+          }
+        },
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "stageId": "${secondStageId}",
+            "state": "ACTIVE"
+          }
+        },
+        {
+          "path": [
+            "evidence"
+          ],
+          "match": {
+            "stageId": "${firstStageId}",
+            "claimIds": [
+              "${firstClaimId}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "claim-review",
+      "params": {
+        "applicationId": "${createdApplicationId}"
+      },
+      "body": {
+        "reviewerId": "b2000102-0000-4000-8000-000000000002",
+        "role": "safety"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-second-claim"
+      },
+      "expectStatus": 200,
+      "capture": {
+        "secondClaimId": [
+          "claimId"
+        ],
+        "secondClaimToken": [
+          "claimToken"
+        ]
+      }
+    },
+    {
+      "operationId": "decide-review",
+      "params": {
+        "claimId": "${secondClaimId}"
+      },
+      "body": {
+        "claimToken": "${secondClaimToken}",
+        "decision": "APPROVE",
+        "reason": "Public Stage 2 approval"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-second-decision"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "applicationId": "${createdApplicationId}",
+        "state": "APPROVED",
+        "decisionRevision": 1
+      }
+    },
+    {
+      "operationId": "read-stages",
+      "params": {
+        "applicationId": "${createdApplicationId}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "stageId": "${firstStageId}",
+            "state": "COMPLETED"
+          }
+        },
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "stageId": "${secondStageId}",
+            "state": "COMPLETED"
+          }
+        },
+        {
+          "path": [
+            "evidence"
+          ],
+          "match": {
+            "stageId": "${firstStageId}",
+            "claimIds": [
+              "${firstClaimId}"
+            ]
+          }
+        },
+        {
+          "path": [
+            "evidence"
+          ],
+          "match": {
+            "stageId": "${secondStageId}",
+            "claimIds": [
+              "${secondClaimId}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "permitApplications"
+          ],
+          "match": {
+            "applicationId": "${createdApplicationId}",
+            "currentRevision": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "applicationRevisions"
+          ],
+          "match": {
+            "applicationId": "${createdApplicationId}",
+            "revision": 1,
+            "fields": {
+              "project": "Public new canopy"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-application",
+      "body": {
+        "applicantId": "b2000102-0000-4000-8000-000000000001",
+        "permitType": "CANOPY",
+        "fields": {
+          "project": "Public new canopy"
+        },
+        "deadlineAt": "${publicClock+3600000ms}",
+        "stages": [
+          {
+            "name": "Public review",
+            "reviewPolicy": {
+              "roles": [
+                {
+                  "role": "safety",
+                  "eligibleReviewerIds": [
+                    "b2000102-0000-4000-8000-000000000002"
+                  ],
+                  "requiredApprovals": 1,
+                  "veto": false
+                }
+              ],
+              "requiredTotalApprovals": 1
+            }
+          },
+          {
+            "name": "Public review",
+            "reviewPolicy": {
+              "roles": [
+                {
+                  "role": "safety",
+                  "eligibleReviewerIds": [
+                    "b2000102-0000-4000-8000-000000000002"
+                  ],
+                  "requiredApprovals": 1,
+                  "veto": false
+                }
+              ],
+              "requiredTotalApprovals": 1
+            }
+          }
+        ],
+        "unknown": true
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-unknown"
+      },
+      "expectStatus": 400,
+      "expectBody": {
+        "error": {
+          "code": "UNKNOWN_FIELD"
+        }
+      }
+    },
+    {
+      "operationId": "create-application",
+      "body": {
+        "applicantId": "b2000102-0000-4000-8000-000000000001",
+        "permitType": "CANOPY",
+        "fields": {
+          "project": "Public new canopy"
+        },
+        "deadlineAt": "${publicClock+3600000ms}",
+        "stages": [
+          {
+            "name": "",
+            "reviewPolicy": {
+              "roles": [
+                {
+                  "role": "safety",
+                  "eligibleReviewerIds": [
+                    "b2000102-0000-4000-8000-000000000002"
+                  ],
+                  "requiredApprovals": 1,
+                  "veto": false
+                }
+              ],
+              "requiredTotalApprovals": 1
+            }
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-invalid-name-0"
+      },
+      "expectStatus": 400,
+      "expectBody": {
+        "error": {
+          "code": "INVALID_REVIEW_STAGES"
+        }
+      }
+    },
+    {
+      "operationId": "create-application",
+      "body": {
+        "applicantId": "b2000102-0000-4000-8000-000000000001",
+        "permitType": "CANOPY",
+        "fields": {
+          "project": "Public new canopy"
+        },
+        "deadlineAt": "${publicClock+3600000ms}",
+        "stages": [
+          {
+            "name": " \t\n",
+            "reviewPolicy": {
+              "roles": [
+                {
+                  "role": "safety",
+                  "eligibleReviewerIds": [
+                    "b2000102-0000-4000-8000-000000000002"
+                  ],
+                  "requiredApprovals": 1,
+                  "veto": false
+                }
+              ],
+              "requiredTotalApprovals": 1
+            }
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-permit-invalid-name-1"
+      },
+      "expectStatus": 400,
+      "expectBody": {
+        "error": {
+          "code": "INVALID_REVIEW_STAGES"
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Source authority is the full public README, Manager requirements and AGENTS. No hidden evaluator data or solution code is imported. This V2 contract fixes wire boundaries; state machines, algorithms, isolation, migrations and performance remain implementation work.",
+    "V2 wire clarification: every route has the closed request/success schema published here; only business inputs occur in creation requests. Omitted success status is 200. Health returns {status:\"ok\"}; UI returns HTML. Collection nextCursor is string or null, with null denoting completion. Path/query/header parameters and independent request examples are explicit. Examples validate transport only, not eligibility of referenced resources.",
+    "V2 wire clarification: the authenticated verification snapshot is one point-in-time envelope with complete named resource arrays, typed retained Work and ordered DomainEvents. When the legacy source did not specify event fields, V2 uses eventId,aggregateId,sequence,type,occurredAt,schemaVersion,payload; payload remains a JSON object. No hidden event payload is prescribed.",
+    "The seed uses the exact V1 array names and graph references. Repeated identical seed import is a no-op; another digest under the same seedVersion conflicts. Manager resources are derived by migration or created by public operations, never invented V1 seed members.",
+    "V2 wire clarification: both literally documented camelCase read paths and kebab-case detail paths remain public. They return the same detail {permitApplication,applicationRevision,reviewPolicy,reviewClaims,reviewDecisions,approvedPermit}; the approvedPermit is null until approval. Creation/decision return PermitApplication; replacement returns the newly created ApplicationRevision.",
+    "V2 wire clarification: successful claim adds claimToken:string to the closed ReviewClaim response. The token is required to invoke the published decision API and is omitted recursively from snapshots and event evidence; this does not provide the token generation/fencing algorithm.",
+    "Submission and replacement must choose exactly one reviewPolicy or stages. Empty/mixed forms, counts and quotas retain INVALID_REVIEW_POLICY or INVALID_REVIEW_STAGES; JSON schemas publish the possible fields without turning those named domain errors into generic shape errors. Revision replacement captures the selected policy/stages under the same Manager semantics as submission.",
+    "The exact V1 PermitApplication and the exact Manager extension are distinct response alternatives so previously saved one-stage replay bodies remain unchanged. New staged submissions expose currentStageOrdinal and stages. No undocumented media negotiation is required by the V2 scaffold; the original unspecified legacy media-type contract remains a release-audit item.",
+    "The V1 seed is a fully approved single-stage application, with Applicant, Reviewer, matching canonical fields/digest/policy, decided Claim, approval Decision and Permit. Migration derives its completed Stage 1. No Manager-only seed fields are added.",
+    "Smoke uses captured snapshot.asOf plus one hour for a deadline within the public thirty-day rule. All quorum, current-stage fencing, immutable evidence, compatibility, recovery and fixed performance requirements remain implementation obligations.",
+    "## PermitForge confirmed author policy — permitforge-stage-review-v1\n\nThis supplement records the user's confirmed product choices. It explicitly changes the Manager multi-stage voting scope; it is not a claim that the original V1 text already allowed that behavior. The original documents remain otherwise binding and unchanged. This package revision must not be compared as an unchanged historical benchmark.\n\n### Reviewer voting scope and compatibility\n\nFor Manager multi-stage review, one Reviewer may record at most one Decision per `(applicationId, revision, stageId)`, across all roles in that Stage. The same Reviewer may be eligible and vote again in a later Stage of the same immutable Revision. Prior-stage Decisions never count toward the later Stage's quotas. Each Claim is durably bound to the Stage that was ACTIVE when it was created; that association cannot move on Stage advancement or Claim reclaim. A later Stage's Claim is a distinct Claim identity. A Decision made through a Claim targeting a Stage that is no longer ACTIVE follows the already published `409 REVIEW_STAGE_CHANGED` rule, without changing any current-stage authority. Exact saved idempotency replay still returns the saved response without a new effect.\n\nV1 and legacy one-stage behavior remains one Decision per Reviewer per Revision. Claim and Decision request/resource shapes, old identities, V1 seed members and saved response bodies remain unchanged. Stage binding is implementation-owned durable state, not a new field in those existing resources. The policy supplies no transaction, locking or fencing implementation.\n\n### Stage names and order\n\nA Stage name must contain at least one non-whitespace character: empty strings and whitespace-only strings are rejected with `400 INVALID_REVIEW_STAGES`. Names may repeat, including identical names within one Revision; no extra length limit or uniqueness rule is introduced. Preserve the submitted name rather than normalizing it silently. Stage identity is `stageId`; order is `ordinal`, assigned contiguously from one using the request array order. The existing stages request still contains only `{name,reviewPolicy}` and does not accept a client-supplied ordinal.\n\n### Explicit immutable Stage evidence\n\nThe Manager `GET /api/v1/permit-applications/:applicationId/stages` response is now exactly `{items:[ReviewStage],evidence:[StageEvidence]}`. `ReviewStage` retains all original fields. `StageEvidence` is exactly `{stageId:uuid,claimIds:[uuid],decisionIds:[uuid]}`.\n\nThere is exactly one evidence item per Stage in `items`, in the same ordinal order. Each ID array is unique and sorted bytewise. It identifies every Claim or Decision bound to that Stage, including historical Claims. A Claim/Decision identity belongs to exactly one Stage. Its application and Revision agree with that Stage, and each Decision is bound to a Claim from that same Stage. All current or historical records belonging to the returned Stages are represented exactly once. Evidence is read atomically with `items`; completing a Stage freezes its Claim/Decision association sets together with the completed-stage evidence. New Stage activity cannot rewrite that history. V1 history migrated to Stage 1 retains its original Claim and Decision identities in Stage 1 evidence.\n\nThe evidence IDs refer to the unchanged public Claim/Decision resources exposed by application detail and verification snapshot. They must not be inferred from display names, Reviewer identities or timestamps; two different Stage Decisions can have the same Reviewer, role and timestamp. No token is exposed by this evidence. No new Domain Event type, payload, Work kind, or V1 seed field is introduced.\n"
+  ],
+  "httpHost": "127.0.0.1",
+  "policyRevision": "permitforge-stage-review-v1",
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1"
+}

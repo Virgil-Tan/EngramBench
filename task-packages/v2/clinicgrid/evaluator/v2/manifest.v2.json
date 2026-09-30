@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 2,
+  "taskId": "clinicgrid",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Requirements and public contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Data correctness, idempotency and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Worker, recovery and persistence",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI, UI and cross-layer closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration, performance and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "CORRECTNESS_INVARIANT",
+      "cap": 30,
+      "publicInvariant": "No resource overlap or partial bundle, Care Plan partial creation or invalid fanout, Waitlist bypass, duplicate idempotent effect, stale Work commit, or migrated-history rewrite may occur."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-CG-01",
+      "summary": "Non-scoring scope note: The Manager publishes no new Care Plan Domain Event type name."
+    },
+    {
+      "id": "SPEC-GAP-CG-02",
+      "summary": "Non-scoring scope note: Migration statement boundaries and access-exclusive locks have no public observation seam."
+    },
+    {
+      "id": "SPEC-GAP-CG-03",
+      "summary": "Non-scoring scope note: No public seam can freeze a confirm transaction exactly at expiresAt."
+    }
+  ],
+  "cases": [
+    {
+      "id": "SLOT-01",
+      "title": "Half-open intervals and 15-minute alignment",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "SLOT-02",
+      "title": "Deterministic Clinician, Room and Equipment selection",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "SLOT-03",
+      "title": "All-or-none multi-resource hold",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "SLOT-04",
+      "title": "Persisted expiry and confirmation strictly before or after expiry",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "SLOT-05",
+      "title": "Waitlist head blocking and earliest feasible slot",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PLAN-01",
+      "title": "Two-through-twelve frozen visits and atomic hold",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PLAN-02",
+      "title": "Aggregate state and earliest held expiry",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PLAN-03",
+      "title": "Per-visit confirm preserves other visit authority",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PLAN-04",
+      "title": "Cancel or expiry termination fanout",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PLAN-05",
+      "title": "Multi-visit Waitlist UI, Work and snapshot closure",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "RACE-01",
+      "title": "Hold, confirm and terminate durable response replay",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-02",
+      "title": "Hot-slot HTTP, UI and calendar consistency",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "RACE-03",
+      "title": "Expiry, confirm and Plan termination lease fence",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-04",
+      "title": "Appointment and Care Plan outbox unknown ACK order",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "MIGRATE-01",
+      "title": "Current standalone Appointments and CarePlans after FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "MIGRATE-02",
+      "title": "Current expiry, promotion and event delivery recover after FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "MIGRATE-03",
+      "title": "Current seed atomicity and live repeated initialization",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "MIGRATE-04",
+      "title": "OpenAPI, UI and snapshot old/new closure",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "LOAD-01",
+      "title": "Formal availability-read sustained workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "LOAD-02",
+      "title": "Formal 180 hot slots by ten contenders",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "LOAD-03",
+      "title": "Formal 2000-record expiry and promotion recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "LOAD-04",
+      "title": "Post-load calendar, Care Plan and Event reconciliation",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "PERF",
+        "chromium"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

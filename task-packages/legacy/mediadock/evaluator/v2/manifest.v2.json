@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "taskId": "mediadock",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "name": "upload-scan-transcode-and-grant-contract", "weight": 30 },
+    "B": { "name": "byte-reference-idempotency-and-concurrency", "weight": 25 },
+    "C": { "name": "work-cross-store-recovery-and-events", "weight": 20 },
+    "D": { "name": "ui-openapi-snapshot-and-publication", "weight": 15 },
+    "E": { "name": "compatibility-and-public-boundaries", "weight": 10 }
+  },
+  "specGaps": [
+    { "id": "MD-GAP-01", "summary": "MediaAlias and PublicationRevision public wire shapes are not published." },
+    { "id": "MD-GAP-02", "summary": "Public alias rendition selection and AccessGrant revision binding are not published." },
+    { "id": "MD-GAP-03", "summary": "Publication revision retention is not published." },
+    { "id": "MD-GAP-04", "summary": "No performance workload or threshold is public." },
+    { "id": "MD-GAP-05", "summary": "No exact worker barrier protocol is public." }
+  ],
+  "hardCaps": [
+    { "id": "BUILD_MIGRATION_OR_BOOT", "cap": 25, "publicInvariant": "Published commands and production processes run." },
+    { "id": "BYTE_INTEGRITY_OR_ATOMICITY", "cap": 30, "publicInvariant": "Committed metadata never names missing, partial, or wrong bytes." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "Retries and concurrency preserve one response identity and one semantic effect." },
+    { "id": "TENANT_OR_SECRET_ISOLATION", "cap": 35, "publicInvariant": "Tenant data, raw tokens, paths, and physical dedup facts are not disclosed." },
+    { "id": "RECOVERY_OR_REFERENCE_SAFETY", "cap": 40, "publicInvariant": "Lease recovery and cleanup cannot publish stale effects or delete reachable bytes." },
+    { "id": "MIGRATION_COMPATIBILITY", "cap": 35, "publicInvariant": "V1 metadata, bytes, replay, Work, and Events survive FINAL migration." }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "冻结 UploadSession 与确定性 multipart ranges", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "Complete assembly、whole digest 与 atomic Blob/Asset/Scan", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Scanner gate、UNKNOWN reconcile 与 INFECTED terminal", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "Frozen profile fan-out 与 deterministic Rendition bytes", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-05", "title": "Capability Grant、HMAC、HEAD/Range、expiry/revoke", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "B-01", "title": "Part/key/bytes identity precedence 与 unknown response", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "64路 complete、content dedup 与tenant non-disclosure", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Scanner duplicate/reordered result 与 asset terminal race", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "Transcode workers 并发 promotion 与 READY aggregate", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "Cleanup frozen candidates 与 live-reference recheck", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-01", "title": "Upload complete unknown outcome 与重启可见性", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-02", "title": "VIRUS_SCAN/TRANSCODE 在公开 LEASED 后 SIGKILL", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "exact-effect-window", "blockedBy": "MD-GAP-05", "policy": "fail-closed-diagnostic" }] },
+    { "id": "C-03", "title": "CLEANUP_DELETE 在公开 LEASED 后崩溃恢复", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "exact-delete-window", "blockedBy": "MD-GAP-05", "policy": "fail-closed-diagnostic" }] },
+    { "id": "C-04", "title": "Pipeline/Cleanup Event unknown ACK", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "D-01", "title": "浏览器完成 V1 upload→scan→rendition→grant→cleanup", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"] },
+    { "id": "D-02", "title": "真实发布 UI 的 Alias/Revision 流程", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"], "blockedAssertions": [{ "id": "alias-public-wire", "blockedBy": "MD-GAP-01", "policy": "fail-closed-diagnostic" }, { "id": "alias-render-target", "blockedBy": "MD-GAP-02", "policy": "fail-closed-diagnostic" }] },
+    { "id": "D-03", "title": "OpenAPI、point-in-time snapshot 与 secret/path absence", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "alias-snapshot-shape", "blockedBy": "MD-GAP-01", "policy": "fail-closed-diagnostic" }] },
+    { "id": "D-04", "title": "Alias stream、Publication pinning 与 Grant lineage", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "publication-wire", "blockedBy": "MD-GAP-01", "policy": "fail-closed-diagnostic" }, { "id": "grant-lineage", "blockedBy": "MD-GAP-02", "policy": "fail-closed-diagnostic" }, { "id": "old-revision-retention", "blockedBy": "MD-GAP-03", "policy": "fail-closed-diagnostic" }] },
+    { "id": "E-01", "title": "V1→FINAL bytes、lease、replay 与 Cleanup 无损迁移", "dimension": "E", "weight": 2.5, "prerequisites": ["V1_CHECKPOINT", "FINAL"] },
+    { "id": "E-02", "title": "最大公开 multipart cardinality 与 managed-root 边界", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "E-03", "title": "多live stream lease 与 Cleanup reachability", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "E-04", "title": "Concurrent Publication CAS 与 PUBLICATION_SWITCH recovery", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "publication-cas-wire", "blockedBy": "MD-GAP-01", "policy": "fail-closed-diagnostic" }, { "id": "publication-effect-window", "blockedBy": "MD-GAP-05", "policy": "fail-closed-diagnostic" }] }
+  ]
+}

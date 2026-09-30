@@ -1,0 +1,3351 @@
+{
+  "taskId": "billforge",
+  "title": "BillForge",
+  "transportErrors": {
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    }
+  },
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Customer"
+          }
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Plan"
+          }
+        },
+        "priceVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PriceVersion"
+          }
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Subscription"
+          }
+        },
+        "invoices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Invoice"
+          }
+        },
+        "paymentIntents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaymentIntent"
+          }
+        },
+        "refunds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Refund"
+          }
+        },
+        "exchangeRateSnapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExchangeRateSnapshot"
+          }
+        },
+        "ledgerAccounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LedgerAccount"
+          }
+        },
+        "ledgerEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LedgerEntry"
+          }
+        },
+        "settlementRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SettlementRun"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "customers",
+        "plans",
+        "priceVersions",
+        "subscriptions",
+        "invoices",
+        "paymentIntents",
+        "refunds",
+        "exchangeRateSnapshots",
+        "ledgerAccounts",
+        "ledgerEntries",
+        "settlementRuns"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-v2-billforge-1",
+      "importedAt": "2026-09-07T00:00:00.000Z",
+      "tenants": [
+        {
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "name": "Public workshop",
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "customers": [
+        {
+          "customerId": "b2000001-0000-4000-8000-000000000002",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "externalRef": "public-customer",
+          "name": "Public customer",
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "plans": [
+        {
+          "planId": "b2000001-0000-4000-8000-000000000003",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "name": "Public fixed plan",
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "priceVersions": [
+        {
+          "priceVersionId": "b2000001-0000-4000-8000-000000000004",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "planId": "b2000001-0000-4000-8000-000000000003",
+          "version": 1,
+          "currency": "USD",
+          "unitAmountMinor": 2500,
+          "effectiveFrom": "2026-09-07T00:00:00.000Z",
+          "effectiveTo": null,
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "subscriptions": [
+        {
+          "subscriptionId": "b2000001-0000-4000-8000-000000000005",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "customerId": "b2000001-0000-4000-8000-000000000002",
+          "planId": "b2000001-0000-4000-8000-000000000003",
+          "version": 1,
+          "quantity": 1,
+          "periodStart": "2035-04-01T00:00:00.000Z",
+          "periodEnd": "2035-05-01T00:00:00.000Z",
+          "state": "ACTIVE",
+          "createdAt": "2026-09-07T00:00:00.000Z",
+          "cancelledAt": null
+        }
+      ],
+      "invoices": [],
+      "paymentIntents": [],
+      "refunds": [],
+      "exchangeRateSnapshots": [
+        {
+          "exchangeRateSnapshotId": "b2000001-0000-4000-8000-000000000006",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "baseCurrency": "USD",
+          "quoteCurrency": "USD",
+          "numerator": 1,
+          "denominator": 1,
+          "effectiveFrom": "2026-09-07T00:00:00.000Z",
+          "effectiveTo": null,
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "ledgerAccounts": [
+        {
+          "ledgerAccountId": "b2000001-0000-4000-8000-000000000007",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "currency": "USD",
+          "accountCode": "CustomerReceivable",
+          "allowOverdraft": false,
+          "balanceMinor": 0,
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        },
+        {
+          "ledgerAccountId": "b2000001-0000-4000-8000-000000000008",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "currency": "USD",
+          "accountCode": "CashClearing",
+          "allowOverdraft": false,
+          "balanceMinor": 0,
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        },
+        {
+          "ledgerAccountId": "b2000001-0000-4000-8000-000000000009",
+          "tenantId": "b2000001-0000-4000-8000-000000000001",
+          "currency": "USD",
+          "accountCode": "RefundExpense",
+          "allowOverdraft": false,
+          "balanceMinor": 0,
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "ledgerEntries": [],
+      "settlementRuns": []
+    }
+  },
+  "schemas": {
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Json"
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "$ref": "#/$defs/JsonObject"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenAPI": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "type": "string",
+          "pattern": "^3\\.1\\."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object"
+        },
+        "components": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "name",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Customer": {
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "customerId",
+        "tenantId",
+        "externalRef",
+        "name",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Plan": {
+      "type": "object",
+      "properties": {
+        "planId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "planId",
+        "tenantId",
+        "name",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "PriceVersion": {
+      "type": "object",
+      "properties": {
+        "priceVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "planId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "unitAmountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveTo": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "priceVersionId",
+        "tenantId",
+        "planId",
+        "version",
+        "currency",
+        "unitAmountMinor",
+        "effectiveFrom",
+        "effectiveTo",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Subscription": {
+      "type": "object",
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "planId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "cancelledAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "subscriptionId",
+        "tenantId",
+        "customerId",
+        "planId",
+        "version",
+        "quantity",
+        "periodStart",
+        "periodEnd",
+        "state",
+        "createdAt",
+        "cancelledAt"
+      ],
+      "additionalProperties": false
+    },
+    "ExchangeRateSnapshot": {
+      "type": "object",
+      "properties": {
+        "exchangeRateSnapshotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "baseCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "quoteCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "numerator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveTo": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "exchangeRateSnapshotId",
+        "tenantId",
+        "baseCurrency",
+        "quoteCurrency",
+        "numerator",
+        "denominator",
+        "effectiveFrom",
+        "effectiveTo",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "LedgerAccount": {
+      "type": "object",
+      "properties": {
+        "ledgerAccountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "accountCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowOverdraft": {
+          "type": "boolean"
+        },
+        "balanceMinor": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "ledgerAccountId",
+        "tenantId",
+        "currency",
+        "accountCode",
+        "allowOverdraft",
+        "balanceMinor",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "InvoiceLine": {
+      "type": "object",
+      "properties": {
+        "invoiceLineId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "BASE",
+            "PRORATION",
+            "DISCOUNT",
+            "TAX"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "unitAmountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "invoiceLineId",
+        "kind",
+        "description",
+        "quantity",
+        "unitAmountMinor",
+        "amountMinor"
+      ],
+      "additionalProperties": false
+    },
+    "Invoice": {
+      "type": "object",
+      "properties": {
+        "invoiceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "OPEN",
+            "PAID",
+            "PARTIALLY_REFUNDED",
+            "REFUNDED",
+            "VOID"
+          ]
+        },
+        "totalMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "paidMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "refundedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "outstandingMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "priceVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "taxVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "discountVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "exchangeRateSnapshotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InvoiceLine"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finalizedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "invoiceId",
+        "tenantId",
+        "customerId",
+        "subscriptionId",
+        "currency",
+        "periodStart",
+        "periodEnd",
+        "state",
+        "totalMinor",
+        "paidMinor",
+        "refundedMinor",
+        "outstandingMinor",
+        "priceVersion",
+        "taxVersion",
+        "discountVersion",
+        "exchangeRateSnapshotId",
+        "lines",
+        "createdAt",
+        "finalizedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "PaymentIntent": {
+      "type": "object",
+      "properties": {
+        "paymentIntentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "invoiceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "CREATED",
+            "PROCESSING",
+            "SUCCEEDED",
+            "FAILED",
+            "UNKNOWN"
+          ]
+        },
+        "providerRequestId": {
+          "type": "string"
+        },
+        "providerTransactionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "paymentIntentId",
+        "invoiceId",
+        "amountMinor",
+        "currency",
+        "state",
+        "providerRequestId",
+        "providerTransactionId",
+        "createdAt",
+        "resolvedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "Refund": {
+      "type": "object",
+      "properties": {
+        "refundId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "paymentIntentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "REQUESTED",
+            "PROCESSING",
+            "SUCCEEDED",
+            "FAILED"
+          ]
+        },
+        "providerTransactionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "refundId",
+        "paymentIntentId",
+        "amountMinor",
+        "state",
+        "providerTransactionId",
+        "createdAt",
+        "resolvedAt"
+      ],
+      "additionalProperties": false
+    },
+    "LedgerEntry": {
+      "type": "object",
+      "properties": {
+        "ledgerEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "postingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "accountCode": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "DEBIT",
+            "CREDIT"
+          ]
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "referenceType": {
+          "type": "string",
+          "enum": [
+            "PAYMENT",
+            "REFUND",
+            "SETTLEMENT"
+          ]
+        },
+        "referenceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "ledgerEntryId",
+        "postingId",
+        "tenantId",
+        "currency",
+        "accountCode",
+        "direction",
+        "amountMinor",
+        "referenceType",
+        "referenceId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "SettlementRun": {
+      "type": "object",
+      "properties": {
+        "settlementRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "SNAPSHOTTING",
+            "CALCULATING",
+            "POSTING",
+            "CLOSED"
+          ]
+        },
+        "snapshotDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "totalInvoiceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "totalPaymentMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "totalRefundMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "closedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "settlementRunId",
+        "tenantId",
+        "periodStart",
+        "periodEnd",
+        "state",
+        "snapshotDigest",
+        "totalInvoiceMinor",
+        "totalPaymentMinor",
+        "totalRefundMinor",
+        "createdAt",
+        "closedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "Dispute": {
+      "type": "object",
+      "properties": {
+        "disputeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "paymentIntentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "WON",
+            "LOST"
+          ]
+        },
+        "reservedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "chargebackPostingId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "disputeId",
+        "tenantId",
+        "paymentIntentId",
+        "externalRef",
+        "amountMinor",
+        "currency",
+        "state",
+        "reservedMinor",
+        "chargebackPostingId",
+        "createdAt",
+        "resolvedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Adjustment": {
+      "type": "object",
+      "properties": {
+        "adjustmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "settlementRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "originalPostingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "postingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "DEBIT",
+            "CREDIT"
+          ]
+        },
+        "accountCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "balancingAccountCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "adjustmentId",
+        "tenantId",
+        "settlementRunId",
+        "originalPostingId",
+        "postingId",
+        "currency",
+        "amountMinor",
+        "direction",
+        "accountCode",
+        "balancingAccountCode",
+        "reason",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ManagerLedgerEntry": {
+      "type": "object",
+      "properties": {
+        "ledgerEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "postingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "accountCode": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "DEBIT",
+            "CREDIT"
+          ]
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "referenceType": {
+          "enum": [
+            "PAYMENT",
+            "REFUND",
+            "SETTLEMENT",
+            "CHARGEBACK",
+            "ADJUSTMENT"
+          ],
+          "type": "string"
+        },
+        "referenceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "ledgerEntryId",
+        "postingId",
+        "tenantId",
+        "currency",
+        "accountCode",
+        "direction",
+        "amountMinor",
+        "referenceType",
+        "referenceId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "INVOICE_FINALIZATION",
+            "PAYMENT_CAPTURE",
+            "REFUND_PROCESSING",
+            "SETTLEMENT_CLOSE"
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "invoice.created",
+            "invoice.finalized",
+            "payment.succeeded",
+            "payment.failed",
+            "payment.unknown",
+            "refund.succeeded",
+            "settlement.closed"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "$ref": "#/$defs/JsonObject"
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Customer"
+          }
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Plan"
+          }
+        },
+        "priceVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PriceVersion"
+          }
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Subscription"
+          }
+        },
+        "invoices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Invoice"
+          }
+        },
+        "paymentIntents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaymentIntent"
+          }
+        },
+        "refunds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Refund"
+          }
+        },
+        "exchangeRateSnapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExchangeRateSnapshot"
+          }
+        },
+        "ledgerAccounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LedgerAccount"
+          }
+        },
+        "ledgerEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LedgerEntry"
+          }
+        },
+        "settlementRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SettlementRun"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "customers",
+        "plans",
+        "priceVersions",
+        "subscriptions",
+        "invoices",
+        "paymentIntents",
+        "refunds",
+        "exchangeRateSnapshots",
+        "ledgerAccounts",
+        "ledgerEntries",
+        "settlementRuns"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Customer"
+          }
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Plan"
+          }
+        },
+        "priceVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PriceVersion"
+          }
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Subscription"
+          }
+        },
+        "invoices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Invoice"
+          }
+        },
+        "paymentIntents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PaymentIntent"
+          }
+        },
+        "refunds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Refund"
+          }
+        },
+        "exchangeRateSnapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExchangeRateSnapshot"
+          }
+        },
+        "ledgerAccounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LedgerAccount"
+          }
+        },
+        "ledgerEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ManagerLedgerEntry"
+          }
+        },
+        "settlementRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SettlementRun"
+          }
+        },
+        "disputes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dispute"
+          }
+        },
+        "adjustments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Adjustment"
+          }
+        }
+      },
+      "required": [
+        "tenants",
+        "customers",
+        "plans",
+        "priceVersions",
+        "subscriptions",
+        "invoices",
+        "paymentIntents",
+        "refunds",
+        "exchangeRateSnapshots",
+        "ledgerAccounts",
+        "ledgerEntries",
+        "settlementRuns",
+        "disputes",
+        "adjustments"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/OpenAPI"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "tenant-create",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-tenant-create"
+        },
+        "body": {
+          "name": "public1"
+        }
+      }
+    },
+    {
+      "id": "customer-create",
+      "method": "POST",
+      "path": "/api/v1/customers",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "externalRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "externalRef",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Customer"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-customer-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "externalRef": "public1",
+          "name": "public1"
+        }
+      }
+    },
+    {
+      "id": "plan-create",
+      "method": "POST",
+      "path": "/api/v1/plans",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Plan"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-plan-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "name": "public1"
+        }
+      }
+    },
+    {
+      "id": "price-version-create",
+      "method": "POST",
+      "path": "/api/v1/price-versions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "unitAmountMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "effectiveTo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "tenantId",
+          "planId",
+          "version",
+          "currency",
+          "unitAmountMinor",
+          "effectiveFrom",
+          "effectiveTo"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PriceVersion"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-price-version-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "planId": "b2000999-0000-4000-8000-000000000001",
+          "version": 1,
+          "currency": "USD",
+          "unitAmountMinor": 1,
+          "effectiveFrom": "2026-09-07T00:00:00.000Z",
+          "effectiveTo": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "subscription-create",
+      "method": "POST",
+      "path": "/api/v1/subscriptions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "customerId",
+          "planId",
+          "quantity",
+          "periodStart",
+          "periodEnd"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Subscription"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-subscription-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "customerId": "b2000999-0000-4000-8000-000000000001",
+          "planId": "b2000999-0000-4000-8000-000000000001",
+          "quantity": 1,
+          "periodStart": "2026-09-07T00:00:00.000Z",
+          "periodEnd": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "subscription-change",
+      "method": "POST",
+      "path": "/api/v1/subscriptions/:subscriptionId/change",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "planId",
+          "quantity",
+          "effectiveAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Subscription"
+      },
+      "parameters": [
+        {
+          "name": "subscriptionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "subscriptionId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-subscription-change"
+        },
+        "body": {
+          "expectedVersion": 1,
+          "planId": "b2000999-0000-4000-8000-000000000001",
+          "quantity": 1,
+          "effectiveAt": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "subscription-cancel",
+      "method": "POST",
+      "path": "/api/v1/subscriptions/:subscriptionId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "effectiveAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Subscription"
+      },
+      "parameters": [
+        {
+          "name": "subscriptionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "subscriptionId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-subscription-cancel"
+        },
+        "body": {
+          "expectedVersion": 1,
+          "effectiveAt": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "invoice-create",
+      "method": "POST",
+      "path": "/api/v1/invoices",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "subscriptionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "subscriptionVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "customerId",
+          "subscriptionId",
+          "subscriptionVersion",
+          "periodStart",
+          "periodEnd",
+          "currency"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Invoice"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-invoice-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "customerId": "b2000999-0000-4000-8000-000000000001",
+          "subscriptionId": "b2000999-0000-4000-8000-000000000001",
+          "subscriptionVersion": 1,
+          "periodStart": "2026-09-07T00:00:00.000Z",
+          "periodEnd": "2026-09-07T00:00:00.000Z",
+          "currency": "USD"
+        }
+      }
+    },
+    {
+      "id": "invoice-finalize",
+      "method": "POST",
+      "path": "/api/v1/invoices/:invoiceId/finalize",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Invoice"
+      },
+      "parameters": [
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "invoiceId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-invoice-finalize"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "invoice-get",
+      "method": "GET",
+      "path": "/api/v1/invoices/:invoiceId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Invoice"
+      },
+      "parameters": [
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "invoiceId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "invoice-ledger",
+      "method": "GET",
+      "path": "/api/v1/invoices/:invoiceId/ledger",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ManagerLedgerEntry"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "invoiceId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "payment-intent-create",
+      "method": "POST",
+      "path": "/api/v1/payment-intents",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "amountMinor",
+          "currency"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PaymentIntent"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-payment-intent-create"
+        },
+        "body": {
+          "invoiceId": "b2000999-0000-4000-8000-000000000001",
+          "amountMinor": 1,
+          "currency": "USD"
+        }
+      }
+    },
+    {
+      "id": "payment-intent-reconcile",
+      "method": "POST",
+      "path": "/api/v1/payment-intents/:paymentIntentId/reconcile",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PaymentIntent"
+      },
+      "parameters": [
+        {
+          "name": "paymentIntentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "paymentIntentId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-payment-intent-reconcile"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "provider-webhook",
+      "method": "POST",
+      "path": "/api/v1/provider/webhooks",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "providerEventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "providerRequestId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "providerTransactionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "SUCCEEDED",
+              "DECLINED"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "providerEventId",
+          "providerRequestId",
+          "providerTransactionId",
+          "outcome",
+          "occurredAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PaymentIntent"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-provider-webhook"
+        },
+        "body": {
+          "providerEventId": "public1",
+          "providerRequestId": "public1",
+          "providerTransactionId": "public1",
+          "outcome": "SUCCEEDED",
+          "occurredAt": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "refund-create",
+      "method": "POST",
+      "path": "/api/v1/payment-intents/:paymentIntentId/refunds",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "amountMinor"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Refund"
+      },
+      "parameters": [
+        {
+          "name": "paymentIntentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "paymentIntentId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-refund-create"
+        },
+        "body": {
+          "amountMinor": 1
+        }
+      }
+    },
+    {
+      "id": "settlement-create",
+      "method": "POST",
+      "path": "/api/v1/settlements",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "periodStart",
+          "periodEnd"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/SettlementRun"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-settlement-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "periodStart": "2026-09-07T00:00:00.000Z",
+          "periodEnd": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "settlement-get",
+      "method": "GET",
+      "path": "/api/v1/settlements/:settlementId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/SettlementRun"
+      },
+      "parameters": [
+        {
+          "name": "settlementId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "settlementId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "dispute-create",
+      "method": "POST",
+      "path": "/api/v1/disputes",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route and resource)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "paymentIntentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "externalRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "tenantId",
+          "paymentIntentId",
+          "externalRef",
+          "amountMinor"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Dispute"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-dispute-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "paymentIntentId": "b2000999-0000-4000-8000-000000000001",
+          "externalRef": "public1",
+          "amountMinor": 1
+        }
+      }
+    },
+    {
+      "id": "dispute-resolve",
+      "method": "POST",
+      "path": "/api/v1/disputes/:disputeId/resolve",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route and resource)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "WON",
+              "LOST"
+            ]
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Dispute"
+      },
+      "parameters": [
+        {
+          "name": "disputeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "disputeId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-dispute-resolve"
+        },
+        "body": {
+          "outcome": "WON"
+        }
+      }
+    },
+    {
+      "id": "adjustment-create",
+      "method": "POST",
+      "path": "/api/v1/adjustments",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (new route and resource)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "settlementRunId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "originalPostingId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "DEBIT",
+              "CREDIT"
+            ]
+          },
+          "accountCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "balancingAccountCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "settlementRunId",
+          "originalPostingId",
+          "currency",
+          "amountMinor",
+          "direction",
+          "accountCode",
+          "balancingAccountCode",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Adjustment"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-adjustment-create"
+        },
+        "body": {
+          "tenantId": "b2000999-0000-4000-8000-000000000001",
+          "settlementRunId": "b2000999-0000-4000-8000-000000000001",
+          "originalPostingId": "b2000999-0000-4000-8000-000000000001",
+          "currency": "USD",
+          "amountMinor": 1,
+          "direction": "DEBIT",
+          "accountCode": "public1",
+          "balancingAccountCode": "public1",
+          "reason": "public1"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer public-example-admin"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "tenants"
+          ],
+          "match": {
+            "tenantId": "b2000001-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "customers"
+          ],
+          "match": {
+            "customerId": "b2000001-0000-4000-8000-000000000002",
+            "tenantId": "b2000001-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "priceVersions"
+          ],
+          "match": {
+            "priceVersionId": "b2000001-0000-4000-8000-000000000004",
+            "planId": "b2000001-0000-4000-8000-000000000003",
+            "unitAmountMinor": 2500
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "subscriptions"
+          ],
+          "match": {
+            "subscriptionId": "b2000001-0000-4000-8000-000000000005",
+            "customerId": "b2000001-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "exchangeRateSnapshots"
+          ],
+          "match": {
+            "exchangeRateSnapshotId": "b2000001-0000-4000-8000-000000000006",
+            "numerator": 1,
+            "denominator": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "ledgerAccounts"
+          ],
+          "match": {
+            "ledgerAccountId": "b2000001-0000-4000-8000-000000000007",
+            "balanceMinor": 0
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "tenant-create",
+      "headers": {
+        "Idempotency-Key": "public-v2-billforge-tenant"
+      },
+      "body": {
+        "name": "Public second workshop"
+      },
+      "expectStatus": 200,
+      "capture": {
+        "tenantId": [
+          "tenantId"
+        ]
+      },
+      "expectBody": {
+        "name": "Public second workshop"
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "tenants"
+          ],
+          "match": {
+            "tenantId": "${tenantId}",
+            "name": "Public second workshop"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Source authority is the full public README, Manager requirements and AGENTS. No hidden evaluator data or solution code is imported. This V2 contract fixes wire boundaries; state machines, algorithms, isolation, migrations and performance remain implementation work.",
+    "V2 wire clarification: every route has the closed request/success schema published here; only business inputs occur in creation requests. Omitted success status is 200. Health returns {status:\"ok\"}; UI returns HTML. Collection nextCursor is string or null, with null denoting completion. Path/query/header parameters and independent request examples are explicit. Examples validate transport only, not eligibility of referenced resources.",
+    "V2 wire clarification: the authenticated verification snapshot is one point-in-time envelope with complete named resource arrays, typed retained Work and ordered DomainEvents. When the legacy source did not specify event fields, V2 uses eventId,aggregateId,sequence,type,occurredAt,schemaVersion,payload; payload remains a JSON object. No hidden event payload is prescribed.",
+    "The seed uses the exact V1 array names and graph references. Repeated identical seed import is a no-op; another digest under the same seedVersion conflicts. Manager resources are derived by migration or created by public operations, never invented V1 seed members.",
+    "V2 wire clarification: V1 names Tenant, Customer, Plan, PriceVersion, Subscription, ExchangeRateSnapshot and LedgerAccount but never defines their fields. Their complete schemas here are new public transport definitions, shared by seed, API and snapshot. Public creation excludes generated IDs/times/state. Exchange rates are exact positive integer ratios; this fixes their representation, not a rounding algorithm.",
+    "Unresolved original business specification: tax/discount configuration has neither a public route nor a V1 seed collection; proration units and rounding, tax rounding and discount allocation formulas are not defined. This contract does not manufacture those algorithms or a hidden-rule fixture. Invoice/payment smoke is deliberately excluded until those business choices are separately published.",
+    "V2 wire clarification: subscription change/cancel use expectedVersion and effectiveAt; invoice generation names subscriptionVersion and the billing period. Provider webhooks carry providerEventId, providerRequestId, providerTransactionId, outcome and occurredAt and return PaymentIntent; transport failures are not successful webhook outcomes.",
+    "Manager only requested impact analysis and a staged plan in its original turn. V2 explicitly publishes new disputes/resolve/adjustments wire interfaces to support the newly requested complete interface scaffold. Their fields and route spelling are not retrospectively claimed as original requirements. CHARGEBACK/ADJUSTMENT extend snapshot ledger referenceType; legacy seed remains unchanged. Dispute reservations, one balanced loss posting and next-period corrections remain business implementation responsibilities.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

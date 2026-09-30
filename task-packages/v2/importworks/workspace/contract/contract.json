@@ -1,0 +1,2429 @@
+{
+  "taskId": "importworks",
+  "title": "ImportWorks",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Schema"
+          }
+        },
+        "schemaRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SchemaRevision"
+          }
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ImportJob"
+          }
+        },
+        "uploadChunks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UploadChunk"
+          }
+        },
+        "validationFindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ValidationFinding"
+          }
+        },
+        "committedRecords": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommittedRecord"
+          }
+        },
+        "errorReports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ErrorReport"
+          }
+        },
+        "importBundles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ImportBundle"
+          }
+        },
+        "bundleMembers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BundleMember"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "tenants",
+        "schemas",
+        "schemaRevisions",
+        "imports",
+        "uploadChunks",
+        "validationFindings",
+        "committedRecords",
+        "errorReports",
+        "importBundles",
+        "bundleMembers"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "importworks-public-v2-1",
+      "tenants": [
+        {
+          "tenantId": "c42a0001-1030-4030-8030-000000000001",
+          "name": "Public Library"
+        }
+      ],
+      "schemas": [
+        {
+          "schemaId": "c42a0001-1030-4030-8030-000000000002",
+          "tenantId": "c42a0001-1030-4030-8030-000000000001",
+          "datasetKey": "public-notes",
+          "name": "Public Notes"
+        }
+      ],
+      "schemaRevisions": [
+        {
+          "schemaId": "c42a0001-1030-4030-8030-000000000002",
+          "revision": 1,
+          "externalIdField": "rowKey",
+          "additionalProperties": false,
+          "fields": [
+            {
+              "name": "rowKey",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "title",
+              "type": "string",
+              "required": true,
+              "maxLength": 100
+            }
+          ]
+        }
+      ],
+      "imports": [
+        {
+          "importId": "c42a0001-1030-4030-8030-000000000003",
+          "tenantId": "c42a0001-1030-4030-8030-000000000001",
+          "datasetKey": "public-notes",
+          "schemaRevision": 1,
+          "commitMode": "ALL_OR_NOTHING",
+          "expectedBytes": 39,
+          "expectedSha256": "8a8d96281308a0a4d028c95c7a520dc845e3411e2ecd3d04060ab43acc45198d",
+          "state": "UPLOADING",
+          "receivedBytes": 0,
+          "totalRows": 0,
+          "validRows": 0,
+          "invalidRows": 0,
+          "createdAt": "2031-04-05T06:07:08.000Z",
+          "completedAt": null,
+          "sequence": 0
+        }
+      ],
+      "uploadChunks": [],
+      "validationFindings": [],
+      "committedRecords": [],
+      "errorReports": [],
+      "importBundles": [],
+      "bundleMembers": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenApi": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "const": "3.1.0"
+        },
+        "info": {
+          "type": "object"
+        },
+        "paths": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Schema": {
+      "type": "object",
+      "properties": {
+        "schemaId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "datasetKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "schemaId",
+        "tenantId",
+        "datasetKey",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaField": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "type": {
+          "enum": [
+            "string",
+            "integer",
+            "number",
+            "boolean",
+            "object"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "required"
+      ],
+      "additionalProperties": false
+    },
+    "SchemaRevision": {
+      "type": "object",
+      "properties": {
+        "schemaId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "externalIdField": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "additionalProperties": {
+          "const": false
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SchemaField"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "schemaId",
+        "revision",
+        "externalIdField",
+        "additionalProperties",
+        "fields"
+      ],
+      "additionalProperties": false
+    },
+    "ImportJob": {
+      "type": "object",
+      "properties": {
+        "importId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "datasetKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "schemaRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "commitMode": {
+          "enum": [
+            "ALL_OR_NOTHING",
+            "VALID_ROWS"
+          ]
+        },
+        "state": {
+          "enum": [
+            "UPLOADING",
+            "UPLOADED",
+            "VALIDATING",
+            "VALIDATED",
+            "COMMITTING",
+            "COMMITTED",
+            "PARTIALLY_COMMITTED",
+            "REJECTED",
+            "CANCELLED"
+          ]
+        },
+        "expectedBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "receivedBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "totalRows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "validRows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "invalidRows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "importId",
+        "tenantId",
+        "datasetKey",
+        "schemaRevision",
+        "commitMode",
+        "state",
+        "expectedBytes",
+        "expectedSha256",
+        "receivedBytes",
+        "totalRows",
+        "validRows",
+        "invalidRows",
+        "createdAt",
+        "completedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "UploadChunk": {
+      "type": "object",
+      "properties": {
+        "importId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "chunkNumber": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "importId",
+        "chunkNumber",
+        "start",
+        "end",
+        "size",
+        "sha256",
+        "receivedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ValidationFinding": {
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "importId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "rowNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "externalRowId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "valueDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "findingId",
+        "importId",
+        "rowNumber",
+        "externalRowId",
+        "field",
+        "code",
+        "message",
+        "valueDigest"
+      ],
+      "additionalProperties": false
+    },
+    "CommittedRecord": {
+      "type": "object",
+      "properties": {
+        "recordId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "datasetKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "externalRowId": {
+          "type": "string"
+        },
+        "sourceImportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "payload": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "recordId",
+        "tenantId",
+        "datasetKey",
+        "externalRowId",
+        "sourceImportId",
+        "payload",
+        "payloadDigest",
+        "committedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ErrorReport": {
+      "type": "object",
+      "properties": {
+        "reportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "importId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "READY",
+            "FAILED"
+          ]
+        },
+        "rowCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "readyAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "reportId",
+        "importId",
+        "state",
+        "rowCount",
+        "sha256",
+        "createdAt",
+        "readyAt"
+      ],
+      "additionalProperties": false
+    },
+    "ImportBundle": {
+      "type": "object",
+      "properties": {
+        "bundleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "state": {
+          "enum": [
+            "DRAFT",
+            "STAGED",
+            "PUBLISHING",
+            "PUBLISHED",
+            "REJECTED",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "stagedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "bundleId",
+        "tenantId",
+        "name",
+        "state",
+        "createdAt",
+        "stagedAt",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "BundleMember": {
+      "type": "object",
+      "properties": {
+        "bundleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "importId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "schemaRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sourceSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "commitMode": {
+          "enum": [
+            "ALL_OR_NOTHING",
+            "VALID_ROWS"
+          ]
+        }
+      },
+      "required": [
+        "bundleId",
+        "importId",
+        "position",
+        "schemaRevision",
+        "sourceSha256",
+        "commitMode"
+      ],
+      "additionalProperties": false
+    },
+    "ByteRange": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "UPLOAD_EXPIRY",
+            "IMPORT_VALIDATE",
+            "IMPORT_COMMIT",
+            "ERROR_REPORT",
+            "EVENT_DELIVERY",
+            "BUNDLE_PUBLISH"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateType": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "import.created",
+            "import.uploaded",
+            "import.validated",
+            "import.committed",
+            "import.partially_committed",
+            "import.cancelled",
+            "import_bundle.staged",
+            "import_bundle.published",
+            "import_bundle.rejected"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "importId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "bundleId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "state": {
+              "type": "string"
+            },
+            "sourceSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "committedCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "aggregateId",
+        "aggregateType",
+        "type",
+        "sequence",
+        "occurredAt",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "CreateSchemaRevision": {
+      "type": "object",
+      "properties": {
+        "externalIdField": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "additionalProperties": {
+          "const": false
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SchemaField"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "externalIdField",
+        "additionalProperties",
+        "fields"
+      ],
+      "additionalProperties": false
+    },
+    "CreateImport": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "datasetKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "schemaRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "commitMode": {
+          "enum": [
+            "ALL_OR_NOTHING",
+            "VALID_ROWS"
+          ]
+        },
+        "expectedBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "datasetKey",
+        "schemaRevision",
+        "commitMode",
+        "expectedBytes",
+        "expectedSha256"
+      ],
+      "additionalProperties": false
+    },
+    "ImportRead": {
+      "type": "object",
+      "properties": {
+        "importId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "datasetKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "schemaRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "commitMode": {
+          "enum": [
+            "ALL_OR_NOTHING",
+            "VALID_ROWS"
+          ]
+        },
+        "state": {
+          "enum": [
+            "UPLOADING",
+            "UPLOADED",
+            "VALIDATING",
+            "VALIDATED",
+            "COMMITTING",
+            "COMMITTED",
+            "PARTIALLY_COMMITTED",
+            "REJECTED",
+            "CANCELLED"
+          ]
+        },
+        "expectedBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "receivedBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "totalRows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "validRows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "invalidRows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "receivedRanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ByteRange"
+          }
+        },
+        "missingRanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ByteRange"
+          }
+        }
+      },
+      "required": [
+        "importId",
+        "tenantId",
+        "datasetKey",
+        "schemaRevision",
+        "commitMode",
+        "state",
+        "expectedBytes",
+        "expectedSha256",
+        "receivedBytes",
+        "totalRows",
+        "validRows",
+        "invalidRows",
+        "createdAt",
+        "completedAt",
+        "sequence",
+        "receivedRanges",
+        "missingRanges"
+      ],
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "tenants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Tenant"
+              }
+            },
+            "schemas": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Schema"
+              }
+            },
+            "schemaRevisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SchemaRevision"
+              }
+            },
+            "imports": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ImportJob"
+              }
+            },
+            "uploadChunks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/UploadChunk"
+              }
+            },
+            "validationFindings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ValidationFinding"
+              }
+            },
+            "committedRecords": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CommittedRecord"
+              }
+            },
+            "errorReports": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ErrorReport"
+              }
+            },
+            "importBundles": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ImportBundle"
+              }
+            },
+            "bundleMembers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/BundleMember"
+              }
+            }
+          },
+          "required": [
+            "tenants",
+            "schemas",
+            "schemaRevisions",
+            "imports",
+            "uploadChunks",
+            "validationFindings",
+            "committedRecords",
+            "errorReports",
+            "importBundles",
+            "bundleMembers"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "createTenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "name": "New Public Tenant"
+        },
+        "headers": {
+          "Idempotency-Key": "import-example-tenant"
+        }
+      }
+    },
+    {
+      "id": "createSchema",
+      "method": "POST",
+      "path": "/api/v1/schemas",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "datasetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "tenantId",
+          "datasetKey",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Schema"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0001-1030-4030-8030-000000000001",
+          "datasetKey": "new-notes",
+          "name": "New Notes"
+        },
+        "headers": {
+          "Idempotency-Key": "import-example-schema"
+        }
+      }
+    },
+    {
+      "id": "createSchemaRevision",
+      "method": "POST",
+      "path": "/api/v1/schemas/:schemaId/revisions",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "$ref": "#/$defs/CreateSchemaRevision"
+      },
+      "response": {
+        "$ref": "#/$defs/SchemaRevision"
+      },
+      "parameters": [
+        {
+          "name": "schemaId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "schemaId": "c42a0001-1030-4030-8030-000000000002"
+        },
+        "body": {
+          "externalIdField": "rowKey",
+          "additionalProperties": false,
+          "fields": [
+            {
+              "name": "rowKey",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "title",
+              "type": "string",
+              "required": true,
+              "maxLength": 100
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "import-example-schema-revision"
+        }
+      }
+    },
+    {
+      "id": "createImport",
+      "method": "POST",
+      "path": "/api/v1/imports",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Upload and resume",
+      "request": {
+        "$ref": "#/$defs/CreateImport"
+      },
+      "response": {
+        "$ref": "#/$defs/ImportJob"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0001-1030-4030-8030-000000000001",
+          "datasetKey": "public-notes",
+          "schemaRevision": 1,
+          "commitMode": "ALL_OR_NOTHING",
+          "expectedBytes": 39,
+          "expectedSha256": "8a8d96281308a0a4d028c95c7a520dc845e3411e2ecd3d04060ab43acc45198d"
+        },
+        "headers": {
+          "Idempotency-Key": "import-example-import"
+        }
+      }
+    },
+    {
+      "id": "getImport",
+      "method": "GET",
+      "path": "/api/v1/imports/:importId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Upload and resume",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/ImportRead"
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        }
+      }
+    },
+    {
+      "id": "putChunk",
+      "method": "PUT",
+      "path": "/api/v1/imports/:importId/chunks/:chunkNumber",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Upload and resume",
+      "request": {
+        "type": "string",
+        "contentMediaType": "application/octet-stream",
+        "minLength": 1
+      },
+      "response": {
+        "$ref": "#/$defs/UploadChunk"
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "chunkNumber",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        {
+          "name": "Content-Range",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^bytes [0-9]+-[0-9]+/[0-9]+$"
+          }
+        },
+        {
+          "name": "X-Chunk-SHA256",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003",
+          "chunkNumber": 0
+        },
+        "body": "{\"rowKey\":\"public-1\",\"title\":\"Public\"}\n",
+        "headers": {
+          "Idempotency-Key": "import-example-chunk",
+          "Content-Type": "application/octet-stream",
+          "Content-Range": "bytes 0-38/39",
+          "X-Chunk-SHA256": "8a8d96281308a0a4d028c95c7a520dc845e3411e2ecd3d04060ab43acc45198d"
+        }
+      }
+    },
+    {
+      "id": "completeImport",
+      "method": "POST",
+      "path": "/api/v1/imports/:importId/complete",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Upload and resume / Validation, commit, and reports",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ImportJob"
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "import-example-complete"
+        }
+      }
+    },
+    {
+      "id": "commitImport",
+      "method": "POST",
+      "path": "/api/v1/imports/:importId/commit",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Upload and resume / Validation, commit, and reports",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ImportJob"
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "import-example-commit"
+        }
+      }
+    },
+    {
+      "id": "cancelImport",
+      "method": "POST",
+      "path": "/api/v1/imports/:importId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Upload and resume / Validation, commit, and reports",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ImportJob"
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "import-example-cancel"
+        }
+      }
+    },
+    {
+      "id": "getFindings",
+      "method": "GET",
+      "path": "/api/v1/imports/:importId/findings",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — HTTP contract",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ValidationFinding"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "getErrorReport",
+      "method": "GET",
+      "path": "/api/v1/imports/:importId/error-report",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Exact public shapes / HTTP contract",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/ErrorReport"
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        }
+      }
+    },
+    {
+      "id": "downloadErrorReport",
+      "method": "GET",
+      "path": "/api/v1/imports/:importId/error-report/content",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "type": "string",
+        "contentMediaType": "application/x-ndjson"
+      },
+      "parameters": [
+        {
+          "name": "importId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        }
+      }
+    },
+    {
+      "id": "listRecords",
+      "method": "GET",
+      "path": "/api/v1/records",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — HTTP contract",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CommittedRecord"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "datasetKey",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "tenantId": "c42a0001-1030-4030-8030-000000000001",
+          "datasetKey": "public-notes",
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "createBundle",
+      "method": "POST",
+      "path": "/api/v1/import-bundles",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ImportBundle"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0001-1030-4030-8030-000000000001",
+          "name": "Public Bundle"
+        },
+        "headers": {
+          "Idempotency-Key": "import-example-bundle"
+        }
+      }
+    },
+    {
+      "id": "addBundleMember",
+      "method": "POST",
+      "path": "/api/v1/import-bundles/:bundleId/members",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "importId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/BundleMember"
+      },
+      "parameters": [
+        {
+          "name": "bundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "bundleId": "c42a0001-1030-4030-8030-000000000004"
+        },
+        "body": {
+          "importId": "c42a0001-1030-4030-8030-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "import-example-member"
+        }
+      }
+    },
+    {
+      "id": "stageBundle",
+      "method": "POST",
+      "path": "/api/v1/import-bundles/:bundleId/stage",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ImportBundle"
+      },
+      "parameters": [
+        {
+          "name": "bundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "bundleId": "c42a0001-1030-4030-8030-000000000004"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "import-example-bundle-stage"
+        }
+      }
+    },
+    {
+      "id": "publishBundle",
+      "method": "POST",
+      "path": "/api/v1/import-bundles/:bundleId/publish",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ImportBundle"
+      },
+      "parameters": [
+        {
+          "name": "bundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "bundleId": "c42a0001-1030-4030-8030-000000000004"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "import-example-bundle-publish"
+        }
+      }
+    },
+    {
+      "id": "snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Seed and snapshot",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Snapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — HTTP contract",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/OpenApi"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "productionUi",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "type": "string",
+        "minLength": 1,
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "schemas"
+          ],
+          "match": {
+            "schemaId": "c42a0001-1030-4030-8030-000000000002",
+            "tenantId": "c42a0001-1030-4030-8030-000000000001",
+            "datasetKey": "public-notes"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "schemaRevisions"
+          ],
+          "match": {
+            "schemaId": "c42a0001-1030-4030-8030-000000000002",
+            "revision": 1,
+            "externalIdField": "rowKey"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "imports"
+          ],
+          "match": {
+            "importId": "c42a0001-1030-4030-8030-000000000003",
+            "state": "UPLOADING",
+            "receivedBytes": 0
+          }
+        }
+      ],
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getImport",
+      "params": {
+        "importId": "c42a0001-1030-4030-8030-000000000003"
+      },
+      "expectBody": {
+        "importId": "c42a0001-1030-4030-8030-000000000003",
+        "state": "UPLOADING",
+        "receivedRanges": [],
+        "missingRanges": [
+          {
+            "start": 0,
+            "end": 38
+          }
+        ]
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createImport",
+      "body": {
+        "tenantId": "c42a0001-1030-4030-8030-000000000001",
+        "datasetKey": "public-notes",
+        "schemaRevision": 1,
+        "commitMode": "ALL_OR_NOTHING",
+        "expectedBytes": 39,
+        "expectedSha256": "8a8d96281308a0a4d028c95c7a520dc845e3411e2ecd3d04060ab43acc45198d"
+      },
+      "headers": {
+        "Idempotency-Key": "import-smoke-create"
+      },
+      "capture": {
+        "newImportId": [
+          "importId"
+        ]
+      },
+      "expectBody": {
+        "tenantId": "c42a0001-1030-4030-8030-000000000001",
+        "datasetKey": "public-notes",
+        "state": "UPLOADING",
+        "expectedSha256": "8a8d96281308a0a4d028c95c7a520dc845e3411e2ecd3d04060ab43acc45198d"
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "putChunk",
+      "params": {
+        "importId": "${newImportId}",
+        "chunkNumber": 0
+      },
+      "body": "{\"rowKey\":\"public-1\",\"title\":\"Public\"}\n",
+      "headers": {
+        "Idempotency-Key": "import-smoke-chunk",
+        "Content-Type": "application/octet-stream",
+        "Content-Range": "bytes 0-38/39",
+        "X-Chunk-SHA256": "8a8d96281308a0a4d028c95c7a520dc845e3411e2ecd3d04060ab43acc45198d"
+      },
+      "expectBody": {
+        "importId": "${newImportId}",
+        "chunkNumber": 0,
+        "start": 0,
+        "end": 38,
+        "size": 39,
+        "sha256": "8a8d96281308a0a4d028c95c7a520dc845e3411e2ecd3d04060ab43acc45198d"
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getImport",
+      "params": {
+        "importId": "${newImportId}"
+      },
+      "expectBody": {
+        "importId": "${newImportId}",
+        "receivedBytes": 39,
+        "receivedRanges": [
+          {
+            "start": 0,
+            "end": 38
+          }
+        ],
+        "missingRanges": []
+      },
+      "expectStatus": 200
+    }
+  ],
+  "notes": [
+    "V2 public wire clarification (new protocol, not a claim about the original specification): object schemas are closed; server-generated identities, counters and timestamps are omitted from creation inputs. Empty command bodies are {}. Tenant is exactly {tenantId,name}; no createdAt is added to it.",
+    "V2 public wire clarification: snapshot is exactly {schemaVersion:1,resources,work,events}; every listed collection is complete and sorted lexicographically by its public identity (composite identities by listed component order). Manager resource collections extend resources. Snapshot requires Authorization: Bearer ADMIN_TOKEN. Health is {status:\"ok\"}; production UI is HTML at /. Error.details is exactly {}. DomainEvent uses the fixed redacted envelope declared in schemas; payload contains only the published resource references/state/digests, never credentials or raw sensitive content.",
+    "V2 public wire clarification: seed is metadata, validated atomically including references and invariants; missing required fields are errors, not adapter defaults. Seed replay follows the original version+canonical digest no-op rule. JSON schema validates wire shape; business checks such as uniqueness, reference ownership, ordering, digest correctness and CAS remain implementation responsibilities.",
+    "Every listed operation has an independent public request example. Examples containing resource IDs from later lifecycle stages illustrate wire shape, not a promise that they can all be called in isolation. Only smoke is an executable ordered scenario; it verifies real seed/read and write/read behavior, not full business acceptance.",
+    "V2 public wire clarification: Schema is {schemaId,tenantId,datasetKey,name}; one Schema exists per (tenantId,datasetKey). SchemaRevision is the declared immutable closed object; server assigns revisions starting at 1. Field names are unique; externalIdField names a required string field. additionalProperties is always false, preserving the original rule that unknown row fields produce findings. Type-specific bounds apply only to the matching type; minimum<=maximum. No arbitrary JSON Schema extensions or executable validators are accepted.",
+    "V2 public wire clarification: fields has at least the external identity field. Missing optional maxLength/minimum/maximum means no such constraint. These are public schema-language additions, not requirements silently inferred from private seeds. Import creation resolves schema by tenantId+datasetKey+schemaRevision, not current revision.",
+    "V2 public wire clarification: chunkNumber starts at 0; byte ranges are inclusive. Import GET returns exact ImportJob fields plus receivedRanges and missingRanges as ascending coalesced {start,end} intervals. All mutation responses retain the exact primary resource at top level. Initial ImportJob sequence is 0; accepted state transitions increment it.",
+    "V2 public wire clarification: GET error-report returns only ErrorReport metadata. Added GET /api/v1/imports/:importId/error-report/content serves a READY report as UTF-8 application/x-ndjson: each sorted ValidationFinding is RFC 8785 canonical JSON followed by LF; sha256 hashes precisely those bytes, empty report hashes the empty byte string. Non-READY content returns IMPORT_NOT_VALIDATED. This explicit extra route makes the original download requirement usable without leaking rejected values.",
+    "V2 public wire clarification: seed keeps the original absence of importedAt and adds importBundles/bundleMembers arrays. The public example contains a tenant, populated schema revision, and byte-free UPLOADING job. Bundle members use zero-based insertion positions, contiguous within the bundle. Snapshot collection identities are schemaId+revision, importId+chunkNumber and bundleId+position for composite rows, otherwise the named ID.",
+    "The smoke performs a real independent upload and resume read but deliberately does not claim validation, atomic commit, recovery or performance acceptance. All 15 original routes, all 4 Manager routes, and the explicit report-content clarification route are declared.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {}
+}

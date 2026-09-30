@@ -1,0 +1,3334 @@
+{
+  "taskId": "flagfoundry",
+  "title": "FlagFoundry",
+  "httpHost": "127.0.0.1",
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "policyRevision": "flagfoundry-public-observation-v2",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "minimum": -1.7976931348623157e+308,
+          "maximum": 1.7976931348623157e+308
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "FLAG_COMPILATION",
+            "ROLLOUT_DEADLINE"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "flag.compilation-started",
+            "flag.revision-rejected",
+            "flag.revision-activated",
+            "flag.revision-superseded"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Project": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Environment": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "contextAttributes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        },
+        "schemaRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "projectId",
+        "name",
+        "contextAttributes",
+        "schemaRevision"
+      ],
+      "additionalProperties": false
+    },
+    "Flag": {
+      "type": "object",
+      "properties": {
+        "flagId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "flagType": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "BOOLEAN"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "flagId",
+        "projectId",
+        "key",
+        "flagType",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeedFlag": {
+      "type": "object",
+      "properties": {
+        "flagId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "flagType": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "BOOLEAN"
+          ]
+        }
+      },
+      "required": [
+        "flagId",
+        "projectId",
+        "key",
+        "flagType"
+      ],
+      "additionalProperties": false
+    },
+    "FlagRule": {
+      "type": "object",
+      "properties": {
+        "ruleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clauses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "attribute": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[\\x00-\\x7f]+$"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "EQUALS",
+                  "IN"
+                ]
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              }
+            },
+            "required": [
+              "attribute",
+              "operator",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "variantKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        }
+      },
+      "required": [
+        "ruleId",
+        "clauses",
+        "variantKey"
+      ],
+      "additionalProperties": false
+    },
+    "FlagRevision": {
+      "type": "object",
+      "properties": {
+        "revisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "flagId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "flagType": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "BOOLEAN"
+          ]
+        },
+        "defaultVariant": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[\\x00-\\x7f]+$"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "allocationBasisPoints": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "allocationBasisPoints"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlagRule"
+          }
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "COMPILING",
+            "READY",
+            "ACTIVE",
+            "REJECTED",
+            "SUPERSEDED"
+          ]
+        },
+        "snapshotDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "revisionId",
+        "flagId",
+        "environment",
+        "revision",
+        "flagType",
+        "defaultVariant",
+        "variants",
+        "rules",
+        "state",
+        "snapshotDigest",
+        "createdAt",
+        "activatedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "FlagSnapshot": {
+      "type": "object",
+      "properties": {
+        "snapshotVersion": {
+          "const": 1
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "flagId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "flagKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "revisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "flagType": {
+          "type": "string",
+          "enum": [
+            "STRING",
+            "BOOLEAN"
+          ]
+        },
+        "defaultVariant": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[\\x00-\\x7f]+$"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "allocationBasisPoints": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "allocationBasisPoints"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FlagRule"
+          }
+        },
+        "contextAttributes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        },
+        "contextSchemaRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "snapshotVersion",
+        "projectId",
+        "flagId",
+        "flagKey",
+        "environment",
+        "revisionId",
+        "revision",
+        "flagType",
+        "defaultVariant",
+        "variants",
+        "rules",
+        "contextAttributes",
+        "contextSchemaRevision"
+      ],
+      "additionalProperties": false
+    },
+    "Evaluation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "flagId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "flagKey": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "environment": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "subjectKey": {
+              "type": "string"
+            },
+            "variantKey": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "revisionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "snapshotDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "DEFAULT",
+                "RULE",
+                "PERCENTAGE"
+              ]
+            },
+            "matchedRuleId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "projectId",
+            "flagId",
+            "flagKey",
+            "environment",
+            "subjectKey",
+            "variantKey",
+            "value",
+            "revisionId",
+            "snapshotDigest",
+            "reason",
+            "matchedRuleId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "flagId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "flagKey": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "environment": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "subjectKey": {
+              "type": "string"
+            },
+            "variantKey": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "revisionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "snapshotDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "DEFAULT",
+                "RULE",
+                "PERCENTAGE"
+              ]
+            },
+            "matchedRuleId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "rolloutId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "stepIndex": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "projectId",
+            "flagId",
+            "flagKey",
+            "environment",
+            "subjectKey",
+            "variantKey",
+            "value",
+            "revisionId",
+            "snapshotDigest",
+            "reason",
+            "matchedRuleId",
+            "rolloutId",
+            "stepIndex"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "FlagRevisionDiff": {
+      "type": "object",
+      "properties": {
+        "flagId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "fromRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "toRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "defaultVariantChanged": {
+          "type": "boolean"
+        },
+        "addedVariantKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        },
+        "removedVariantKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        },
+        "changedVariantKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        },
+        "variantOrderChanged": {
+          "type": "boolean"
+        },
+        "addedRuleIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "removedRuleIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "changedRuleIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "ruleOrderChanged": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "flagId",
+        "environment",
+        "fromRevision",
+        "toRevision",
+        "defaultVariantChanged",
+        "addedVariantKeys",
+        "removedVariantKeys",
+        "changedVariantKeys",
+        "variantOrderChanged",
+        "addedRuleIds",
+        "removedRuleIds",
+        "changedRuleIds",
+        "ruleOrderChanged"
+      ],
+      "additionalProperties": false
+    },
+    "CompilationFinding": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "path",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "ProgressiveRollout": {
+      "type": "object",
+      "properties": {
+        "rolloutId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "flagId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x00-\\x7f]+$"
+        },
+        "priorRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "candidateRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "RUNNING",
+            "COMPLETED",
+            "ROLLED_BACK",
+            "STALE"
+          ]
+        },
+        "currentStepIndex": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stepIndex": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "candidateExposureBasisPoints": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "minimumEvaluationCount": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "maximumFailureBasisPoints": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "observationSeconds": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "successCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "failureCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "OBSERVING",
+                  "PASSED",
+                  "FAILED"
+                ]
+              },
+              "startedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "observationDeadlineAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "completedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "stepIndex",
+              "candidateExposureBasisPoints",
+              "minimumEvaluationCount",
+              "maximumFailureBasisPoints",
+              "observationSeconds",
+              "successCount",
+              "failureCount",
+              "state",
+              "startedAt",
+              "observationDeadlineAt",
+              "completedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "rolloutId",
+        "flagId",
+        "environment",
+        "priorRevisionId",
+        "candidateRevisionId",
+        "state",
+        "currentStepIndex",
+        "steps",
+        "createdAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "EvaluationOutcome": {
+      "type": "object",
+      "properties": {
+        "outcomeId": {
+          "type": "string"
+        },
+        "stepIndex": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "subjectKey": {
+          "type": "string"
+        },
+        "snapshotDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "SUCCESS",
+            "FAILURE"
+          ]
+        },
+        "rolloutId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "outcomeId",
+        "stepIndex",
+        "subjectKey",
+        "snapshotDigest",
+        "outcome",
+        "rolloutId",
+        "reportedAt"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "projects": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Project"
+              }
+            },
+            "environments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Environment"
+              }
+            },
+            "flags": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Flag"
+              }
+            },
+            "flagRevisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FlagRevision"
+              }
+            },
+            "flagSnapshots": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FlagSnapshot"
+              }
+            },
+            "progressiveRollouts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ProgressiveRollout"
+              }
+            },
+            "evaluationOutcomes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EvaluationOutcome"
+              }
+            }
+          },
+          "required": [
+            "projects",
+            "environments",
+            "flags",
+            "flagRevisions",
+            "flagSnapshots",
+            "progressiveRollouts",
+            "evaluationOutcomes"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#real-ui",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "70000000-0000-4000-8000-000000000001",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "list-revisions",
+      "method": "GET",
+      "path": "/api/v1/flag-revisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FlagRevision"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "get-revision",
+      "method": "GET",
+      "path": "/api/v1/flag-revisions/:revisionId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/FlagRevision"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "revisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "revisionId": "70000000-0000-4000-8000-000000000203"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "compilation-findings",
+      "method": "GET",
+      "path": "/api/v1/flag-revisions/:revisionId/findings",
+      "status": 200,
+      "source": "V2 public observation clarification (contract notes), original CompilationFinding and stale-compilation requirements",
+      "response": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/CompilationFinding"
+        }
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "revisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "revisionId": "70000000-0000-4000-8000-000000000203"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "update-context-schema",
+      "method": "POST",
+      "path": "/api/v1/projects/:projectId/environments/:environment/context-schema",
+      "status": 200,
+      "source": "V2 public observation clarification (contract notes), original captured Environment context schema invariant",
+      "response": {
+        "$ref": "#/$defs/Environment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "contextAttributes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "contextAttributes"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "environment",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "projectId": "70000000-0000-4000-8000-000000000201",
+          "environment": "production"
+        },
+        "body": {
+          "contextAttributes": [
+            "region",
+            "subjectKey",
+            "tier"
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-update-context-schema",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-flag",
+      "method": "POST",
+      "path": "/api/v1/flags",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Flag"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          },
+          "flagType": {
+            "type": "string",
+            "enum": [
+              "STRING",
+              "BOOLEAN"
+            ]
+          }
+        },
+        "required": [
+          "projectId",
+          "key",
+          "flagType"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "projectId": "70000000-0000-4000-8000-000000000201",
+          "key": "public-created-flag",
+          "flagType": "BOOLEAN"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-flag"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-revision",
+      "method": "POST",
+      "path": "/api/v1/flags/:flagId/revisions",
+      "status": 202,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/FlagRevision"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          },
+          "flagType": {
+            "type": "string",
+            "enum": [
+              "STRING",
+              "BOOLEAN"
+            ]
+          },
+          "defaultVariant": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[\\x00-\\x7f]+$"
+                },
+                "value": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "allocationBasisPoints": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "key",
+                "value",
+                "allocationBasisPoints"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FlagRule"
+            }
+          },
+          "expectedActiveRevision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "environment",
+          "flagType",
+          "defaultVariant",
+          "variants",
+          "rules",
+          "expectedActiveRevision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "flagId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "flagId": "70000000-0000-4000-8000-000000000202"
+        },
+        "body": {
+          "environment": "production",
+          "flagType": "STRING",
+          "defaultVariant": "standard",
+          "variants": [
+            {
+              "key": "standard",
+              "value": "Welcome",
+              "allocationBasisPoints": 10000
+            }
+          ],
+          "rules": [],
+          "expectedActiveRevision": 1
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-revision"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "activate-revision",
+      "method": "POST",
+      "path": "/api/v1/flag-revisions/:revisionId/activate",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/FlagRevision"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedActiveRevision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expectedActiveRevision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "revisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "revisionId": "70000000-0000-4000-8000-000000000204"
+        },
+        "body": {
+          "expectedActiveRevision": 1
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-activate-revision"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "evaluate",
+      "method": "POST",
+      "path": "/api/v1/evaluations",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Evaluation"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "flagKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          },
+          "environment": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          },
+          "context": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x00-\\x7f]+$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "snapshotDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "projectId",
+          "flagKey",
+          "environment",
+          "context"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "projectId": "70000000-0000-4000-8000-000000000201",
+          "flagKey": "welcome",
+          "environment": "production",
+          "context": {
+            "subjectKey": "public-subject",
+            "region": "us",
+            "tier": "pro"
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-evaluate"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "revision-diff",
+      "method": "GET",
+      "path": "/api/v1/flags/:flagId/revisions/:revision/diff",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/FlagRevisionDiff"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "flagId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "revision",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "against",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "environment",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "flagId": "70000000-0000-4000-8000-000000000202",
+          "revision": 2
+        },
+        "query": {
+          "against": 1,
+          "environment": "production"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "flag-revisions",
+      "method": "GET",
+      "path": "/api/v1/flags/:flagId/revisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FlagRevision"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "flagId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "environment",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[\\x00-\\x7f]+$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "flagId": "70000000-0000-4000-8000-000000000202"
+        },
+        "query": {
+          "environment": "production",
+          "limit": 50
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "progressive-activate",
+      "method": "POST",
+      "path": "/api/v1/flag-revisions/:revisionId/progressive-activate",
+      "status": 202,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/ProgressiveRollout"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedActiveRevision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "candidateExposureBasisPoints": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "minimumEvaluationCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "maximumFailureBasisPoints": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "observationSeconds": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "candidateExposureBasisPoints",
+                "minimumEvaluationCount",
+                "maximumFailureBasisPoints",
+                "observationSeconds"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "expectedActiveRevision",
+          "steps"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "revisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "revisionId": "70000000-0000-4000-8000-000000000204"
+        },
+        "body": {
+          "expectedActiveRevision": 1,
+          "steps": [
+            {
+              "candidateExposureBasisPoints": 10000,
+              "minimumEvaluationCount": 1,
+              "maximumFailureBasisPoints": 0,
+              "observationSeconds": 60
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-progressive-activate"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "outcome-batch",
+      "method": "POST",
+      "path": "/api/v1/progressive-rollouts/:rolloutId/outcome-batches",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "acceptedIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "duplicateIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "acceptedIds",
+          "duplicateIds"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "outcomeId": {
+                  "type": "string"
+                },
+                "stepIndex": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "subjectKey": {
+                  "type": "string"
+                },
+                "snapshotDigest": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "SUCCESS",
+                    "FAILURE"
+                  ]
+                }
+              },
+              "required": [
+                "outcomeId",
+                "stepIndex",
+                "subjectKey",
+                "snapshotDigest",
+                "outcome"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "outcomes"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "rolloutId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "rolloutId": "70000000-0000-4000-8000-000000000205"
+        },
+        "body": {
+          "outcomes": [
+            {
+              "outcomeId": "public-outcome",
+              "stepIndex": 0,
+              "subjectKey": "public-subject",
+              "snapshotDigest": "19d7163685a4c611de7c2cf8d7b391d4d726decad3fa59dfdf072298f66e7aa1",
+              "outcome": "SUCCESS"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-outcome-batch"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "get-rollout",
+      "method": "GET",
+      "path": "/api/v1/progressive-rollouts/:rolloutId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/ProgressiveRollout"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "rolloutId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "rolloutId": "70000000-0000-4000-8000-000000000205"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    }
+  ],
+  "seed": {
+    "command": [
+      "npm",
+      "run",
+      "db:seed",
+      "--",
+      "--file",
+      "${SEED_PATH}"
+    ],
+    "replay": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Project"
+          }
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Environment"
+          }
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedFlag"
+          }
+        },
+        "activeRevisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "revisionId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "flagId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "environment": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[\\x00-\\x7f]+$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "flagType": {
+                "type": "string",
+                "enum": [
+                  "STRING",
+                  "BOOLEAN"
+                ]
+              },
+              "defaultVariant": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[\\x00-\\x7f]+$"
+              },
+              "variants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[\\x00-\\x7f]+$"
+                    },
+                    "value": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "allocationBasisPoints": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "value",
+                    "allocationBasisPoints"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/FlagRule"
+                }
+              },
+              "state": {
+                "const": "ACTIVE"
+              },
+              "snapshotDigest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "activatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "sequence": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "revisionId",
+              "flagId",
+              "environment",
+              "revision",
+              "flagType",
+              "defaultVariant",
+              "variants",
+              "rules",
+              "state",
+              "snapshotDigest",
+              "createdAt",
+              "activatedAt",
+              "sequence"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "projects",
+        "environments",
+        "flags",
+        "activeRevisions"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "flagfoundry-public-v2-1",
+      "projects": [
+        {
+          "projectId": "70000000-0000-4000-8000-000000000201",
+          "name": "Public decision project"
+        }
+      ],
+      "environments": [
+        {
+          "projectId": "70000000-0000-4000-8000-000000000201",
+          "name": "production",
+          "contextAttributes": [
+            "region",
+            "subjectKey",
+            "tier"
+          ],
+          "schemaRevision": 1
+        }
+      ],
+      "flags": [
+        {
+          "flagId": "70000000-0000-4000-8000-000000000202",
+          "projectId": "70000000-0000-4000-8000-000000000201",
+          "key": "welcome",
+          "flagType": "STRING"
+        }
+      ],
+      "activeRevisions": [
+        {
+          "revisionId": "70000000-0000-4000-8000-000000000203",
+          "flagId": "70000000-0000-4000-8000-000000000202",
+          "environment": "production",
+          "revision": 1,
+          "flagType": "STRING",
+          "defaultVariant": "standard",
+          "variants": [
+            {
+              "key": "standard",
+              "value": "Welcome",
+              "allocationBasisPoints": 10000
+            }
+          ],
+          "rules": [],
+          "state": "ACTIVE",
+          "snapshotDigest": "19d7163685a4c611de7c2cf8d7b391d4d726decad3fa59dfdf072298f66e7aa1",
+          "createdAt": "2026-09-07T00:00:00.000Z",
+          "activatedAt": "2026-09-07T00:00:00.000Z",
+          "sequence": 1
+        }
+      ]
+    }
+  },
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "ok"
+      }
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "projects"
+          ],
+          "match": {
+            "projectId": "70000000-0000-4000-8000-000000000201",
+            "name": "Public decision project"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "flags"
+          ],
+          "match": {
+            "flagId": "70000000-0000-4000-8000-000000000202",
+            "projectId": "70000000-0000-4000-8000-000000000201",
+            "key": "welcome",
+            "flagType": "STRING"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "flagRevisions"
+          ],
+          "match": {
+            "revisionId": "70000000-0000-4000-8000-000000000203",
+            "flagId": "70000000-0000-4000-8000-000000000202",
+            "environment": "production",
+            "revision": 1,
+            "flagType": "STRING",
+            "defaultVariant": "standard",
+            "variants": [
+              {
+                "key": "standard",
+                "value": "Welcome",
+                "allocationBasisPoints": 10000
+              }
+            ],
+            "rules": [],
+            "state": "ACTIVE",
+            "snapshotDigest": "19d7163685a4c611de7c2cf8d7b391d4d726decad3fa59dfdf072298f66e7aa1",
+            "createdAt": "2026-09-07T00:00:00.000Z",
+            "activatedAt": "2026-09-07T00:00:00.000Z",
+            "sequence": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "flagSnapshots"
+          ],
+          "match": {
+            "snapshotVersion": 1,
+            "projectId": "70000000-0000-4000-8000-000000000201",
+            "flagId": "70000000-0000-4000-8000-000000000202",
+            "flagKey": "welcome",
+            "environment": "production",
+            "revisionId": "70000000-0000-4000-8000-000000000203",
+            "revision": 1,
+            "flagType": "STRING",
+            "defaultVariant": "standard",
+            "variants": [
+              {
+                "key": "standard",
+                "value": "Welcome",
+                "allocationBasisPoints": 10000
+              }
+            ],
+            "rules": [],
+            "contextAttributes": [
+              "region",
+              "subjectKey",
+              "tier"
+            ],
+            "contextSchemaRevision": 1
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "evaluate",
+      "body": {
+        "projectId": "70000000-0000-4000-8000-000000000201",
+        "flagKey": "welcome",
+        "environment": "production",
+        "context": {
+          "subjectKey": "public-read-subject"
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "v2-public-seed-evaluation"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "flagId": "70000000-0000-4000-8000-000000000202",
+        "revisionId": "70000000-0000-4000-8000-000000000203",
+        "value": "Welcome",
+        "snapshotDigest": "19d7163685a4c611de7c2cf8d7b391d4d726decad3fa59dfdf072298f66e7aa1"
+      }
+    },
+    {
+      "operationId": "create-flag",
+      "body": {
+        "projectId": "70000000-0000-4000-8000-000000000201",
+        "key": "public-independent-flag",
+        "flagType": "BOOLEAN"
+      },
+      "headers": {
+        "Idempotency-Key": "v2-public-new-flag"
+      },
+      "expectStatus": 201,
+      "capture": {
+        "flagId": [
+          "flagId"
+        ]
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "flags"
+          ],
+          "match": {
+            "flagId": "${flagId}",
+            "projectId": "70000000-0000-4000-8000-000000000201",
+            "key": "public-independent-flag",
+            "flagType": "BOOLEAN"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "compilation-findings",
+      "params": {
+        "revisionId": "70000000-0000-4000-8000-000000000203"
+      },
+      "expectStatus": 200,
+      "expectBody": []
+    },
+    {
+      "operationId": "update-context-schema",
+      "params": {
+        "projectId": "70000000-0000-4000-8000-000000000201",
+        "environment": "production"
+      },
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}",
+        "Idempotency-Key": "v2-public-schema-noop"
+      },
+      "body": {
+        "contextAttributes": [
+          "region",
+          "subjectKey",
+          "tier"
+        ]
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "projectId": "70000000-0000-4000-8000-000000000201",
+        "name": "production",
+        "contextAttributes": [
+          "region",
+          "subjectKey",
+          "tier"
+        ],
+        "schemaRevision": 1
+      }
+    }
+  ],
+  "notes": [
+    "Authority: the complete original public README and Manager requirements. This contract uses no private evaluator cases or submitted implementation. Wire validation does not establish workflow, recovery or performance correctness.",
+    "V2 wire clarification: unspecified health body is exactly {status:\"ok\"}; production UI is HTML at /. GET domain-events returns {items:[DomainEvent]} with aggregateId required and optional afterSequence (default 0), limit (default 50, range 1..100), ordered by sequence. No other query keys are accepted.",
+    "Original error details is an exact empty object. Every mutation requires its published Idempotency-Key. Only documented admin routes require ADMIN_TOKEN. Output timestamps retain the original UTC millisecond precision.",
+    "The FINAL snapshot has exactly its published resource keys and explicitly typed Work/DomainEvent records. It is one database snapshot; recursive *Token omission, stable ordering, retained terminal Work and event identity remain business requirements. Manager-only data is created by public APIs, never inserted through the V1 seed.",
+    "Examples are independent public transport examples, not a required stateful sequence. A success requires the state/time/lease/revision prerequisites in the original public documents. Smoke checks identity and a separate write/read path, not every operation or concurrency invariant.",
+    "Author-confirmed business policy flagfoundry-rollout-authority-v1: while a progressive rollout is RUNNING, its captured prior revision remains the sole ACTIVE revision and its captured candidate remains READY with activatedAt null. The official active pointer and expectedActiveRevision compare-and-set still refer to the prior revision, including a final cohort at 10000 exposure while observations remain incomplete.",
+    "The RUNNING rollout alone authorizes evaluation of its captured READY candidate Snapshot according to the published cohort bucket; this is the explicit Manager exception to the V1 invariant that an inactive revision cannot be evaluated. Non-selected, unrelated READY, REJECTED and stale revisions gain no evaluation authority. Every progressive Evaluation still names its rolloutId and current stepIndex.",
+    "Only the transaction that passes all rollout steps marks the rollout COMPLETED, supersedes the prior revision and makes the candidate the sole ACTIVE revision. Candidate activatedAt is that completion transaction timestamp, equal to rollout terminalAt; immutable prior and candidate Snapshot contents and digests do not change. A failed threshold or deadline instead marks the rollout ROLLED_BACK without activating the candidate: prior remains ACTIVE, candidate remains READY with activatedAt null, and subsequent fresh evaluations use the prior Snapshot.",
+    "The confirmed authority rule applies at the observed RUNNING or terminal transition, not as a permanent condition on historical terminal rollout rows. A later legitimate activation may supersede that active revision. A concurrent immediate activation makes a RUNNING rollout STALE and owns the new active pointer; old rollout work cannot restore its prior. Saved V1 replies and seeded history remain unchanged.",
+    "Author clarification flagfoundry-public-observation-v2 preserves flagfoundry-rollout-authority-v1 and all original business requirements. ASCII 1..64 means U+0000 through U+007F inclusive, length 1..64, case-sensitive, with no trimming or visible-character-only restriction. This is distinct from the visible-ASCII Idempotency-Key header rule.",
+    "GET /api/v1/flag-revisions/:revisionId/findings returns the complete CompilationFinding array, sorted by path then code using UTF-8 byte order, without a wrapper or pagination. It is a read-only durable explanation of that Compilation result, not another snapshot resource key. Unknown revision returns 404 NOT_FOUND. COMPILING and successfully compiled revisions return []; a REJECTED revision has one or more nonempty code/path/message findings explaining the rejected rule or captured prerequisite. Findings use JSON Pointer paths into the revision request and remain stable after completion; no new error-code enum is imposed on findings.",
+    "POST /api/v1/projects/:projectId/environments/:environment/context-schema is an ADMIN_TOKEN mutation using the ordinary durable Idempotency-Key contract. Body is exactly {contextAttributes:[ASCII name]}; names must be sorted unique and unsorted names return 400 INVALID_REQUEST. It updates only an existing Environment and returns its exact Environment shape; missing Project/Environment returns 404 NOT_FOUND. A changed attribute list increments schemaRevision by one in the same transaction; an identical list is a no-op and replay never increments again. Existing Snapshots and captured Compilation inputs remain immutable. This publishes the mutation needed to observe the original captured-schema invariant, not an automatic activation, a schema-edit workflow, or a new event. A READY revision compiled against an older schema cannot activate (409 ACTIVE_REVISION_CHANGED); an unfinished stale Compilation becomes REJECTED with explanatory findings. The existing active Snapshot remains authority until a valid new activation.",
+    "For fresh legacy /activate requests, the Manager one-Step 10000/zero-observation description is semantic equivalence to immediate activation: keep the exact old FlagRevision response and create no new ProgressiveRollout, EvaluationOutcome, or ROLLOUT_DEADLINE Work. Existing RUNNING rollouts may become STALE as already required. Imported history and saved legacy replay bodies acquire no synthetic rollout rows or activations.",
+    "An Outcome for a well-formed but wrong Snapshot digest in its otherwise current open rollout Step returns 409 SNAPSHOT_MISMATCH. Wrong current Step or superseded authority retains 409 ROLLOUT_STALE; deadline precedence retains 409 OUTCOME_WINDOW_CLOSED. A failed member rejects the complete batch with no accepted IDs, counter increments, or side effects. outcomeId is the original unrestricted JSON string: do not impose an unpublished UUID, nonempty, ASCII, or maximum-length requirement.",
+    "V2 public wire clarification: outcome batches return the closed object {acceptedIds:[string],duplicateIds:[string]}, each preserving input order. These are the outcomeId values accepted or replayed, not counters or private record identifiers.",
+    "V2 public wire clarification: revision-diff requires against (positive integer). Optional environment disambiguates per-environment revision numbers; omitting it is valid only when exactly one Environment contains both revisions. Ambiguous requests return 400 INVALID_REQUEST, never compare revisions across Environments. Flag-specific revision lists require environment.",
+    "V2 compatibility clarification: ordinary and saved legacy Evaluation responses retain the original shape; evaluations participating in a progressive activation include both rolloutId and stepIndex. If an implementation includes the two fields outside a rollout they are both null. The union allows old replay bodies, never an extra wrapper.",
+    "The Evaluation context is an explicitly open map of published ASCII attribute names to string values; subjectKey is the intrinsic required bucketing input and need not also occur in contextAttributes. Other supplied keys must occur in the captured Environment attribute whitelist. Missing nonempty subjectKey uses MISSING_SUBJECT_KEY and a non-intrinsic unknown attribute uses INVALID_FLAG_RULE. Rules, variant type agreement, allocation totals and progressive-step bounds retain the business errors published in README/Manager.",
+    "The V1 seed keeps only projects, environments, flags and activeRevisions. The linked public example has one exact RFC 8785 Snapshot digest. Seed flags have no createdAt field; their public createdAt is the earliest imported revision createdAt, or the import transaction time if none exists, and replay never changes it. No rollout or outcome state may be seeded."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1"
+}

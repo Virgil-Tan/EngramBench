@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-leases" | "read-lease-legacy-path" | "create-lease" | "confirm-lease" | "renew-lease" | "release-lease" | "cancel-admission" | "pool-timeline" | "read-lease" | "read-members" | "domain-events" | "verification-snapshot";

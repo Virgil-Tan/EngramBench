@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "taskId": "seatreserve",
+  "profile": "learning-v2",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "公共合同与主流程", "weight": 30 },
+    "B": { "title": "幂等、并发与线性化", "weight": 25 },
+    "C": { "title": "持久工作、恢复与事件", "weight": 20 },
+    "D": { "title": "HTTP、UI 与 snapshot 跨层闭环", "weight": 15 },
+    "E": { "title": "兼容迁移与正式性能", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "SEAT_OWNERSHIP_ATOMICITY", "cap": 35, "publicInvariant": "A committed seat has at most one live Hold, Order, or Offer owner and multi-seat acquisition is all-or-nothing." },
+    { "id": "PAYMENT_IDENTITY_CONSERVATION", "cap": 35, "publicInvariant": "UNKNOWN payment preserves one provider identity and cannot double charge, release protected seats, or regress terminal state." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "Response loss, concurrency, and restart restore one saved status, body, identity, and semantic effect." },
+    { "id": "STALE_WORK_OR_LOST_WORK", "cap": 40, "publicInvariant": "Persisted Work is reclaimable and an expired lease owner cannot commit a seat, payment, offer, or event effect." },
+    { "id": "MIGRATION_COMPATIBILITY", "cap": 35, "publicInvariant": "FINAL migration preserves every V1 identity, frozen amount, provider identity, saved replay, Work, and Event." }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-SR-01", "summary": "The Manager contract publishes no user-facing Entry read/list or Offer discovery seam; D-03 refresh discovery remains fail-closed diagnostic." },
+    { "id": "SPEC-GAP-SR-02", "summary": "The Manager contract publishes no waitlist- or offer-specific event type; the evaluator must not invent one." }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "1..12 SeatHold 原子占有、TTL 与冻结价格", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "Checkout 与 Provider UNKNOWN identity", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Hold expiry、Order ownership 与 seat conservation", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "Waitlist FIFO 与连续座位 deterministic match", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-05", "title": "SeatOffer 冻结、120s 与 lifecycle", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "B-01", "title": "Hold/checkout mutation durable replay", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "Hot seats 多 API Hold 竞争不超卖", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Receipt/reconcile/expiry 交换律与 payment 单终态", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "并发 release/match 保持 FIFO 与 owner 唯一", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "accept/decline/cancel/expiry 竞争单一终态", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-01", "title": "Hold expiry Work reclaim 与 stale fence", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "C-02", "title": "Provider 已持久化但 response unknown 的 payment recovery", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "C-03", "title": "WAITLIST_MATCH/OFFER_EXPIRY 崩溃后闭合", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "C-04", "title": "Seat/payment event unknown ACK", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "D-01", "title": "V1/Waitlist/Offer wire、errors 与 tenant scope", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "D-02", "title": "浏览器完成 seat map→Hold→checkout/reconcile", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "D-03", "title": "浏览器完成 waitlist/offer 倒计时与控制", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"], "blockedAssertions": [{ "id": "SR-D03-REFRESH-OFFER-DISCOVERY", "blockedBy": "SPEC-GAP-SR-01", "policy": "fail-closed-diagnostic" }] },
+    { "id": "D-04", "title": "FINAL snapshot 单时点 live-owner closure", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "E-01", "title": "Populated V1→Waitlist FINAL 兼容迁移", "dimension": "E", "weight": 3, "prerequisites": ["V1", "FINAL"] },
+    { "id": "E-02", "title": "seat-hold-ingest 固定负载", "dimension": "E", "weight": 3, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "E-03", "title": "hot-seat-contention 竞争负载", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "E-04", "title": "payment-expiry-recovery 恢复负载", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF", "SIGKILL"] }
+  ]
+}

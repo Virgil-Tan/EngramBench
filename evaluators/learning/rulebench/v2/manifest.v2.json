@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 2,
+  "taskId": "rulebench",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "weight": 30,
+      "title": "Rule language and deterministic semantics"
+    },
+    "B": {
+      "weight": 25,
+      "title": "Atomicity, idempotency, and concurrency"
+    },
+    "C": {
+      "weight": 20,
+      "title": "Worker, replay, recovery, and events"
+    },
+    "D": {
+      "weight": 15,
+      "title": "HTTP, browser, and verification snapshot"
+    },
+    "E": {
+      "weight": 10,
+      "title": "Migration and formal performance"
+    }
+  },
+  "cases": [
+    {
+      "id": "A-01",
+      "dimension": "A",
+      "weight": 6,
+      "title": "Expression dialect, depth, scale, and safe-integer gates",
+      "prerequisites": []
+    },
+    {
+      "id": "A-02",
+      "dimension": "A",
+      "weight": 6,
+      "title": "Missing/null and comparison semantics without coercion",
+      "prerequisites": []
+    },
+    {
+      "id": "A-03",
+      "dimension": "A",
+      "weight": 6,
+      "title": "Rule order, terminal short-circuit, and ExplanationNodes",
+      "prerequisites": []
+    },
+    {
+      "id": "A-04",
+      "dimension": "A",
+      "weight": 6,
+      "title": "Static ConflictReport and immutable publication",
+      "prerequisites": []
+    },
+    {
+      "id": "A-05",
+      "dimension": "A",
+      "weight": 6,
+      "title": "Frozen ComparisonRun corpus, versions, and digests",
+      "prerequisites": []
+    },
+    {
+      "id": "B-01",
+      "dimension": "B",
+      "weight": 5,
+      "title": "Evaluation durable idempotency and facts freeze",
+      "prerequisites": []
+    },
+    {
+      "id": "B-02",
+      "dimension": "B",
+      "weight": 5,
+      "title": "Concurrent unique immutable RuleSet publication",
+      "prerequisites": []
+    },
+    {
+      "id": "B-03",
+      "dimension": "B",
+      "weight": 5,
+      "title": "Multi-Worker deterministic at-most-once Evaluation",
+      "prerequisites": []
+    },
+    {
+      "id": "B-04",
+      "dimension": "B",
+      "weight": 5,
+      "title": "Comparison start CAS and one Result per frozen item",
+      "prerequisites": []
+    },
+    {
+      "id": "B-05",
+      "dimension": "B",
+      "weight": 5,
+      "title": "Cancel, promote, and Worker commit convergence",
+      "prerequisites": []
+    },
+    {
+      "id": "C-01",
+      "dimension": "C",
+      "weight": 5,
+      "title": "Evaluation Work lease reclaim and stale fence",
+      "prerequisites": []
+    },
+    {
+      "id": "C-02",
+      "dimension": "C",
+      "weight": 5,
+      "title": "Replay always uses original frozen version and facts",
+      "prerequisites": []
+    },
+    {
+      "id": "C-03",
+      "dimension": "C",
+      "weight": 5,
+      "title": "Comparison Worker crash and corpus closure",
+      "prerequisites": []
+    },
+    {
+      "id": "C-04",
+      "dimension": "C",
+      "weight": 5,
+      "title": "Rule and Comparison event restart stability",
+      "prerequisites": [],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "D-01",
+      "dimension": "D",
+      "weight": 4,
+      "title": "Strict tenant-scoped V1 and Comparison HTTP contract",
+      "prerequisites": []
+    },
+    {
+      "id": "D-02",
+      "dimension": "D",
+      "weight": 4,
+      "title": "Production browser RuleSet to Evaluation and Replay",
+      "prerequisites": [
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-03",
+      "dimension": "D",
+      "weight": 4,
+      "title": "Production browser ComparisonRun control workflow",
+      "prerequisites": [
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-04",
+      "dimension": "D",
+      "weight": 3,
+      "title": "Point-in-time FINAL verification snapshot",
+      "prerequisites": []
+    },
+    {
+      "id": "E-01",
+      "dimension": "E",
+      "weight": 3,
+      "title": "Evaluation, Replay and leased Work survive FINAL restart",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "dimension": "E",
+      "weight": 3,
+      "title": "Formal evaluation-throughput workload",
+      "prerequisites": [
+        "exclusive_performance_slot"
+      ]
+    },
+    {
+      "id": "E-03",
+      "dimension": "E",
+      "weight": 2,
+      "title": "Formal deep-short-circuit workload",
+      "prerequisites": [
+        "exclusive_performance_slot"
+      ]
+    },
+    {
+      "id": "E-04",
+      "dimension": "E",
+      "weight": 2,
+      "title": "Formal comparison-recovery workload",
+      "prerequisites": [
+        "exclusive_performance_slot"
+      ]
+    }
+  ],
+  "hardCaps": [
+    {
+      "id": "DECLARATIVE_SAFETY",
+      "cap": 35,
+      "publicInvariant": "Rule input remains declarative and obeys the published grammar and size limits."
+    },
+    {
+      "id": "VERSION_IMMUTABILITY",
+      "cap": 35,
+      "publicInvariant": "Published RuleSetVersions and ConflictReports remain immutable."
+    },
+    {
+      "id": "DETERMINISTIC_EVALUATION",
+      "cap": 35,
+      "publicInvariant": "Decision, tags, matches, explanations, and digests are deterministic."
+    },
+    {
+      "id": "COMPARISON_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "A frozen ComparisonRun closes with one immutable Result per corpus Evaluation."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "A durable idempotent replay never creates a second business effect."
+    },
+    {
+      "id": "WORK_RECOVERY",
+      "cap": 40,
+      "publicInvariant": "A stale Worker cannot commit and durable Work is not stranded after process death."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "FINAL migration preserves every V1 identity, digest, replay body, lease, and Event."
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

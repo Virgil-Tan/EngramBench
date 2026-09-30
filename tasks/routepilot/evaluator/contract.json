@@ -1,0 +1,161 @@
+{
+  "seedKeys": [
+    "tenants",
+    "backends",
+    "routeDefinitions",
+    "routeRevisions",
+    "rateLimitPolicies",
+    "circuitPolicies",
+    "configReleases",
+    "gatewayRequests",
+    "upstreamAttempts",
+    "rateWindows",
+    "circuitWindows"
+  ],
+  "publicPaths": [
+    "/api/v1/tenants",
+    "/api/v1/backends",
+    "/api/v1/route-definitions",
+    "/api/v1/route-revisions",
+    "/api/v1/rate-limit-policies",
+    "/api/v1/circuit-policies",
+    "/api/v1/config-releases",
+    "/api/v1/config-releases/:configReleaseId",
+    "/api/v1/config-releases/:configReleaseId/rollback",
+    "/api/v1/gateway/dispatch",
+    "/api/v1/gateway-requests/:gatewayRequestId",
+    "/api/v1/regional-rollouts",
+    "/api/v1/regional-rollouts/:regionalRolloutId",
+    "/api/v1/regional-rollouts/:regionalRolloutId/pause",
+    "/api/v1/regional-rollouts/:regionalRolloutId/resume",
+    "/api/v1/regional-rollouts/:regionalRolloutId/cancel",
+    "/api/v1/regional-rollouts/:regionalRolloutId/rollback",
+    "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {
+        "key": "tenants",
+        "shape": "Tenant",
+        "sort": [
+          "tenantId"
+        ]
+      },
+      {
+        "key": "backends",
+        "shape": "Backend",
+        "sort": [
+          "backendId"
+        ]
+      },
+      {
+        "key": "routeDefinitions",
+        "shape": "RouteDefinition",
+        "sort": [
+          "routeId"
+        ]
+      },
+      {
+        "key": "routeRevisions",
+        "shape": "RouteRevision",
+        "sort": [
+          "routeId",
+          "revision"
+        ]
+      },
+      {
+        "key": "rateLimitPolicies",
+        "shape": "RateLimitPolicy",
+        "sort": [
+          "rateLimitPolicyId",
+          "revision"
+        ]
+      },
+      {
+        "key": "circuitPolicies",
+        "shape": "CircuitPolicy",
+        "sort": [
+          "circuitPolicyId",
+          "revision"
+        ]
+      },
+      {
+        "key": "configReleases",
+        "shape": "ConfigRelease",
+        "sort": [
+          "configReleaseId"
+        ]
+      },
+      {
+        "key": "gatewayRequests",
+        "shape": "GatewayRequest",
+        "sort": [
+          "gatewayRequestId"
+        ]
+      },
+      {
+        "key": "upstreamAttempts",
+        "shape": "UpstreamAttempt",
+        "sort": [
+          "gatewayRequestId",
+          "attempt"
+        ]
+      },
+      {
+        "key": "rateWindows",
+        "shape": "RateWindow",
+        "sort": [
+          "tenantId",
+          "rateLimitPolicyId",
+          "windowStart"
+        ]
+      },
+      {
+        "key": "circuitWindows",
+        "shape": "CircuitWindow",
+        "sort": [
+          "tenantId",
+          "backendId",
+          "epoch"
+        ]
+      }
+    ],
+    "managerResources": [
+      {
+        "key": "regionalRollouts",
+        "shape": "RegionalRollout",
+        "sort": [
+          "regionalRolloutId"
+        ]
+      },
+      {
+        "key": "regionalStages",
+        "shape": "RegionalStage",
+        "sort": [
+          "regionalRolloutId",
+          "ordinal"
+        ]
+      }
+    ]
+  },
+  "workKinds": {
+    "v1": [
+      "CONFIG_ACTIVATE",
+      "CIRCUIT_RECONCILE"
+    ],
+    "manager": [
+      "REGIONAL_ROLLOUT_ADVANCE"
+    ]
+  },
+  "perfScenarios": [
+    {
+      "id": "route-match-steady"
+    },
+    {
+      "id": "hot-tenant-limit"
+    },
+    {
+      "id": "breaker-reload-recovery"
+    }
+  ]
+}

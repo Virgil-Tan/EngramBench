@@ -1,0 +1,3052 @@
+{
+  "schemaVersion": 1,
+  "tasks": {
+    "ledgerbridge": {
+      "seedKeys": [
+        "accounts",
+        "transfers"
+      ],
+      "publicPaths": [
+        "/api/v1/transfers",
+        "/api/v1/transfers/:transferId/cancel",
+        "/api/v1/transfers/:transferId/reverse",
+        "/api/v1/accounts/:accountId/statement?limit&cursor",
+        "/api/v1/accounts/:accountId",
+        "/api/v1/transfers/:transferId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "accounts",
+            "shape": "Account",
+            "sort": [
+              "accountId"
+            ]
+          },
+          {
+            "key": "transfers",
+            "shape": "Transfer",
+            "sort": [
+              "transferId"
+            ]
+          },
+          {
+            "key": "postings",
+            "shape": "Posting",
+            "sort": [
+              "postingId"
+            ]
+          }
+        ],
+        "managerResources": []
+      },
+      "workKinds": {
+        "v1": [
+          "SETTLEMENT"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "statement-read",
+          "method": "GET",
+          "path": "/api/v1/accounts/:accountId/statement?limit=50",
+          "setup": "Use the unchanged perf-v1 seed; reads do not consume data.",
+          "selector": "Choose accountId round-robin from all accounts in verification-snapshot bytewise UUID order; omit cursor on every request.",
+          "request": "No body. Require Authorization only if the public route normally requires it.",
+          "success": "Only complete 200 StatementPage responses count; every page must have valid order, cursor, leg amounts, and balanceAfterMinor.",
+          "threshold": "At least 150 successful responses/s for 60 seconds and successful-response p95 <= 150 ms; unexpected 5xx = 0.",
+          "target": "150 statement reads/s with p95 <= 150 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "transfer-mutation-mix",
+          "method": "POST",
+          "path": "/api/v1/transfers; /api/v1/transfers/:transferId/cancel; /api/v1/transfers/:transferId/reverse",
+          "setup": "Reserve disjoint warm-up and measured pools of funded same-currency Account pairs, PENDING Transfers, and POSTED Transfers from bytewise-sorted seed IDs.",
+          "selector": "Repeat CREATE, CREATE, CANCEL, REVERSE. Each CANCEL or REVERSE ID is used once; each CREATE uses the next Account pair, amountMinor 1, and a fresh key.",
+          "request": "CREATE uses {sourceAccountId,destinationAccountId,currency,amountMinor:1}; CANCEL uses {}; REVERSE uses {reason:\"perf\"}. Warm-up and measured IDs never overlap.",
+          "success": "Only the published 2xx terminal response for each scheduled operation counts; no expected conflict is part of the success numerator.",
+          "threshold": "At least 40 successful mutations/s for 60 seconds and successful-response p95 <= 500 ms; all balances, reservations, postings, and events reconcile afterward.",
+          "target": "40 transfer mutations/s with p95 <= 500 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "settlement-recovery",
+          "path": "work:SETTLEMENT",
+          "setup": "Exactly 2,000 PENDING Transfers each have one nonterminal SETTLEMENT Work. Start two workers, hold both at worker.claimed, SIGKILL them, wait for both leases to expire, then start two replacements.",
+          "selector": "Workers claim by the published createdAt,transferId order until no SETTLEMENT Work is nonterminal.",
+          "measureSeconds": 45,
+          "success": "All 2,000 Transfers are POSTED exactly once, no SETTLEMENT Work has terminal=false, stale workers cannot commit, and conservation plus event invariants pass.",
+          "threshold": "The replacement-worker timer is <= 45 seconds and worker unexpected failures = 0.",
+          "timer": "Start when both replacement worker processes are spawned; stop only after one verification snapshot proves the backlog drained and all postconditions.",
+          "target": "drain 2,000 Settlement Tasks within 45 s after workers restart"
+        }
+      ]
+    },
+    "metersettle": {
+      "seedKeys": [
+        "tenants",
+        "meterDefinitions",
+        "ratePlans",
+        "usageEvents"
+      ],
+      "publicPaths": [
+        "/api/v1/usage-batches",
+        "/api/v1/tenants/:tenantId/watermark",
+        "/api/v1/statements/:statementId",
+        "/api/v1/meters/:meterId/usage?from&to&limit&cursor",
+        "/api/v1/correction-batches",
+        "/api/v1/statements/:statementId/revisions/:revision"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "tenantStates",
+            "shape": "TenantState = {tenantId:uuid,name:string,watermarkThrough:timestamp|null,openPeriodStarts:[timestamp],finalizedThrough:timestamp|null}",
+            "sort": [
+              "tenantId"
+            ]
+          },
+          {
+            "key": "meterDefinitions",
+            "shape": "MeterDefinition = {meterId:uuid,tenantId:uuid,name:string}",
+            "sort": [
+              "meterId"
+            ]
+          },
+          {
+            "key": "ratePlans",
+            "shape": "RatePlan = {tenantId:uuid,version:int,effectiveFrom:timestamp,effectiveTo:timestamp|null,unitPriceMinor:int}",
+            "sort": [
+              "tenantId",
+              "version"
+            ]
+          },
+          {
+            "key": "usageEvents",
+            "shape": "UsageEvent",
+            "sort": [
+              "tenantId",
+              "eventId"
+            ]
+          },
+          {
+            "key": "usageBatches",
+            "shape": "UsageBatch",
+            "sort": [
+              "batchId"
+            ]
+          },
+          {
+            "key": "statements",
+            "shape": "Statement",
+            "sort": [
+              "statementId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "correctionEvents",
+            "shape": "CorrectionEvent",
+            "sort": [
+              "tenantId",
+              "correctionId"
+            ]
+          },
+          {
+            "key": "statementRevisions",
+            "shape": "StatementRevision",
+            "sort": [
+              "statementId",
+              "revision"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "RATING"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "usage-batch-ingest",
+          "method": "POST",
+          "path": "/api/v1/usage-batches",
+          "setup": "Prepare 700 disjoint 100-event batches: 100 for warm-up and 600 for measurement. Events target existing meters in open periods and use unique deterministic eventIds.",
+          "selector": "Round-robin tenants by tenantId and meters by meterId in bytewise order; one batch contains one tenant and exactly 100 consecutive IDs.",
+          "request": "{tenantId,events:[{eventId,meterId,occurredAt,quantity:1} x100]}; measured eventId values have prefix perf-measured and warm-up values have prefix perf-warmup.",
+          "success": "Only 202 responses accepting all 100 IDs count; duplicates and 409 responses do not count.",
+          "threshold": "At least 10 successful batches/s (1,000 accepted Usage Events/s) for 60 seconds and batch p95 <= 400 ms; unexpected 5xx = 0.",
+          "target": "ingest 1,000 Usage Events/s for 60 s with p95 <= 400 ms per 100-event batch"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "statement-read",
+          "method": "GET",
+          "path": "/api/v1/statements/:statementId",
+          "setup": "Before warm-up, advance Watermarks through the public API and wait until the 10,000 seeded closed-period events produce FINALIZED Statements; exclude setup time and do not mutate them during measurement.",
+          "selector": "Round-robin statementId values in bytewise UUID order.",
+          "request": "No body and no optional query parameters.",
+          "success": "Only 200 responses whose lines sum to totalQuantity and totalMinor count.",
+          "threshold": "At least 200 successful responses/s for 60 seconds and p95 <= 150 ms; unexpected 5xx = 0.",
+          "target": "serve 200 Statement reads/s with p95 <= 150 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "rating-recovery",
+          "path": "work:RATING",
+          "setup": "Advance the required tenant Watermarks through the public API so exactly 10,000 closed, previously unfinalized Usage Events are covered. Hold two Rating workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Process eligible Statements by periodStart then statementId and retain every terminal Work record.",
+          "measureSeconds": 60,
+          "success": "Exactly 10,000 RatedLine members are committed once, every covered Statement is FINALIZED, no RATING Work remains nonterminal, and totals use the occurredAt Rate Plan.",
+          "threshold": "Recovery completes in <= 60 seconds with no duplicate line, gap, or unexpected worker failure.",
+          "timer": "Start when both replacement workers are spawned; stop on the first point-in-time verification snapshot proving all stated postconditions.",
+          "target": "finalize 10,000 rated lines within 60 s after recovery"
+        }
+      ]
+    },
+    "clinicgrid": {
+      "seedKeys": [
+        "clinicians",
+        "rooms",
+        "equipmentUnits",
+        "serviceTypes",
+        "patients",
+        "waitlistEntries"
+      ],
+      "publicPaths": [
+        "/api/v1/appointments",
+        "/api/v1/appointments/:appointmentId/confirm",
+        "/api/v1/appointments/:appointmentId/cancel",
+        "/api/v1/waitlist-entries",
+        "/api/v1/availability?serviceTypeId&clinicianId&from&to",
+        "/api/v1/resources/:resourceType/:resourceId/calendar?from&to",
+        "/api/v1/care-plans",
+        "/api/v1/care-plans/:carePlanId",
+        "/api/v1/care-plans/:carePlanId/visits/:visitIndex/confirm",
+        "/api/v1/care-plans/:carePlanId/visits/:visitIndex/cancel",
+        "/api/v1/care-plans/:carePlanId/terminate"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "clinicians",
+            "shape": "Clinician = {clinicianId:uuid,name:string,priority:int,availability:[{startAt:timestamp,endAt:timestamp}]}",
+            "sort": [
+              "clinicianId"
+            ]
+          },
+          {
+            "key": "rooms",
+            "shape": "Room = {roomId:uuid,name:string,priority:int,availability:[{startAt:timestamp,endAt:timestamp}]}",
+            "sort": [
+              "roomId"
+            ]
+          },
+          {
+            "key": "equipmentUnits",
+            "shape": "EquipmentUnit = {equipmentUnitId:uuid,equipmentType:string,priority:int,availability:[{startAt:timestamp,endAt:timestamp}]}",
+            "sort": [
+              "equipmentUnitId"
+            ]
+          },
+          {
+            "key": "serviceTypes",
+            "shape": "ServiceType",
+            "sort": [
+              "serviceTypeId"
+            ]
+          },
+          {
+            "key": "patients",
+            "shape": "Patient = {patientId:uuid,name:string}",
+            "sort": [
+              "patientId"
+            ]
+          },
+          {
+            "key": "appointments",
+            "shape": "Appointment",
+            "sort": [
+              "appointmentId"
+            ]
+          },
+          {
+            "key": "waitlistEntries",
+            "shape": "WaitlistEntry",
+            "sort": [
+              "waitlistEntryId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "carePlans",
+            "shape": "CarePlan",
+            "sort": [
+              "carePlanId"
+            ]
+          },
+          {
+            "key": "carePlanWaitlistEntries",
+            "shape": "CarePlanWaitlistEntry",
+            "sort": [
+              "waitlistEntryId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "APPOINTMENT_EXPIRY",
+          "WAITLIST_PROMOTION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "availability-read",
+          "method": "GET",
+          "path": "/api/v1/availability?serviceTypeId=:serviceTypeId&clinicianId=:clinicianId&from=:from&to=:to",
+          "setup": "Select all serviceTypeId,clinicianId pairs with seeded availability; for each pair use its earliest complete UTC day as the half-open query range.",
+          "selector": "Round-robin eligible pairs by serviceTypeId then clinicianId, both bytewise; reads reuse the same immutable ranges.",
+          "request": "No body; from and to are millisecond UTC timestamps exactly 24 hours apart and to is exclusive.",
+          "success": "Only 200 responses with deterministically ordered AvailabilitySlot items and no overlapping allocation count.",
+          "threshold": "At least 200 successful responses/s for 60 seconds and p95 <= 180 ms; unexpected 5xx = 0.",
+          "target": "200 availability queries/s with p95 <= 180 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "competing-holds",
+          "method": "POST",
+          "path": "/api/v1/appointments",
+          "setup": "Create 30 warm-up and 180 measured feasible hot slots. Assign ten distinct Patient IDs to contend for each slot and never reuse a patient-slot attempt.",
+          "selector": "Visit hot slots round-robin; send their ten contenders concurrently in bytewise patientId order before advancing to the next slot.",
+          "request": "{patientId,serviceTypeId,clinicianId,startAt} for the exact hot slot; every request has a fresh Idempotency-Key.",
+          "success": "For each slot exactly one 201 HELD is a successful hold and the other nine responses are exactly 409 SLOT_UNAVAILABLE; request-rate latency includes both outcomes.",
+          "threshold": "At least 30 complete attempts/s for 60 seconds, all successful-hold responses have p95 <= 600 ms, and no slot has zero or multiple winners.",
+          "target": "30 competing hold requests/s with p95 <= 600 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "expiry-and-promotion-recovery",
+          "path": "work:APPOINTMENT_EXPIRY,WAITLIST_PROMOTION",
+          "setup": "The seed has exactly 1,000 due HELD Appointments and 1,000 eligible WAITING entries. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Expire by expiresAt,appointmentId and promote by priority descending,joinedAt,waitlistEntryId without bypass.",
+          "measureSeconds": 45,
+          "success": "All 1,000 due Appointments are EXPIRED once, all 1,000 eligible entries are PROMOTED once, no named Work remains nonterminal, and resource calendars remain exclusive.",
+          "threshold": "Both backlogs drain in <= 45 seconds after replacement workers spawn; unexpected failures = 0.",
+          "timer": "Start when both replacements spawn and stop only on a verification snapshot proving both Work kinds drained and all invariants.",
+          "target": "expire and promote 2,000 due records within 45 s after restart"
+        }
+      ]
+    },
+    "dockchain": {
+      "seedKeys": [
+        "berths",
+        "tugPools",
+        "yardWindows",
+        "vessels",
+        "portCalls",
+        "standbyEntries"
+      ],
+      "publicPaths": [
+        "/api/v1/port-calls",
+        "/api/v1/port-calls/:portCallId/confirm",
+        "/api/v1/port-calls/:portCallId/start-service",
+        "/api/v1/port-calls/:portCallId/cancel",
+        "/api/v1/port-calls/:portCallId/complete",
+        "/api/v1/standby-entries",
+        "/api/v1/port-resources/feasible-windows?vesselId&arrivalFrom&arrivalTo&durationMinutes&requiredTugs&containerUnits&limit&cursor",
+        "/api/v1/port-resources/schedule?from&to",
+        "/api/v1/port-calls/:portCallId/movements/:movementId/confirm",
+        "/api/v1/port-calls/:portCallId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "berths",
+            "shape": "Berth = {berthId:uuid,name:string,priority:int,maxLengthMeters:int,availability:[{startAt:timestamp,endAt:timestamp}]}",
+            "sort": [
+              "berthId"
+            ]
+          },
+          {
+            "key": "tugPools",
+            "shape": "TugPool = {tugPoolId:uuid,name:string,priority:int,capacity:int,availability:[{startAt:timestamp,endAt:timestamp}]}",
+            "sort": [
+              "tugPoolId"
+            ]
+          },
+          {
+            "key": "yardWindows",
+            "shape": "YardWindow = {yardWindowId:uuid,priority:int,capacityUnits:int,startAt:timestamp,endAt:timestamp}",
+            "sort": [
+              "yardWindowId"
+            ]
+          },
+          {
+            "key": "vessels",
+            "shape": "Vessel = {vesselId:uuid,name:string,lengthMeters:int}",
+            "sort": [
+              "vesselId"
+            ]
+          },
+          {
+            "key": "portCalls",
+            "shape": "PortCall",
+            "sort": [
+              "portCallId"
+            ]
+          },
+          {
+            "key": "resourceAllocations",
+            "shape": "ResourceAllocation",
+            "sort": [
+              "resourceType",
+              "resourceId",
+              "startAt",
+              "endAt"
+            ]
+          },
+          {
+            "key": "standbyEntries",
+            "shape": "StandbyEntry",
+            "sort": [
+              "standbyEntryId"
+            ]
+          },
+          {
+            "key": "clearances",
+            "shape": "Clearance",
+            "sort": [
+              "portCallId",
+              "taskId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "portMovements",
+            "shape": "PortMovement",
+            "sort": [
+              "portCallId",
+              "movementId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "PORT_CALL_EXPIRY",
+          "CLEARANCE",
+          "STANDBY_PROMOTION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "feasible-window-read",
+          "method": "GET",
+          "path": "/api/v1/port-resources/feasible-windows?vesselId=:vesselId&arrivalFrom=:arrivalFrom&arrivalTo=:arrivalTo&durationMinutes=120&requiredTugs=1&containerUnits=1",
+          "setup": "Select seeded vessels with at least one feasible two-hour window; use each vessel's earliest complete seven-day availability range.",
+          "selector": "Round-robin vesselId bytewise; ranges are immutable during this read-only scenario.",
+          "request": "No body; arrivalFrom/arrivalTo are exact UTC millisecond timestamps seven days apart.",
+          "success": "Only 200 responses with windows in the published candidate and resource order count.",
+          "threshold": "At least 120 successful responses/s for 60 seconds and p95 <= 220 ms; unexpected 5xx = 0.",
+          "target": "120 feasible-window queries/s with p95 <= 220 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "port-call-create",
+          "method": "POST",
+          "path": "/api/v1/port-calls",
+          "setup": "Reserve disjoint warm-up and measured sets of feasible vessel/time bundles so no request intentionally conflicts.",
+          "selector": "Use vesselId bytewise and the earliest remaining feasible 120-minute window; requiredTugs and containerUnits are both 1.",
+          "request": "{vesselId,arrivalAt,departureAt,requiredTugs:1,containerUnits:1}; every request has a fresh Idempotency-Key.",
+          "success": "Only 201 HELD responses count; 409 outcomes do not count, and each response must expose the canonical resource bundle.",
+          "threshold": "At least 25 successful creations/s for 60 seconds and p95 <= 700 ms; no capacity oversubscription or unexpected 5xx.",
+          "target": "25 atomic Port Call creations/s with p95 <= 700 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "clearance-recovery",
+          "path": "work:CLEARANCE",
+          "setup": "Exactly 1,500 HELD Port Calls have a pending Clearance Work. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Claim by Port Call creation order and portCallId; validate only the captured immutable vessel/resource snapshot.",
+          "measureSeconds": 60,
+          "success": "All 1,500 Calls become CLEARED exactly once, no CLEARANCE Work remains nonterminal, stale workers cannot commit, and every capacity invariant holds.",
+          "threshold": "The recovery backlog drains in <= 60 seconds with unexpected worker failures = 0.",
+          "timer": "Start when both replacement workers spawn and stop at the first point-in-time snapshot proving every postcondition.",
+          "target": "recover and clear 1,500 tasks within 60 s"
+        }
+      ]
+    },
+    "queueforge": {
+      "seedKeys": [
+        "queues",
+        "jobDefinitions",
+        "runs",
+        "attempts",
+        "executionLeases"
+      ],
+      "publicPaths": [
+        "/api/v1/runs",
+        "/api/v1/job-definitions",
+        "/api/v1/job-definitions/:jobDefinitionId/versions",
+        "/api/v1/runs/:runId/cancel",
+        "/api/v1/workers/:workerId/claim",
+        "/api/v1/runs/:runId/attempt-result",
+        "/api/v1/queues/:queueId",
+        "/api/v1/runs/:runId/attempts",
+        "/api/v1/workflow-runs",
+        "/api/v1/workflow-runs/:workflowRunId",
+        "/api/v1/workflow-runs/:workflowRunId/cancel",
+        "/api/v1/workflow-runs/:workflowRunId/nodes/:nodeKey/retry"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "queues",
+            "shape": "Queue = {queueId:uuid,name:string,capacity:int}",
+            "sort": [
+              "queueId"
+            ]
+          },
+          {
+            "key": "jobDefinitions",
+            "shape": "JobDefinition",
+            "sort": [
+              "jobDefinitionId",
+              "version"
+            ]
+          },
+          {
+            "key": "runs",
+            "shape": "Run",
+            "sort": [
+              "runId"
+            ]
+          },
+          {
+            "key": "executionLeases",
+            "shape": "ExecutionLease",
+            "sort": [
+              "runId",
+              "attempt"
+            ]
+          },
+          {
+            "key": "attempts",
+            "shape": "Attempt",
+            "sort": [
+              "runId",
+              "attempt"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "workflowRuns",
+            "shape": "WorkflowRun",
+            "sort": [
+              "workflowRunId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "RUN_EXECUTION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "run-enqueue",
+          "method": "POST",
+          "path": "/api/v1/runs",
+          "setup": "Choose one seeded ECHO JobDefinition and queues with unused measured capacity; warm-up and measured Run IDs are server-generated from disjoint Idempotency-Keys.",
+          "selector": "Round-robin queues by queueId; use priority 50 and notBefore equal to the setup transaction timestamp.",
+          "request": "{jobDefinitionId,jobVersion,queueId,priority:50,notBefore,input:{value:\"64 ASCII bytes, fixed per request ordinal\"}}.",
+          "success": "Only 202 QUEUED responses count; each Run captures the requested JobDefinition version exactly.",
+          "threshold": "At least 300 successful enqueues/s for 60 seconds and p95 <= 250 ms; unexpected 5xx = 0.",
+          "target": "enqueue 300 Runs/s with p95 <= 250 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 4,
+          "warmupSeconds": 0,
+          "measureSeconds": 60,
+          "timer": "Start immediately before the four clients issue their first claim and stop on the verification snapshot proving all 5,000 terminal results.",
+          "id": "short-run-execution",
+          "method": "POST",
+          "path": "/api/v1/workers/:workerId/claim; /api/v1/runs/:runId/attempt-result",
+          "setup": "Use exactly 5,000 QUEUED ECHO Runs whose input JSON is <= 128 bytes; no other Run is eligible in their queues.",
+          "selector": "Four worker clients claim maxRuns:25 from the same bytewise queueId list and immediately return the exact echoed value with outcome SUCCEEDED.",
+          "request": "Claim body is {queueIds,maxRuns:25}; result body is {attempt,leaseToken,outcome:\"SUCCEEDED\",output:{value},errorCode:null}; the service computes and stores outputDigest.",
+          "success": "All 5,000 Runs reach SUCCEEDED with one successful Attempt, no lease exceeds Queue capacity, and no Run remains QUEUED or RUNNING.",
+          "threshold": "The complete set finishes in <= 60 seconds; stale-lease responses and unexpected 5xx are zero.",
+          "target": "claim and complete 5,000 short Runs within 60 s using four workers"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 4,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "expired-lease-recovery",
+          "path": "work:RUN_EXECUTION",
+          "setup": "Use exactly 2,000 seeded RUNNING Runs whose sole ExecutionLeases are expired. Start four workers with the published queue capacity limits.",
+          "selector": "Reclaim in priority descending,notBefore,createdAt,runId order and execute each captured operation once.",
+          "measureSeconds": 45,
+          "success": "All 2,000 Runs become terminal through one new Attempt, expired tokens cannot commit, and active leases never exceed any Queue capacity.",
+          "threshold": "All expired leases recover in <= 45 seconds; unexpected worker failures = 0.",
+          "timer": "Start when all four recovery workers are spawned and stop at the first verification snapshot proving no selected Run is nonterminal.",
+          "target": "recover 2,000 expired leases within 45 s without capacity oversubscription"
+        }
+      ]
+    },
+    "incidentrelay": {
+      "seedKeys": [
+        "services",
+        "responders",
+        "escalationPolicies",
+        "incidents",
+        "escalationSteps",
+        "notificationDeliveries"
+      ],
+      "publicPaths": [
+        "/api/v1/incidents",
+        "/api/v1/incidents/:incidentId/acknowledge",
+        "/api/v1/incidents/:incidentId/resolve",
+        "/api/v1/services/:serviceId/escalation-policies",
+        "/api/v1/incidents/:incidentId/timeline",
+        "/api/v1/services/:serviceId/escalation-policy",
+        "/api/v1/incidents/:incidentId/acknowledgements",
+        "/api/v1/incidents/:incidentId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "services",
+            "shape": "Service = {serviceId:uuid,name:string,currentPolicyId:uuid,currentPolicyVersion:int}",
+            "sort": [
+              "serviceId"
+            ]
+          },
+          {
+            "key": "responders",
+            "shape": "Responder = {responderId:uuid,name:string,deliveryUrl:http-url}",
+            "sort": [
+              "responderId"
+            ]
+          },
+          {
+            "key": "escalationPolicies",
+            "shape": "EscalationPolicy",
+            "sort": [
+              "policyId",
+              "version"
+            ]
+          },
+          {
+            "key": "incidents",
+            "shape": "Incident",
+            "sort": [
+              "incidentId"
+            ]
+          },
+          {
+            "key": "escalationSteps",
+            "shape": "EscalationStep",
+            "sort": [
+              "incidentId",
+              "stepIndex"
+            ]
+          },
+          {
+            "key": "notificationDeliveries",
+            "shape": "NotificationDelivery",
+            "sort": [
+              "incidentId",
+              "stepIndex",
+              "responderId",
+              "notificationId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "groupEscalationSteps",
+            "shape": "GroupEscalationStep",
+            "sort": [
+              "incidentId",
+              "stepIndex"
+            ]
+          },
+          {
+            "key": "incidentAcknowledgements",
+            "shape": "IncidentAcknowledgement",
+            "sort": [
+              "incidentId",
+              "stepIndex",
+              "responderId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "ESCALATION_STEP",
+          "INCIDENT_EXPIRY"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "deduplicated-incident-ingest",
+          "method": "POST",
+          "path": "/api/v1/incidents",
+          "setup": "Prepare disjoint warm-up and measured streams. In every ten requests, nine use new serviceId,dedupKey pairs and the tenth repeats the immediately preceding alert semantics with a fresh Idempotency-Key to exercise active-key deduplication.",
+          "selector": "Round-robin serviceId bytewise; dedupKey is perf-{phase}-{ordinal}; severity cycles LOW,MEDIUM,HIGH,CRITICAL.",
+          "request": "{serviceId,dedupKey,severity,title:\"perf incident\",details:\"fixed 64-byte ASCII detail\"}.",
+          "success": "A new 201 OPEN or the documented stable dedup replay counts; semantic conflicts do not count. Exactly nine Incidents exist per ten requests.",
+          "threshold": "At least 200 complete successful responses/s for 60 seconds and p95 <= 250 ms; unexpected 5xx = 0.",
+          "target": "ingest 200 deduplicated alerts/s with p95 <= 250 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "incident-timeline-read",
+          "method": "GET",
+          "path": "/api/v1/incidents/:incidentId/timeline",
+          "setup": "Use all seeded Incident IDs; reads do not alter escalation state.",
+          "selector": "Round-robin incidentId values in bytewise order.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 responses whose TimelineItems have contiguous sequence and agree with Incident plus EscalationStep state count.",
+          "threshold": "At least 250 successful reads/s for 60 seconds and p95 <= 150 ms; unexpected 5xx = 0.",
+          "target": "serve 250 timeline reads/s with p95 <= 150 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "escalation-recovery",
+          "path": "work:ESCALATION_STEP",
+          "setup": "Exactly 3,000 PENDING Escalation Steps are due. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements; the local test receiver returns 204.",
+          "selector": "Process dueAt,incidentId,stepIndex order; delivery retry retains notificationId and body.",
+          "measureSeconds": 45,
+          "success": "All 3,000 Steps are SENT once in business state, no ESCALATION_STEP Work remains nonterminal, and the receiver observes the exact notification contract with stable retries.",
+          "threshold": "The backlog drains in <= 45 seconds after replacement spawn; unexpected worker or receiver failures = 0.",
+          "timer": "Start when both replacements spawn and stop only after verification snapshot plus receiver log prove every postcondition.",
+          "target": "drain 3,000 due Escalation Steps within 45 s after restart"
+        }
+      ]
+    },
+    "schemaharbor": {
+      "seedKeys": [
+        "subjects",
+        "publishedVersions"
+      ],
+      "publicPaths": [
+        "/api/v1/subjects/:subjectId/schema-drafts",
+        "/api/v1/subjects",
+        "/api/v1/schema-drafts/:draftId/publish",
+        "/api/v1/subjects/:subjectId/compatibility-mode",
+        "/api/v1/subjects/:subjectId/versions/latest",
+        "/api/v1/subjects/:subjectId/versions/:version/diff?against",
+        "/api/v1/subjects/:subjectId/versions?limit&cursor",
+        "/api/v1/release-bundles",
+        "/api/v1/release-bundles/:releaseBundleId",
+        "/api/v1/release-bundles/:releaseBundleId/publish",
+        "/api/v1/subjects/:subjectId/versions/:version"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "subjects",
+            "shape": "Subject",
+            "sort": [
+              "subjectId"
+            ]
+          },
+          {
+            "key": "schemaDrafts",
+            "shape": "SchemaDraft",
+            "sort": [
+              "draftId"
+            ]
+          },
+          {
+            "key": "schemaVersions",
+            "shape": "SchemaVersion",
+            "sort": [
+              "subjectId",
+              "version"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "releaseBundles",
+            "shape": "ReleaseBundle",
+            "sort": [
+              "releaseBundleId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "SCHEMA_VALIDATION"
+        ],
+        "manager": [
+          "BUNDLE_VALIDATION"
+        ]
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "latest-schema-read",
+          "method": "GET",
+          "path": "/api/v1/subjects/:subjectId/versions/latest",
+          "setup": "Use all seeded Subjects with a published head; reads do not mutate headVersion.",
+          "selector": "Round-robin subjectId values in bytewise order.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 exact LatestSchemaResponse bodies whose subject and nullable version come from the same point-in-time head count.",
+          "threshold": "At least 500 successful reads/s for 60 seconds and p95 <= 80 ms; unexpected 5xx = 0.",
+          "target": "serve 500 latest-schema reads/s with p95 <= 80 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts at first measured POST; each queue-latency sample starts at that draft's creation commit and ends at its VALID terminal commit.",
+          "id": "schema-validation",
+          "method": "POST",
+          "path": "/api/v1/subjects/:subjectId/schema-drafts",
+          "setup": "Prepare separate warm-up and measured draft requests against published Subject heads; each schema has exactly 20 fields and exactly two published dependency pins.",
+          "selector": "Round-robin subjectId bytewise, use its current headVersion, and generate unique schema names and field names from request ordinal.",
+          "request": "{schema:{name,fields:{20 deterministic fields}},dependencies:[two pins],expectedHeadVersion}; use a fresh Idempotency-Key.",
+          "success": "Only 202 VALIDATING creations whose SCHEMA_VALIDATION Work reaches VALID count; REJECTED or STALE drafts do not count.",
+          "threshold": "At least 50 VALID drafts/s for 60 seconds and terminal validation queue-latency p95 <= 2,000 ms; unexpected 5xx = 0.",
+          "target": "validate 50 schemas/s with p95 queue latency <= 2 s"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "gapless-publish",
+          "method": "POST",
+          "path": "/api/v1/schema-drafts/:draftId/publish",
+          "setup": "Before timing, create and validate exactly 2,000 measured Drafts, one for each distinct Subject, plus a disjoint warm-up set.",
+          "selector": "Publish Draft IDs round-robin in bytewise subjectId order; no two measured Drafts share a Subject.",
+          "request": "Body {} with one fresh Idempotency-Key per Draft.",
+          "success": "Every measured request publishes exactly one next SchemaVersion; all 2,000 responses are successful and no Subject has a version gap.",
+          "threshold": "Exactly 2,000 non-conflicting publishes complete within the 60-second window; unexpected conflict and 5xx counts are zero.",
+          "target": "publish 2,000 non-conflicting versions without gaps during a 60 s run"
+        }
+      ]
+    },
+    "flagfoundry": {
+      "seedKeys": [
+        "projects",
+        "environments",
+        "flags",
+        "activeRevisions"
+      ],
+      "publicPaths": [
+        "/api/v1/flags/:flagId/revisions",
+        "/api/v1/flags",
+        "/api/v1/flag-revisions/:revisionId/activate",
+        "/api/v1/evaluations",
+        "/api/v1/flags/:flagId/revisions/:revision/diff?against",
+        "/api/v1/flags/:flagId/revisions?environment&limit&cursor",
+        "/api/v1/flag-revisions/:revisionId/progressive-activate",
+        "/api/v1/progressive-rollouts/:rolloutId/outcome-batches",
+        "/api/v1/progressive-rollouts/:rolloutId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "projects",
+            "shape": "Project = {projectId:uuid,name:string}",
+            "sort": [
+              "projectId"
+            ]
+          },
+          {
+            "key": "environments",
+            "shape": "Environment = {projectId:uuid,name:string,contextAttributes:[string],schemaRevision:int}",
+            "sort": [
+              "projectId",
+              "name"
+            ]
+          },
+          {
+            "key": "flags",
+            "shape": "Flag",
+            "sort": [
+              "flagId"
+            ]
+          },
+          {
+            "key": "flagRevisions",
+            "shape": "FlagRevision",
+            "sort": [
+              "flagId",
+              "environment",
+              "revision"
+            ]
+          },
+          {
+            "key": "flagSnapshots",
+            "shape": "FlagSnapshot",
+            "sort": [
+              "projectId",
+              "flagId",
+              "environment",
+              "revision"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "progressiveRollouts",
+            "shape": "ProgressiveRollout",
+            "sort": [
+              "rolloutId"
+            ]
+          },
+          {
+            "key": "evaluationOutcomes",
+            "shape": "EvaluationOutcome",
+            "sort": [
+              "rolloutId",
+              "stepIndex",
+              "outcomeId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "FLAG_COMPILATION"
+        ],
+        "manager": [
+          "ROLLOUT_DEADLINE"
+        ]
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "flag-evaluation",
+          "method": "POST",
+          "path": "/api/v1/evaluations",
+          "setup": "Use all measured active Flag/Environment pairs. Context has exactly subjectKey, region, and tier and satisfies the selected Environment schema.",
+          "selector": "Round-robin pairs by projectId,flagId,environment bytewise; subjectKey is perf-subject-{request ordinal modulo 100000}.",
+          "request": "{projectId,flagKey,environment,context:{subjectKey,region:\"us\",tier:\"pro\"}} with no snapshotDigest pin.",
+          "success": "Only 200 Evaluation responses matching an active immutable FlagSnapshot count; repeat inputs must return the same variant and reason.",
+          "threshold": "At least 2,000 successful decisions/s for 60 seconds and p95 <= 40 ms; mixed-snapshot and unexpected 5xx counts are zero.",
+          "target": "evaluate 2,000 decisions/s with p95 <= 40 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts at first measured POST; per-revision latency starts at creation commit and ends at the READY commit observed in one snapshot.",
+          "id": "revision-compilation",
+          "method": "POST",
+          "path": "/api/v1/flags/:flagId/revisions",
+          "setup": "Prepare disjoint warm-up and measured request ordinals over existing Flags; each candidate has two variants and ten one-clause rules using declared attributes.",
+          "selector": "Round-robin flagId then Environment bytewise; expectedActiveRevision is read once immediately before each request.",
+          "request": "{environment,flagType,defaultVariant,variants:[two totaling 10000],rules:[ten],expectedActiveRevision} with a fresh key.",
+          "success": "Only 202 creations whose FLAG_COMPILATION Work reaches READY count; REJECTED or stale candidates do not count.",
+          "threshold": "At least 100 READY revisions/s for 60 seconds and creation-commit to READY-commit queue-latency p95 <= 2,000 ms.",
+          "target": "compile 100 revisions/s with p95 queue latency <= 2 s"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "disjoint-activation",
+          "method": "POST",
+          "path": "/api/v1/flag-revisions/:revisionId/activate",
+          "setup": "Before timing, create exactly 500 READY measured candidates for 500 distinct Flag/Environment pairs and a disjoint warm-up set.",
+          "selector": "Activate candidates by flagId,environment bytewise; each pair is targeted once.",
+          "request": "{expectedActiveRevision} captured with the candidate; use a fresh Idempotency-Key.",
+          "success": "All 500 requests succeed, each pair has exactly one new active pointer, and concurrent evaluations see only the complete prior or candidate Snapshot.",
+          "threshold": "Exactly 500 disjoint activations finish within 60 seconds; conflicts, mixed snapshots, gaps, and unexpected 5xx are zero.",
+          "target": "activate 500 disjoint revisions during 60 s with no mixed snapshot reads"
+        }
+      ]
+    },
+    "reconcilehub": {
+      "seedKeys": [
+        "ledgerEntries",
+        "statementBatches",
+        "matches"
+      ],
+      "publicPaths": [
+        "/api/v1/statement-batches",
+        "/api/v1/matches",
+        "/api/v1/matches/:matchId/confirm",
+        "/api/v1/matches/:matchId/reject",
+        "/api/v1/matches/:matchId/reverse",
+        "/api/v1/statement-lines/:statementLineId/ignore",
+        "/api/v1/reconciliation-work?state=UNMATCHED&limit&cursor",
+        "/api/v1/match-groups",
+        "/api/v1/match-groups/:matchGroupId/confirm",
+        "/api/v1/match-groups/:matchGroupId",
+        "/api/v1/matches/:matchId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "statementBatches",
+            "shape": "StatementBatch",
+            "sort": [
+              "batchId"
+            ]
+          },
+          {
+            "key": "statementLines",
+            "shape": "StatementLine",
+            "sort": [
+              "statementLineId"
+            ]
+          },
+          {
+            "key": "ledgerEntries",
+            "shape": "LedgerEntry",
+            "sort": [
+              "ledgerEntryId"
+            ]
+          },
+          {
+            "key": "matches",
+            "shape": "Match",
+            "sort": [
+              "matchId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "matchGroups",
+            "shape": "MatchGroup",
+            "sort": [
+              "matchGroupId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "MATCH_SUGGESTION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "statement-batch-import",
+          "method": "POST",
+          "path": "/api/v1/statement-batches",
+          "setup": "Prepare 3,500 disjoint 100-line batches: 500 for warm-up and 3,000 for measurement, with unique source,batchKey and externalId values.",
+          "selector": "Batch ordinal determines source and batchKey; lines sort by bookedAt,externalId and alternate USD/EUR with non-zero amountMinor.",
+          "request": "{source,batchKey,lines:[{externalId,bookedAt,currency,amountMinor,reference} x100]}; every request has a fresh key.",
+          "success": "Only successful atomic imports with exactly 100 new Statement Lines count; duplicates or conflicts do not count.",
+          "threshold": "At least 50 successful batches/s for 60 seconds and p95 <= 500 ms; partial imports and unexpected 5xx are zero.",
+          "target": "import 50 batches/s of 100 lines with p95 <= 500 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "reconciliation-review",
+          "method": "GET",
+          "path": "/api/v1/reconciliation-work?state=UNMATCHED&limit=100",
+          "setup": "Use the unchanged perf-v1 unmatched set; omit cursor so every request reads the stable first page.",
+          "selector": "No ID selection; all clients issue the exact same read-only query.",
+          "request": "No body.",
+          "success": "Only 200 responses whose lines, entries, suggestions, and nextCursor obey the published deterministic order count.",
+          "threshold": "At least 250 successful review reads/s for 60 seconds and p95 <= 180 ms; unexpected 5xx = 0.",
+          "target": "serve 250 review queries/s with p95 <= 180 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "suggestion-generation",
+          "path": "work:MATCH_SUGGESTION",
+          "setup": "Use exactly 10,000 unmatched Statement Lines and 10,000 unmatched Ledger Entries and start two workers; no preexisting PROPOSED Match uses these members.",
+          "selector": "Use the published Statement Line order and candidate rank; one snapshot cannot reuse a member.",
+          "measureSeconds": 60,
+          "success": "Exactly 10,000 PROPOSED Matches cover the 20,000 input records one-to-one, no MATCH_SUGGESTION Work remains nonterminal, and confirmed history is unchanged.",
+          "threshold": "The complete 20,000-record input is processed in <= 60 seconds with zero member reuse or unexpected failure.",
+          "timer": "Start when both workers spawn and stop on the first verification snapshot proving the exact proposal count, coverage, and drained Work.",
+          "target": "generate suggestions for 20,000 unmatched records within 60 s"
+        }
+      ]
+    },
+    "evidencechain": {
+      "seedKeys": [
+        "cases",
+        "caseManifests",
+        "facilities",
+        "custodians",
+        "deviceRegistrations",
+        "intakeScans",
+        "custodyMatches",
+        "transfers"
+      ],
+      "publicPaths": [
+        "/api/v1/intake-batches",
+        "/api/v1/custody-matches",
+        "/api/v1/custody-matches/:matchId/confirm",
+        "/api/v1/custody-matches/:matchId/reverse",
+        "/api/v1/collected-items/:itemId/transfers",
+        "/api/v1/collected-items/:itemId/timeline",
+        "/api/v1/collected-items/:itemId/splits",
+        "/api/v1/item-splits/:splitId/reverse",
+        "/api/v1/item-splits/:splitId",
+        "/api/v1/custody-match-groups",
+        "/api/v1/custody-match-groups/:custodyMatchGroupId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "cases",
+            "shape": "Case = {caseId:uuid,caseNumber:string}",
+            "sort": [
+              "caseId"
+            ]
+          },
+          {
+            "key": "caseManifests",
+            "shape": "CaseManifest = {caseId:uuid,version:int,items:[{collectedItemId:uuid,expectedLabel:string,expectedSealCode:string,quantity:int}]}",
+            "sort": [
+              "caseId",
+              "version"
+            ]
+          },
+          {
+            "key": "facilities",
+            "shape": "Facility = {facilityId:uuid,name:string,receivingCustodianId:uuid}",
+            "sort": [
+              "facilityId"
+            ]
+          },
+          {
+            "key": "custodians",
+            "shape": "Custodian = {custodianId:uuid,name:string}",
+            "sort": [
+              "custodianId"
+            ]
+          },
+          {
+            "key": "deviceRegistrations",
+            "shape": "DeviceRegistration = {deviceId:uuid,facilityId:uuid,lastBatchSequence:int}",
+            "sort": [
+              "deviceId"
+            ]
+          },
+          {
+            "key": "intakeScans",
+            "shape": "IntakeScan",
+            "sort": [
+              "intakeScanId"
+            ]
+          },
+          {
+            "key": "collectedItems",
+            "shape": "CollectedItem",
+            "sort": [
+              "collectedItemId"
+            ]
+          },
+          {
+            "key": "custodyMatches",
+            "shape": "CustodyMatch",
+            "sort": [
+              "matchId"
+            ]
+          },
+          {
+            "key": "custodyTransfers",
+            "shape": "CustodyTransfer",
+            "sort": [
+              "transferId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "itemSplits",
+            "shape": "ItemSplit",
+            "sort": [
+              "splitId"
+            ]
+          },
+          {
+            "key": "aliquots",
+            "shape": "Aliquot",
+            "sort": [
+              "aliquotId"
+            ]
+          },
+          {
+            "key": "custodyMatchGroups",
+            "shape": "CustodyMatchGroup",
+            "sort": [
+              "custodyMatchGroupId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "EVIDENCE_VERIFICATION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "scanner-batch-ingest",
+          "method": "POST",
+          "path": "/api/v1/intake-batches",
+          "setup": "Prepare independent warm-up and measured device sequence ranges. Every batch has exactly 20 scans; nine batches are new, then one exact idempotent replay of the preceding batch.",
+          "selector": "Round-robin deviceId bytewise while preserving a strictly increasing batchSequence per Device; scanId is deterministic from Device and sequence.",
+          "request": "{deviceId,batchSequence,scans:[{scanId,label,sealCode,scannedAt,facilityId} x20]}; replay uses the original key and body.",
+          "success": "A new atomic 202 or byte-identical replay counts; exactly 180 new IntakeScans exist per ten requests and partial batches never exist.",
+          "threshold": "At least 100 complete successful batch responses/s for 60 seconds and p95 <= 350 ms; unexpected 5xx = 0.",
+          "target": "ingest 100 scanner batches/s with p95 <= 350 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "custody-timeline-read",
+          "method": "GET",
+          "path": "/api/v1/collected-items/:itemId/timeline",
+          "setup": "Use all Collected Items with at least one seeded timeline fact; reads do not mutate custody.",
+          "selector": "Round-robin collectedItemId values bytewise.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 responses with exact item shape and contiguous EvidenceTimelineItem sequence count.",
+          "threshold": "At least 200 successful reads/s for 60 seconds and p95 <= 180 ms; unexpected 5xx = 0.",
+          "target": "serve 200 custody timeline reads/s with p95 <= 180 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "verification-recovery",
+          "path": "work:EVIDENCE_VERIFICATION",
+          "setup": "Exactly 10,000 matched IntakeScans have pending verification Work. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Verify in committed Match order and update each Collected Item at most once.",
+          "measureSeconds": 60,
+          "success": "All 10,000 selected items reach VERIFIED exactly once, no Work remains nonterminal, and custody identity remains exclusive.",
+          "threshold": "All 10,000 Work records become terminal in <= 60 seconds after replacement spawn; stale commits and unexpected failures are zero.",
+          "timer": "Start when both replacements spawn and stop only on a snapshot proving the drained Work and every reconciliation invariant.",
+          "target": "verify 10,000 scans within 60 s after worker recovery"
+        }
+      ]
+    },
+    "auctionguard": {
+      "seedKeys": [
+        "bidders",
+        "lots",
+        "auctions",
+        "bids"
+      ],
+      "publicPaths": [
+        "/api/v1/auctions/:auctionId/bids",
+        "/api/v1/admin/auctions",
+        "/api/v1/auctions/:auctionId/cancel",
+        "/api/v1/admin/auctions/:auctionId/open",
+        "/api/v1/auctions/:auctionId/bids?limit&cursor",
+        "/api/v1/time",
+        "/api/v1/auctions/:auctionId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "bidders",
+            "shape": "Bidder = {bidderId:uuid,displayName:string}",
+            "sort": [
+              "bidderId"
+            ]
+          },
+          {
+            "key": "lots",
+            "shape": "Lot",
+            "sort": [
+              "lotId"
+            ]
+          },
+          {
+            "key": "auctions",
+            "shape": "Auction",
+            "sort": [
+              "auctionId"
+            ]
+          },
+          {
+            "key": "bids",
+            "shape": "Bid",
+            "sort": [
+              "auctionId",
+              "committedSequence",
+              "bidId"
+            ]
+          },
+          {
+            "key": "auctionOutcomes",
+            "shape": "AuctionOutcome",
+            "sort": [
+              "auctionId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "awards",
+            "shape": "Award",
+            "sort": [
+              "auctionId",
+              "allocationRank",
+              "awardId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "AUCTION_CLOSE"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 20,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "hot-auction-bids",
+          "method": "POST",
+          "path": "/api/v1/auctions/:auctionId/bids",
+          "setup": "Use exactly 20 seeded OPEN hot Auctions and disjoint warm-up and measured Bidder pools. Keep one sequential producer per Auction.",
+          "selector": "Each of 20 producers targets one Auction and chooses the next bidderId bytewise; amountMinor is prior accepted amount plus minimumIncrementMinor.",
+          "request": "{bidderId,amountMinor}; the producer waits for its response before computing the next amount and always uses a fresh key.",
+          "success": "Only 201 accepted Bids count; committedSequence is gapless, the leader matches the greatest committed amount, and no 409 is in the success numerator.",
+          "threshold": "At least 250 accepted Bids/s across the 20 Auctions for 60 seconds and p95 <= 300 ms; unexpected 5xx = 0.",
+          "target": "accept 250 Bids/s on 20 hot Auctions with p95 <= 300 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "live-auction-read",
+          "method": "GET",
+          "path": "/api/v1/auctions/:auctionId",
+          "setup": "Use the same 20 OPEN hot Auctions without issuing Bids in this independent run.",
+          "selector": "Round-robin auctionId values bytewise.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 Auction responses whose leader, amount, state, and effectiveEndAt agree atomically count.",
+          "threshold": "At least 400 successful reads/s for 60 seconds and p95 <= 100 ms; mixed revisions and unexpected 5xx are zero.",
+          "target": "serve 400 live Auction reads/s with p95 <= 100 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "auction-close-recovery",
+          "path": "work:AUCTION_CLOSE",
+          "setup": "Exactly 2,000 CLOSING Auctions have due Close Work. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Close by effectiveEndAt,auctionId using the locked canonical Bid snapshot.",
+          "measureSeconds": 45,
+          "success": "Every Auction becomes CLOSED exactly once with one canonical AuctionOutcome, no AUCTION_CLOSE Work remains nonterminal, and stale workers cannot create another outcome.",
+          "threshold": "The 2,000-Auction backlog drains in <= 45 seconds after replacement spawn; unexpected failures = 0.",
+          "timer": "Start when both replacements spawn and stop at the first point-in-time snapshot proving all outcomes and invariants.",
+          "target": "close 2,000 due Auctions within 45 s after restart"
+        }
+      ]
+    },
+    "dispatchboard": {
+      "seedKeys": [
+        "zones",
+        "zoneDistances",
+        "couriers",
+        "customers",
+        "deliveries",
+        "offers",
+        "offerNotifications",
+        "assignments"
+      ],
+      "publicPaths": [
+        "/api/v1/deliveries",
+        "/api/v1/offers/:offerId/accept",
+        "/api/v1/deliveries/:deliveryId/cancel",
+        "/api/v1/deliveries/:deliveryId/pickup",
+        "/api/v1/deliveries/:deliveryId/complete",
+        "/api/v1/deliveries/:deliveryId/offers",
+        "/api/v1/couriers/:courierId",
+        "/api/v1/deliveries/:deliveryId/assignments/:assignmentId/ready",
+        "/api/v1/deliveries/:deliveryId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "zones",
+            "shape": "Zone = {zoneId:string,name:string}",
+            "sort": [
+              "zoneId"
+            ]
+          },
+          {
+            "key": "zoneDistances",
+            "shape": "ZoneDistance = {fromZone:string,toZone:string,distanceBucket:int}",
+            "sort": [
+              "fromZone",
+              "toZone"
+            ]
+          },
+          {
+            "key": "couriers",
+            "shape": "Courier",
+            "sort": [
+              "courierId"
+            ]
+          },
+          {
+            "key": "customers",
+            "shape": "Customer = {customerId:uuid,name:string}",
+            "sort": [
+              "customerId"
+            ]
+          },
+          {
+            "key": "deliveries",
+            "shape": "Delivery",
+            "sort": [
+              "deliveryId"
+            ]
+          },
+          {
+            "key": "offers",
+            "shape": "Offer",
+            "sort": [
+              "deliveryId",
+              "round",
+              "rank",
+              "offerId"
+            ]
+          },
+          {
+            "key": "offerNotifications",
+            "shape": "OfferNotification",
+            "sort": [
+              "offerId",
+              "notificationId"
+            ]
+          },
+          {
+            "key": "assignments",
+            "shape": "Assignment",
+            "sort": [
+              "assignmentId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "teamOffers",
+            "shape": "TeamOffer",
+            "sort": [
+              "deliveryId",
+              "round",
+              "roleIndex",
+              "rank",
+              "offerId"
+            ]
+          },
+          {
+            "key": "teamAssignments",
+            "shape": "TeamAssignment",
+            "sort": [
+              "teamAssignmentId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "OFFER_ISSUANCE",
+          "OFFER_EXPIRY"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "delivery-create",
+          "method": "POST",
+          "path": "/api/v1/deliveries",
+          "setup": "Prepare disjoint warm-up and measured Customer IDs and valid Zone pairs; readyAt is setup time plus 10 minutes and deliverBy is readyAt plus 60 minutes.",
+          "selector": "Round-robin customerId and complete Zone pairs bytewise; loadUnits is 1.",
+          "request": "{customerId,pickupZone,dropoffZone,readyAt,deliverBy,loadUnits:1} with a fresh Idempotency-Key.",
+          "success": "Only 202 REQUESTED responses that schedule exactly one initial OFFER_ISSUANCE Work count.",
+          "threshold": "At least 100 successful creations/s for 60 seconds and p95 <= 300 ms; unexpected 5xx = 0.",
+          "target": "create 100 Deliveries/s with p95 <= 300 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 0,
+          "measureSeconds": 5,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "hot-offer-claims",
+          "method": "POST",
+          "path": "/api/v1/offers/:offerId/accept",
+          "setup": "Use exactly 200 hot Deliveries with five OPEN Offers each. All 1,000 Offers are before expiresAt and deliverBy when timing begins; historical Offers are not selected.",
+          "selector": "Submit every Offer once in deliveryId,round,rank,offerId order with its own courierId; clients may race offers for the same Delivery.",
+          "request": "{courierId} with one fresh Idempotency-Key per Offer.",
+          "success": "Exactly one claim per Delivery returns the successful Assignment result; every later claim returns exact 409 OFFER_LOST. Completed-attempt throughput includes both published outcomes.",
+          "threshold": "All 1,000 claims finish in <= 5 seconds and all-response p95 <= 350 ms; exactly 200 winners, no double load, unexpected 5xx = 0.",
+          "target": "process 1,000 competing Offer claims across 200 hot Deliveries within 5 s with p95 <= 350 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "offer-expiry-recovery",
+          "path": "work:OFFER_EXPIRY,OFFER_ISSUANCE",
+          "setup": "Exactly 5,000 Offers are due. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Expire by expiresAt,deliveryId,round,rank and issue any legal next round deterministically.",
+          "measureSeconds": 60,
+          "success": "Every due Offer is terminal once, each affected Delivery has one coherent winner or next round, Courier loads reconcile, and neither Work kind remains nonterminal.",
+          "threshold": "All 5,000 due Offers settle in <= 60 seconds after replacement spawn; stale commits and unexpected failures are zero.",
+          "timer": "Start when both replacements spawn and stop on a snapshot proving all due Offers settled and every load invariant.",
+          "target": "recover and settle 5,000 due Offers within 60 s"
+        }
+      ]
+    },
+    "artifactvault": {
+      "seedKeys": [
+        "packages",
+        "artifactVersions"
+      ],
+      "publicPaths": [
+        "/api/v1/upload-sessions",
+        "/api/v1/upload-sessions/:uploadId/chunks",
+        "/api/v1/upload-sessions/:uploadId/complete",
+        "/api/v1/packages/:packageName/versions/:version",
+        "/api/v1/packages/:packageName/versions/:version/content",
+        "/api/v1/upload-sessions/:uploadId",
+        "/api/v1/releases",
+        "/api/v1/releases/:releaseId/artifacts/:platform/retry",
+        "/api/v1/releases/:releaseId/publish",
+        "/api/v1/packages/:packageName/releases/:version",
+        "/api/v1/packages/:packageName/releases/:version/artifacts/:platform/content"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "packages",
+            "shape": "Package = {packageName:string,displayName:string}",
+            "sort": [
+              "packageName"
+            ]
+          },
+          {
+            "key": "uploadSessions",
+            "shape": "UploadSession",
+            "sort": [
+              "uploadId"
+            ]
+          },
+          {
+            "key": "artifactVersions",
+            "shape": "ArtifactVersion",
+            "sort": [
+              "artifactVersionId"
+            ]
+          },
+          {
+            "key": "verificationResults",
+            "shape": "VerificationResult",
+            "sort": [
+              "uploadId"
+            ]
+          },
+          {
+            "key": "blobs",
+            "shape": "Blob = {sha256:sha256,size:int,mediaType:string,state:STAGED|VERIFIED|COMMITTED|ORPHANED,referenceCount:int}",
+            "sort": [
+              "sha256"
+            ]
+          },
+          {
+            "key": "blobReferences",
+            "shape": "BlobReference = {artifactVersionId:uuid,blobSha256:sha256,createdAt:timestamp}",
+            "sort": [
+              "artifactVersionId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "releases",
+            "shape": "Release",
+            "sort": [
+              "releaseId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "ARTIFACT_VERIFICATION",
+          "UPLOAD_EXPIRY",
+          "BLOB_GC"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 20,
+          "warmupSeconds": 0,
+          "measureSeconds": 60,
+          "timer": "Start immediately before dispatching the first 20 chunks and stop after all 160 measured PUT response bodies are complete.",
+          "id": "concurrent-upload-stream",
+          "method": "PUT",
+          "path": "/api/v1/upload-sessions/:uploadId/chunks",
+          "setup": "Use exactly 20 STAGING measured UploadSessions of 64 MiB each. Their deterministic bytes and expected digests are prepared before timing; this finite scenario has no warm-up.",
+          "selector": "One client owns each UploadSession and sends eight sequential 8 MiB ranges; sessions run concurrently and never share a chunk request.",
+          "request": "Raw application/octet-stream with Content-Range bytes start-end/67108864; each chunk is exactly 8 MiB and carries a fresh Idempotency-Key.",
+          "success": "Every PUT returns the exact ChunkReceipt and advances nextOffset once; after timing, complete all sessions and verify their digests as a correctness postcondition.",
+          "threshold": "From first measured PUT dispatch through the last complete PUT response, aggregate accepted payload throughput is >= 120 MiB/s; replay, gap, and 5xx errors are zero.",
+          "target": "stream 20 concurrent 64 MiB uploads with aggregate >= 120 MiB/s"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "artifact-metadata-read",
+          "method": "GET",
+          "path": "/api/v1/packages/:packageName/versions/:version",
+          "setup": "Use all 100,000 seeded committed ArtifactVersions; reads never open content bytes.",
+          "selector": "Round-robin packageName then version by UTF-8 byte order.",
+          "request": "No body, Range, or conditional header.",
+          "success": "Only 200 exact ArtifactVersion metadata responses count; blob digest, size, mediaType, and sequence must agree atomically.",
+          "threshold": "At least 200 successful metadata reads/s for 60 seconds and p95 <= 120 ms; unexpected 5xx = 0.",
+          "target": "serve 200 metadata reads/s with p95 <= 120 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "verification-recovery",
+          "path": "work:ARTIFACT_VERIFICATION",
+          "setup": "Exactly 32 VERIFYING 64 MiB sessions total 2 GiB. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements; record each replacement baseline RSS before its first claim and sample RSS every 100 ms.",
+          "selector": "Process by UploadSession createdAt then uploadId and stream bytes rather than buffering an object.",
+          "measureSeconds": 90,
+          "success": "All 32 sessions reach COMMITTED exactly once, no verification Work remains nonterminal, every Blob digest/reference verifies, each replacement peak RSS is <= 768 MiB, and peak minus its recorded baseline is <= 64 MiB.",
+          "threshold": "The 2 GiB backlog drains in <= 90 seconds after replacement spawn with both RSS bounds and zero stale commit or unexpected failure.",
+          "timer": "Start when both replacements spawn and stop only after snapshot, managed-object verification, and the final RSS sample prove all postconditions.",
+          "target": "verify a 2 GiB backlog within 90 s after worker recovery with worker peak RSS <= 768 MiB"
+        }
+      ]
+    },
+    "exportvault": {
+      "seedKeys": [
+        "subjects",
+        "datasetRevisions",
+        "exports"
+      ],
+      "publicPaths": [
+        "/api/v1/exports",
+        "/api/v1/exports/:exportId/cancel",
+        "/api/v1/exports/:exportId/download-grants",
+        "/api/v1/download-grants/:grantId/revoke",
+        "/api/v1/download-grants/:grantId/content",
+        "/api/v1/exports/:exportId/sections",
+        "/api/v1/exports/:exportId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "subjects",
+            "shape": "ExportSubject = {subjectId:uuid,name:string,currentDatasetRevision:int}",
+            "sort": [
+              "subjectId"
+            ]
+          },
+          {
+            "key": "datasetRevisionSummaries",
+            "shape": "DatasetRevisionSummary = {subjectId:uuid,revision:int,committedAt:timestamp,recordCount:int,recordsDigest:sha256}; recordsDigest is SHA-256 of RFC 8785 records sorted by recordId",
+            "sort": [
+              "subjectId",
+              "revision"
+            ]
+          },
+          {
+            "key": "exports",
+            "shape": "Export",
+            "sort": [
+              "exportId"
+            ]
+          },
+          {
+            "key": "exportSections",
+            "shape": "ExportSection",
+            "sort": [
+              "exportId",
+              "name"
+            ]
+          },
+          {
+            "key": "downloadGrants",
+            "shape": "DownloadGrant",
+            "sort": [
+              "grantId"
+            ]
+          },
+          {
+            "key": "deletionProofs",
+            "shape": "DeletionProof",
+            "sort": [
+              "exportId",
+              "objectSha256"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "exportShards",
+            "shape": "ExportShard",
+            "sort": [
+              "exportId",
+              "ordinal",
+              "shardId"
+            ]
+          },
+          {
+            "key": "exportManifests",
+            "shape": "ExportManifest",
+            "sort": [
+              "exportId",
+              "manifestId"
+            ]
+          },
+          {
+            "key": "shardedDownloadGrants",
+            "shape": "ShardedDownloadGrant",
+            "sort": [
+              "grantId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "EXPORT_GENERATION",
+          "EXPORT_CLEANUP"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 100,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "range-download",
+          "method": "GET",
+          "path": "/api/v1/download-grants/:grantId/content",
+          "setup": "The perf seed provides at least 100 live READY Exports sharing a verified object of at least 64 MiB. Create one unexpired Grant per Export before warm-up.",
+          "selector": "One closed-loop client owns each of 100 Grants and repeatedly reads its object; Grant IDs are never shared between clients.",
+          "request": "Header Range: bytes=0-1048575 for exactly 1 MiB per 206 response; no conditional header.",
+          "success": "Only complete 206 responses with Content-Length 1048576, correct Content-Range, ETag, and verified bytes count.",
+          "threshold": "Aggregate verified response-body throughput is >= 150 MiB/s for 60 seconds; wrong bytes, 200 fallback, 5xx, and live-object deletion are zero.",
+          "target": "serve 100 concurrent range downloads at aggregate >= 150 MiB/s"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "five-million-record-generation",
+          "path": "work:EXPORT_GENERATION",
+          "setup": "Use one seeded Dataset Revision containing exactly 5,000,000 records across profile, activity, orders, and files, with 1,250,000 recordId-ordered records per scope. Create one JSONL Export covering all four scopes before starting two workers.",
+          "selector": "Write scopes in request order and records by recordId; each line is the exact RFC 8785 record followed by LF.",
+          "measureSeconds": 120,
+          "success": "The Export is READY with all Sections VERIFIED, exact 5,000,000-record coverage, object bytes/digest/size verified, and no EXPORT_GENERATION Work nonterminal.",
+          "threshold": "Generation and verification complete in <= 120 seconds with zero missing, duplicate, reordered, or unexpected-failure record.",
+          "timer": "Start when both workers spawn after the Export request commits; stop only after snapshot and direct object verification prove every postcondition.",
+          "target": "generate 5,000,000 seeded records into verified objects within 120 s"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "expired-object-cleanup",
+          "path": "work:EXPORT_CLEANUP",
+          "setup": "Use exactly 10,000 READY Exports past retention with no live Grant plus 1,000 READY live controls; start two cleanup workers.",
+          "selector": "Process expired Exports by retentionUntil then exportId; recheck Grant liveness inside the delete-publication transaction.",
+          "measureSeconds": 60,
+          "success": "All 10,000 expired objects are deleted with exact DeletionProofs, every live control remains byte-readable, and no cleanup Work is nonterminal.",
+          "threshold": "Cleanup finishes in <= 60 seconds with zero live-data deletion, missing proof, or unexpected failure.",
+          "timer": "Start when both cleanup workers spawn and stop after snapshot plus byte reads of all control-object digests prove the postconditions.",
+          "target": "clean 10,000 expired objects within 60 s without deleting live data"
+        }
+      ]
+    },
+    "configrelay": {
+      "seedKeys": [
+        "fleets",
+        "agents",
+        "configurations",
+        "deployments",
+        "assignments"
+      ],
+      "publicPaths": [
+        "/api/v1/deployments",
+        "/api/v1/fleets/:fleetId/configurations",
+        "/api/v1/agents/:agentId/poll",
+        "/api/v1/agents/:agentId/acknowledgements",
+        "/api/v1/deployments/:deploymentId/cancel",
+        "/api/v1/agents/:agentId",
+        "/api/v1/agents/:agentId/assignments",
+        "/api/v1/deployments/:deploymentId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "agents",
+            "shape": "Agent",
+            "sort": [
+              "agentId"
+            ]
+          },
+          {
+            "key": "configurations",
+            "shape": "Configuration",
+            "sort": [
+              "fleetId",
+              "revision"
+            ]
+          },
+          {
+            "key": "deployments",
+            "shape": "Deployment",
+            "sort": [
+              "deploymentId"
+            ]
+          },
+          {
+            "key": "assignments",
+            "shape": "Assignment",
+            "sort": [
+              "assignmentId"
+            ]
+          },
+          {
+            "key": "acknowledgements",
+            "shape": "Acknowledgement",
+            "sort": [
+              "agentId",
+              "deploymentId",
+              "commandSequence"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "deploymentCohorts",
+            "shape": "DeploymentCohort",
+            "sort": [
+              "deploymentId",
+              "ordinal",
+              "cohortId"
+            ]
+          },
+          {
+            "key": "rolloutCommands",
+            "shape": "RolloutCommand",
+            "sort": [
+              "deploymentId",
+              "agentId",
+              "commandSequence"
+            ]
+          },
+          {
+            "key": "deploymentRollbacks",
+            "shape": "DeploymentRollback",
+            "sort": [
+              "deploymentId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "ASSIGNMENT_DELIVERY"
+        ],
+        "manager": [
+          "COHORT_DEADLINE",
+          "ROLLBACK_DELIVERY"
+        ]
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "agent-poll",
+          "method": "POST",
+          "path": "/api/v1/agents/:agentId/poll",
+          "setup": "Use 50,000 Agents with one current WAITING Assignment and 50,000 without a newer Assignment; the scenario does not acknowledge commands.",
+          "selector": "Alternate COMMAND-eligible and NO_CHANGE Agent IDs, each subgroup bytewise round-robin.",
+          "request": "{appliedRevision} equal to the seeded Agent value; COMMAND Agents submit last known applied revision and NO_CHANGE Agents are current.",
+          "success": "Only 200 exact AgentPollResponse bodies count; the measured mix is exactly 50% COMMAND and 50% NO_CHANGE over each complete 100-request block.",
+          "threshold": "At least 2,000 successful polls/s for 60 seconds and p95 <= 80 ms; token mix-up and unexpected 5xx = 0.",
+          "target": "serve 2,000 Agent polls/s with p95 <= 80 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "acknowledgement-ingest",
+          "method": "POST",
+          "path": "/api/v1/agents/:agentId/acknowledgements",
+          "setup": "Poll 35,000 disjoint current Assignments before timing to obtain their exact tokens. Reserve 5,000 for warm-up and 30,000 for measurement.",
+          "selector": "Repeat two-request pairs: one new acknowledgement then one exact idempotent replay. Among unique requests, 90% outcome APPLIED and 10% REJECTED.",
+          "request": "{deploymentId,commandSequence,revision,digest,assignmentToken,outcome}; each replay reuses the original key and byte-identical body.",
+          "success": "A first stored acknowledgement or exact replay counts; stale token/sequence responses do not count and each unique Assignment changes state once.",
+          "threshold": "At least 1,000 successful responses/s for 60 seconds and p95 <= 180 ms with the exact 45% APPLIED, 5% REJECTED, 50% replay request mix.",
+          "target": "ingest 1,000 acknowledgements/s with p95 <= 180 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "assignment-delivery-recovery",
+          "path": "work:ASSIGNMENT_DELIVERY",
+          "setup": "Exactly 50,000 WAITING Assignments on distinct Agents have pending delivery Work. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Deliver by deployment createdAt,deploymentId,agentId and preserve each commandSequence plus deliveryId across retry.",
+          "measureSeconds": 120,
+          "success": "Every selected Assignment reaches SENT with its stable delivery identity, no ASSIGNMENT_DELIVERY Work remains nonterminal, and Agent desired state plus Deployment counts reconcile; ACKED is not required.",
+          "threshold": "All 50,000 Assignments reach SENT in <= 120 seconds after replacement spawn; stale commits and unexpected failures are zero.",
+          "timer": "Start when both replacements spawn and stop on a point-in-time snapshot proving SENT state, drained Work, and all counters.",
+          "target": "recover and deliver 50,000 pending Assignments within 120 s"
+        }
+      ]
+    },
+    "firmwarefleet": {
+      "seedKeys": [
+        "deviceModels",
+        "devices",
+        "firmwareImages",
+        "campaigns",
+        "deviceUpdates",
+        "commands",
+        "reports"
+      ],
+      "publicPaths": [
+        "/api/v1/firmware-campaigns",
+        "/api/v1/firmware-images",
+        "/api/v1/devices/:deviceId/commands/poll",
+        "/api/v1/devices/:deviceId/report-batches",
+        "/api/v1/firmware-campaigns/:campaignId/cancel",
+        "/api/v1/devices/:deviceId/updates",
+        "/api/v1/firmware-campaigns/:campaignId/updates",
+        "/api/v1/device-updates/:deviceUpdateId/upgrade-plan",
+        "/api/v1/device-updates/:deviceUpdateId/retry"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "deviceModels",
+            "shape": "DeviceModel = {modelId:uuid,name:string}",
+            "sort": [
+              "modelId"
+            ]
+          },
+          {
+            "key": "devices",
+            "shape": "Device = {deviceId:uuid,modelId:uuid,labels:object,installedVersion:string,installedDigest:sha256,lastReportSequence:int}",
+            "sort": [
+              "deviceId"
+            ]
+          },
+          {
+            "key": "firmwareImages",
+            "shape": "FirmwareImage",
+            "sort": [
+              "firmwareImageId"
+            ]
+          },
+          {
+            "key": "firmwareCampaigns",
+            "shape": "FirmwareCampaign",
+            "sort": [
+              "campaignId"
+            ]
+          },
+          {
+            "key": "deviceUpdates",
+            "shape": "DeviceUpdate",
+            "sort": [
+              "deviceUpdateId"
+            ]
+          },
+          {
+            "key": "deviceCommands",
+            "shape": "DeviceCommand",
+            "sort": [
+              "deviceUpdateId",
+              "sequence"
+            ]
+          },
+          {
+            "key": "deviceReports",
+            "shape": "DeviceReport",
+            "sort": [
+              "deviceUpdateId",
+              "sequence"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "upgradePlans",
+            "shape": "UpgradePlan",
+            "sort": [
+              "deviceUpdateId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "COMMAND_DELIVERY",
+          "REPORT_TIMEOUT",
+          "ROLLBACK"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "device-command-poll",
+          "method": "POST",
+          "path": "/api/v1/devices/:deviceId/commands/poll",
+          "setup": "All 100,000 Devices have one current command. Half of the poll targets report the preceding sequence and half report the current sequence; polling does not consume commands.",
+          "selector": "Alternate COMMAND and NO_CHANGE Device IDs from separate bytewise-sorted lists.",
+          "request": "{lastCommandSequence}; use current-1 for COMMAND and current for NO_CHANGE.",
+          "success": "Only 200 exact poll responses count; each complete 100-request block is exactly 50 COMMAND and 50 NO_CHANGE, and command tokens never cross Device IDs.",
+          "threshold": "At least 3,000 successful polls/s for 60 seconds and p95 <= 80 ms; unexpected 5xx = 0.",
+          "target": "serve 3,000 command polls/s with p95 <= 80 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "device-report-batch",
+          "method": "POST",
+          "path": "/api/v1/devices/:deviceId/report-batches",
+          "setup": "Reserve 70,000 Device commands: 10,000 unique reports for warm-up and 60,000 for measurement. Every request contains exactly one report.",
+          "selector": "Repeat a new one-report batch then its exact idempotent replay. Across each 100 unique reports, 90 are SUCCEEDED and 10 are FAILED.",
+          "request": "{firstSequence,reports:[{sequence,commandId,commandToken,outcome,installedDigest}]}; replay reuses key and body.",
+          "success": "A first atomic stored batch or exact replay counts; no partial batch, sequence gap, or cross-command token is accepted.",
+          "threshold": "At least 2,000 successful one-report batch responses/s for 60 seconds and p95 <= 200 ms; exactly half the requests are replays.",
+          "target": "ingest 2,000 Device Reports/s with p95 <= 200 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "command-recovery",
+          "path": "work:COMMAND_DELIVERY",
+          "setup": "Exactly 100,000 Devices each have one pending COMMAND_DELIVERY Work. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Process campaignId,deviceId,command sequence order while respecting each Campaign maxParallel bound.",
+          "measureSeconds": 180,
+          "success": "Every selected command becomes durably pollable with one identity, no COMMAND_DELIVERY Work remains nonterminal, and Campaign active counts never exceed maxParallel.",
+          "threshold": "All 100,000 pending commands drain in <= 180 seconds after replacement spawn; stale commit and unexpected failure counts are zero.",
+          "timer": "Start when both replacements spawn and stop only after snapshot plus representative poll responses prove every postcondition.",
+          "target": "recover and drain 100,000 pending Command Tasks within 180 s after restart"
+        }
+      ]
+    },
+    "quotamesh": {
+      "seedKeys": [
+        "dimensions",
+        "quotaPools",
+        "commitments",
+        "reservations"
+      ],
+      "publicPaths": [
+        "/api/v1/quota-pools/:poolId/reservations",
+        "/api/v1/quota-pools",
+        "/api/v1/reservations/:reservationId/commit",
+        "/api/v1/reservations/:reservationId/release",
+        "/api/v1/admission-queue",
+        "/api/v1/quota-pools/:poolId",
+        "/api/v1/quota-pools/:poolId/admission-queue",
+        "/api/v1/quota-organizations",
+        "/api/v1/quota-organizations/:organizationId/projects",
+        "/api/v1/quota-organizations/:organizationId/projects/:projectId/reservations",
+        "/api/v1/quota-organizations/:organizationId/capacity",
+        "/api/v1/quota-organizations/:organizationId/projects/:projectId/allocation",
+        "/api/v1/quota-organizations/:organizationId",
+        "/api/v1/quota-organizations/:organizationId/projects/:projectId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "dimensions",
+            "shape": "Dimension = {name:string,unit:string}",
+            "sort": [
+              "name"
+            ]
+          },
+          {
+            "key": "quotaPools",
+            "shape": "QuotaPool",
+            "sort": [
+              "poolId"
+            ]
+          },
+          {
+            "key": "reservations",
+            "shape": "Reservation",
+            "sort": [
+              "reservationId"
+            ]
+          },
+          {
+            "key": "commitments",
+            "shape": "Commitment",
+            "sort": [
+              "commitmentId"
+            ]
+          },
+          {
+            "key": "admissionEntries",
+            "shape": "AdmissionEntry",
+            "sort": [
+              "admissionEntryId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "quotaOrganizations",
+            "shape": "QuotaOrganization",
+            "sort": [
+              "organizationId"
+            ]
+          },
+          {
+            "key": "quotaProjects",
+            "shape": "QuotaProject",
+            "sort": [
+              "projectId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "RESERVATION_EXPIRY",
+          "ADMISSION_PROMOTION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "quota-pool-read",
+          "method": "GET",
+          "path": "/api/v1/quota-pools/:poolId",
+          "setup": "Use all 1,000 seeded Quota Pools; reads do not mutate capacity vectors.",
+          "selector": "Round-robin poolId values in bytewise order.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 QuotaPool responses whose held and committed vectors reconcile with members count.",
+          "threshold": "At least 500 successful reads/s for 60 seconds and p95 <= 100 ms; inconsistent vectors and unexpected 5xx are zero.",
+          "target": "serve 500 quota reads/s with p95 <= 100 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "hot-pool-reservation-race",
+          "method": "POST",
+          "path": "/api/v1/quota-pools/:poolId/reservations",
+          "setup": "Before warm-up, create ten measured and ten warm-up Pools through the public API. Each has all five Dimensions; the eight measured spare Pools have capacity 20,000 per Dimension and the other two are saturated.",
+          "selector": "Repeat eight spare-Pool requests then two saturated-Pool requests, round-robin within each subgroup by poolId.",
+          "request": "{ownerId,quantities:{each declared Dimension:1},ttlSeconds:300}; ownerId and key are unique per new request.",
+          "success": "Spare targets return 201 HELD and saturated targets return exact 409 QUOTA_EXCEEDED; completed-attempt throughput includes both, while only 201 contributes successful reservations.",
+          "threshold": "At least 200 complete attempts/s for 60 seconds and all-response p95 <= 400 ms with exact 80% 201 and 20% expected 409 over each 100 attempts.",
+          "target": "process 200 hot-pool Reservation races/s with p95 <= 400 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "expiry-and-admission-recovery",
+          "path": "work:RESERVATION_EXPIRY,ADMISSION_PROMOTION",
+          "setup": "Exactly 20,000 HELD Reservations are due and exactly 20,000 WAITING Admission Entries become eligible after release. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Expire by expiresAt,reservationId and promote each Pool by priority descending,requestedAt,admissionEntryId without bypass.",
+          "measureSeconds": 60,
+          "success": "All 20,000 Reservations become EXPIRED, all 20,000 Entries become PROMOTED, neither Work kind remains nonterminal, and every Dimension conserves capacity.",
+          "threshold": "Both 20,000-record backlogs drain in <= 60 seconds after replacement spawn; oversubscription, stale commit, and unexpected failure counts are zero.",
+          "timer": "Start when both replacements spawn and stop on the first point-in-time snapshot proving all 40,000 terminal transitions and invariants.",
+          "target": "expire 20,000 HELD Reservations and promote 20,000 Admission Entries within 60 s after recovery"
+        }
+      ]
+    },
+    "carbonledger": {
+      "seedKeys": [
+        "projects",
+        "beneficiaries",
+        "creditLots",
+        "retirements",
+        "certificates"
+      ],
+      "publicPaths": [
+        "/api/v1/retirements",
+        "/api/v1/retirements/:retirementId/release",
+        "/api/v1/retirements/:retirementId/certificate",
+        "/api/v1/credit-lots?projectId&vintage&methodology&limit&cursor",
+        "/api/v1/credit-lots/:creditLotId",
+        "/api/v1/retirements/:retirementId",
+        "/api/v1/retirements/:retirementId/allocations"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "projects",
+            "shape": "CarbonProject = {projectId:uuid,name:string}",
+            "sort": [
+              "projectId"
+            ]
+          },
+          {
+            "key": "beneficiaries",
+            "shape": "Beneficiary = {beneficiaryId:uuid,name:string}",
+            "sort": [
+              "beneficiaryId"
+            ]
+          },
+          {
+            "key": "creditLots",
+            "shape": "CreditLot",
+            "sort": [
+              "creditLotId"
+            ]
+          },
+          {
+            "key": "retirements",
+            "shape": "Retirement",
+            "sort": [
+              "retirementId"
+            ]
+          },
+          {
+            "key": "certificates",
+            "shape": "Certificate",
+            "sort": [
+              "retirementId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "lotAllocations",
+            "shape": "LotAllocation",
+            "sort": [
+              "retirementId",
+              "ordinal"
+            ]
+          },
+          {
+            "key": "splitCertificates",
+            "shape": "SplitCertificate",
+            "sort": [
+              "retirementId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "CERTIFICATE_GENERATION",
+          "RETIREMENT_EXPIRY"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "lot-and-provenance-read",
+          "method": "GET",
+          "path": "/api/v1/credit-lots?projectId=:projectId&vintage=:vintage&methodology=:methodology&limit=50; /api/v1/credit-lots/:creditLotId",
+          "setup": "Use all seeded eligible Lots. Reads do not create Retirements or alter quantities.",
+          "selector": "Alternate collection and detail reads. Collection filters come from the next Lot in priority order; detail IDs advance bytewise.",
+          "request": "No body; omit cursor on collection requests.",
+          "success": "Only 200 responses count; every complete 100-request block is exactly 50 collection and 50 detail reads and all quantity/provenance fields reconcile.",
+          "threshold": "At least 300 successful mixed reads/s for 60 seconds and p95 <= 140 ms; unexpected 5xx = 0.",
+          "target": "serve 300 lot/provenance reads/s with p95 <= 140 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "competing-retirement-create",
+          "method": "POST",
+          "path": "/api/v1/retirements",
+          "setup": "Use the ten perf-v1 hot Credit Lots, each with at least 10,000 available grams under one shared eligibility tuple; warm-up uses separate Lots.",
+          "selector": "Round-robin beneficiaryId and the shared eligibility; every request competes for the same ordered ten-Lot set and requests one gram.",
+          "request": "{beneficiaryId,quantityGrams:1,eligibility:{projectId,vintageFrom:vintage,vintageTo:vintage,methodology}} with a fresh key.",
+          "success": "Only 202 RESERVED responses count; each gram moves available to reserved exactly once and no CREDIT_UNAVAILABLE response counts.",
+          "threshold": "At least 80 successful Retirements/s for 60 seconds and p95 <= 500 ms; Lot conservation and unexpected 5xx checks pass.",
+          "target": "create 80 competing Retirements/s with p95 <= 500 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "certificate-recovery",
+          "path": "work:CERTIFICATE_GENERATION",
+          "setup": "Exactly 5,000 RESERVED Retirements have pending Certificate Work. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Process by Retirement createdAt then retirementId and publish canonical bytes only after the Lot transition commits.",
+          "measureSeconds": 90,
+          "success": "All 5,000 Retirements reach RETIRED with one verified Certificate, no Work remains nonterminal, every digest matches served bytes, and Lot totals conserve grams.",
+          "threshold": "All Certificates publish in <= 90 seconds after replacement spawn; partial objects, stale commits, and unexpected failures are zero.",
+          "timer": "Start when both replacements spawn and stop only after snapshot and direct Certificate byte verification prove every postcondition.",
+          "target": "generate and publish 5,000 Certificates within 90 s after recovery"
+        }
+      ]
+    },
+    "mergeboard": {
+      "seedKeys": [
+        "documents",
+        "changes",
+        "snapshots"
+      ],
+      "publicPaths": [
+        "/api/v1/documents/:documentId/changes",
+        "/api/v1/documents",
+        "/api/v1/documents/:documentId/conflicts/:conflictId/resolve",
+        "/api/v1/documents/:documentId/revisions/:revision",
+        "/api/v1/documents/:documentId/diff?fromRevision&toRevision",
+        "/api/v1/documents/:documentId/changes?limit&cursor",
+        "/api/v1/documents/:documentId/branches",
+        "/api/v1/documents/:documentId/branches/:branchId/changes",
+        "/api/v1/documents/:documentId/merge-requests",
+        "/api/v1/merge-requests/:mergeRequestId/approvals",
+        "/api/v1/merge-requests/:mergeRequestId/merge",
+        "/api/v1/merge-requests/:mergeRequestId",
+        "/api/v1/documents/:documentId/branches/:branchId/revisions/:revision"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "documents",
+            "shape": "Document",
+            "sort": [
+              "documentId"
+            ]
+          },
+          {
+            "key": "documentRevisions",
+            "shape": "DocumentRevision",
+            "sort": [
+              "documentId",
+              "revision"
+            ]
+          },
+          {
+            "key": "changes",
+            "shape": "Change",
+            "sort": [
+              "documentId",
+              "changeId"
+            ]
+          },
+          {
+            "key": "conflicts",
+            "shape": "Conflict",
+            "sort": [
+              "changeId",
+              "operationIndex",
+              "conflictId"
+            ]
+          },
+          {
+            "key": "documentSnapshots",
+            "shape": "DocumentSnapshot = {documentId:uuid,revision:int,canonicalDigest:sha256,createdAt:timestamp}",
+            "sort": [
+              "documentId",
+              "revision"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "branches",
+            "shape": "Branch",
+            "sort": [
+              "documentId",
+              "branchId"
+            ]
+          },
+          {
+            "key": "mergeRequests",
+            "shape": "MergeRequest",
+            "sort": [
+              "mergeRequestId"
+            ]
+          },
+          {
+            "key": "branchDocumentSnapshots",
+            "shape": "BranchDocumentSnapshot = {documentId:uuid,branchId:uuid,revision:int,canonicalDigest:sha256,createdAt:timestamp}",
+            "sort": [
+              "documentId",
+              "branchId",
+              "revision"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "SNAPSHOT_COMPACTION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "non-overlapping-change-apply",
+          "method": "POST",
+          "path": "/api/v1/documents/:documentId/changes",
+          "setup": "Use disjoint warm-up and measured Document sets, each with at least one dedicated Block. Keep at most one in-flight Change per Document.",
+          "selector": "Round-robin documentId bytewise; clientSequence and baseRevision advance from the preceding successful response for that Document.",
+          "request": "One REPLACE operation per Change targeting the dedicated block, with exact expectedText and a deterministic 64-ASCII-byte newText; use a fresh key.",
+          "success": "Only 201 APPLIED responses count; each creates one gapless revision with the expected canonicalDigest and no Conflict.",
+          "threshold": "At least 300 successful Changes/s for 60 seconds and p95 <= 250 ms; conflicts, revision gaps, and unexpected 5xx are zero.",
+          "target": "apply 300 non-overlapping Changes/s with p95 <= 250 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "document-revision-read",
+          "method": "GET",
+          "path": "/api/v1/documents/:documentId/revisions/:revision",
+          "setup": "Use all seeded DocumentRevision identities; reads do not trigger compaction.",
+          "selector": "Round-robin documentId then revision in bytewise/numeric order.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 responses whose Blocks recompute the published canonicalDigest and provenance count.",
+          "threshold": "At least 400 successful reads/s for 60 seconds and p95 <= 120 ms; digest mismatch and unexpected 5xx counts are zero.",
+          "target": "serve 400 revision reads/s with p95 <= 120 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "snapshot-compaction-recovery",
+          "path": "work:SNAPSHOT_COMPACTION",
+          "setup": "Exactly 10,000 Documents have one pending compaction Work each, covering exactly 100 APPLIED one-operation Changes per Document and 1,000,000 operations total. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Compact by documentId and include Changes through the Work's captured revision without deleting operation history.",
+          "measureSeconds": 120,
+          "success": "Exactly 10,000 verified DocumentSnapshots cover all 1,000,000 operations, no Work remains nonterminal, replay equals each snapshot digest, and stale workers cannot publish.",
+          "threshold": "Compaction finishes in <= 120 seconds after replacement spawn with zero missing operation, digest mismatch, stale commit, or unexpected failure.",
+          "timer": "Start when both replacements spawn and stop only after snapshot files, database snapshot rows, and full replay verification prove every postcondition.",
+          "target": "compact 1,000,000 operations into verified Snapshots within 120 s after recovery"
+        }
+      ]
+    },
+    "escrowguard": {
+      "seedKeys": [
+        "parties",
+        "escrows",
+        "milestones",
+        "disputes",
+        "releases"
+      ],
+      "publicPaths": [
+        "/api/v1/escrows",
+        "/api/v1/escrows/:escrowId/milestones/:milestoneId/submit",
+        "/api/v1/escrows/:escrowId/milestones/:milestoneId/accept",
+        "/api/v1/escrows/:escrowId/milestones/:milestoneId/disputes",
+        "/api/v1/admin/disputes/:disputeId/resolve",
+        "/api/v1/escrows/:escrowId"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "parties",
+            "shape": "Party = {partyId:uuid,displayName:string}",
+            "sort": [
+              "partyId"
+            ]
+          },
+          {
+            "key": "escrows",
+            "shape": "Escrow",
+            "sort": [
+              "escrowId"
+            ]
+          },
+          {
+            "key": "milestones",
+            "shape": "Milestone",
+            "sort": [
+              "escrowId",
+              "ordinal",
+              "milestoneId"
+            ]
+          },
+          {
+            "key": "disputes",
+            "shape": "Dispute",
+            "sort": [
+              "escrowId",
+              "openedAt",
+              "disputeId"
+            ]
+          },
+          {
+            "key": "releases",
+            "shape": "Release",
+            "sort": [
+              "escrowId",
+              "createdAt",
+              "releaseId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "beneficiaryShares",
+            "shape": "BeneficiaryShare",
+            "sort": [
+              "milestoneId",
+              "ordinal",
+              "beneficiaryShareId"
+            ]
+          },
+          {
+            "key": "beneficiaryPayouts",
+            "shape": "BeneficiaryPayout",
+            "sort": [
+              "releaseId",
+              "beneficiaryShareId",
+              "payoutId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "ESCROW_EXPIRY"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "escrow-detail-read",
+          "method": "GET",
+          "path": "/api/v1/escrows/:escrowId",
+          "setup": "Use exactly 10,000 stable active Escrows from perf-v1; no measured request changes their state.",
+          "selector": "Round-robin escrowId values in bytewise order.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 responses whose Milestones, Releases, Dispute, and Fund Position recompute exact conservation count.",
+          "threshold": "At least 300 successful reads/s for 60 seconds and p95 <= 140 ms; mixed revisions and unexpected 5xx are zero.",
+          "target": "serve 300 Escrow detail reads/s with p95 <= 140 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "funded-escrow-create",
+          "method": "POST",
+          "path": "/api/v1/escrows",
+          "setup": "Use disjoint warm-up and measured Escrow identities and the fixed perf-v1 Party set.",
+          "selector": "Advance Buyer and Seller pairs bytewise and use a fresh semantic Escrow request each time.",
+          "request": "{buyerId,sellerId,currency,totalMinor,expiresAt,milestones:[{title,amountMinor}]} with a fresh Idempotency-Key.",
+          "success": "Only 201 FUNDED responses whose Milestones sum exactly and whose Fund Position conserves count.",
+          "threshold": "At least 80 successful Escrows/s for 60 seconds and p95 <= 500 ms; partial funding and unexpected 5xx counts are zero.",
+          "target": "create 80 funded Escrows/s with p95 <= 500 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "escrow-expiry-recovery",
+          "path": "work:ESCROW_EXPIRY",
+          "setup": "Exactly 5,000 due funded Escrows have unreleased value and one nonterminal Expiry Work. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.",
+          "selector": "Expire by expiresAt then escrowId and refund every remaining Milestone in one transaction.",
+          "measureSeconds": 75,
+          "success": "All 5,000 Escrows become REFUNDED once, all Fund Positions conserve, and no ESCROW_EXPIRY Work remains nonterminal.",
+          "threshold": "The complete backlog drains in <= 75 seconds after replacement spawn; stale commits, partial refunds, and unexpected failures are zero.",
+          "timer": "Start when both replacement workers spawn and stop on the first point-in-time snapshot proving every terminal state and invariant.",
+          "target": "expire and refund 5,000 Escrows within 75 s after worker recovery"
+        }
+      ]
+    },
+    "permitforge": {
+      "seedKeys": [
+        "applicants",
+        "reviewers",
+        "permitApplications",
+        "applicationRevisions",
+        "reviewClaims",
+        "reviewDecisions",
+        "approvedPermits"
+      ],
+      "publicPaths": [
+        "/api/v1/permit-applications",
+        "/api/v1/permit-applications/:applicationId/review-claims",
+        "/api/v1/review-claims/:claimId/decisions",
+        "/api/v1/permit-applications/:applicationId/revisions",
+        "/api/v1/permit-applications/:applicationId",
+        "/api/v1/permit-applications/:applicationId/revisions/:revision",
+        "/api/v1/permit-applications/:applicationId/stages"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "applicants",
+            "shape": "Applicant = {applicantId:uuid,name:string}",
+            "sort": [
+              "applicantId"
+            ]
+          },
+          {
+            "key": "reviewers",
+            "shape": "Reviewer = {reviewerId:uuid,name:string,roles:[string]}",
+            "sort": [
+              "reviewerId"
+            ]
+          },
+          {
+            "key": "permitApplications",
+            "shape": "PermitApplication",
+            "sort": [
+              "applicationId"
+            ]
+          },
+          {
+            "key": "applicationRevisions",
+            "shape": "ApplicationRevision",
+            "sort": [
+              "applicationId",
+              "revision"
+            ]
+          },
+          {
+            "key": "reviewClaims",
+            "shape": "ReviewClaim",
+            "sort": [
+              "applicationId",
+              "revision",
+              "claimId"
+            ]
+          },
+          {
+            "key": "reviewDecisions",
+            "shape": "ReviewDecision",
+            "sort": [
+              "applicationId",
+              "revision",
+              "decidedAt",
+              "decisionId"
+            ]
+          },
+          {
+            "key": "approvedPermits",
+            "shape": "ApprovedPermit = {permitId:uuid,applicationId:uuid,revision:int,canonicalDigest:sha256,issuedAt:timestamp}",
+            "sort": [
+              "permitId"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "reviewStages",
+            "shape": "ReviewStage",
+            "sort": [
+              "applicationId",
+              "revision",
+              "ordinal",
+              "stageId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "PERMIT_DEADLINE"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "application-current-read",
+          "method": "GET",
+          "path": "/api/v1/permit-applications/:applicationId",
+          "setup": "Use exactly 10,000 stable nonterminal Applications with immutable current Revisions and captured policies.",
+          "selector": "Round-robin applicationId values in bytewise order.",
+          "request": "No body or query parameters.",
+          "success": "Only 200 responses whose current Revision, policy, Claims, Decisions, and aggregate state form one revision count.",
+          "threshold": "At least 350 successful reads/s for 60 seconds and p95 <= 120 ms; mixed revisions and unexpected 5xx are zero.",
+          "target": "serve 350 current Application reads/s with p95 <= 120 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "application-submit",
+          "method": "POST",
+          "path": "/api/v1/permit-applications",
+          "setup": "Use disjoint warm-up and measured Application identities with the fixed Applicant, Reviewer, and policy sets.",
+          "selector": "Advance Applicant and policy combinations bytewise and use unique canonical fields.",
+          "request": "{applicantId,permitType,fields,deadlineAt,reviewPolicy} with a fresh Idempotency-Key.",
+          "success": "Only 201 SUBMITTED responses creating immutable Revision 1 with one captured policy count.",
+          "threshold": "At least 100 successful Applications/s for 60 seconds and p95 <= 350 ms; partial revision state and unexpected 5xx are zero.",
+          "target": "submit 100 Permit Applications/s with p95 <= 350 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "permit-deadline-recovery",
+          "path": "work:PERMIT_DEADLINE",
+          "setup": "Exactly 10,000 undecided current Revisions are due with one nonterminal Deadline Work each. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start replacements.",
+          "selector": "Expire by deadlineAt then applicationId after locking and rechecking current Revision and quorum state.",
+          "measureSeconds": 75,
+          "success": "All 10,000 Applications become EXPIRED once, no Permit is issued, and no PERMIT_DEADLINE Work remains nonterminal.",
+          "threshold": "The backlog drains in <= 75 seconds after replacement spawn; stale decisions, invented Permits, and unexpected failures are zero.",
+          "timer": "Start when both replacement workers spawn and stop on the first point-in-time snapshot proving terminal state and revision invariants.",
+          "target": "expire 10,000 undecided Applications within 75 s after worker recovery"
+        }
+      ]
+    },
+    "capacitylease": {
+      "seedKeys": [
+        "owners",
+        "capacityPools",
+        "capacityLeases",
+        "admissionEntries",
+        "capacitySlices"
+      ],
+      "publicPaths": [
+        "/api/v1/capacity-leases",
+        "/api/v1/capacity-leases/:leaseId/confirm",
+        "/api/v1/capacity-leases/:leaseId/renew",
+        "/api/v1/capacity-leases/:leaseId/release",
+        "/api/v1/admission-entries/:admissionEntryId",
+        "/api/v1/capacity-pools/:poolId/timeline?from&to",
+        "/api/v1/capacity-leases/:leaseId",
+        "/api/v1/capacity-leases/:leaseId/members"
+      ],
+      "snapshot": {
+        "resources": [
+          {
+            "key": "owners",
+            "shape": "CapacityOwner = {ownerId:uuid,name:string}",
+            "sort": [
+              "ownerId"
+            ]
+          },
+          {
+            "key": "capacityPools",
+            "shape": "CapacityPool",
+            "sort": [
+              "poolId"
+            ]
+          },
+          {
+            "key": "capacityLeases",
+            "shape": "CapacityLease",
+            "sort": [
+              "leaseId"
+            ]
+          },
+          {
+            "key": "admissionEntries",
+            "shape": "AdmissionEntry",
+            "sort": [
+              "poolId",
+              "priority",
+              "requestedAt",
+              "admissionEntryId"
+            ]
+          },
+          {
+            "key": "capacitySlices",
+            "shape": "CapacitySlice",
+            "sort": [
+              "poolId",
+              "startAt",
+              "endAt"
+            ]
+          }
+        ],
+        "managerResources": [
+          {
+            "key": "gangLeaseMembers",
+            "shape": "GangLeaseMember",
+            "sort": [
+              "leaseId",
+              "ordinal",
+              "memberId"
+            ]
+          }
+        ]
+      },
+      "workKinds": {
+        "v1": [
+          "LEASE_EXPIRY",
+          "ADMISSION_PROMOTION"
+        ],
+        "manager": []
+      },
+      "perfScenarios": [
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "pool-timeline-read",
+          "method": "GET",
+          "path": "/api/v1/capacity-pools/:poolId/timeline?from=:from&to=:to",
+          "setup": "Use all 200 perf-v1 Pools and their 20,000 stable Leases; reads do not change capacity.",
+          "selector": "Round-robin poolId values and request each Pool's complete published measured interval.",
+          "request": "No body; from and to are the perf-v1 interval bounds.",
+          "success": "Only 200 responses whose sorted Slices cover the interval without gaps and conserve capacity count.",
+          "threshold": "At least 400 successful timeline reads/s for 60 seconds and p95 <= 120 ms; mixed revisions and unexpected 5xx are zero.",
+          "target": "serve 400 Pool timeline reads/s with p95 <= 120 ms"
+        },
+        {
+          "mode": "http",
+          "concurrency": 64,
+          "warmupSeconds": 10,
+          "measureSeconds": 60,
+          "timer": "The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.",
+          "id": "independent-hold-create",
+          "method": "POST",
+          "path": "/api/v1/capacity-leases",
+          "setup": "Use disjoint warm-up and measured owner/Pool/interval combinations with sufficient capacity and no overlap contention.",
+          "selector": "Advance Pool then owner bytewise; each request uses a unique one-minute interval and fresh key.",
+          "request": "{poolId,ownerId,startAt,endAt,units:1,priority:0,allowWait:false}.",
+          "success": "Only 201 HELD responses with one consuming Lease and exact Slice conservation count.",
+          "threshold": "At least 120 successful Holds/s for 60 seconds and p95 <= 350 ms; waiting responses and unexpected 5xx do not count.",
+          "target": "create 120 independent Holds/s with p95 <= 350 ms"
+        },
+        {
+          "mode": "worker",
+          "method": "N/A",
+          "concurrency": 2,
+          "warmupSeconds": 0,
+          "request": "No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.",
+          "id": "expiry-promotion-recovery",
+          "path": "work:LEASE_EXPIRY,ADMISSION_PROMOTION",
+          "setup": "Exactly 10,000 HELD Leases are due and exactly 10,000 WAITING Entries become eligible after their release. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start replacements.",
+          "selector": "Expire by holdExpiresAt,leaseId and promote by priority descending,requestedAt,admissionEntryId without overlapping bypass.",
+          "measureSeconds": 90,
+          "success": "All due Leases become EXPIRED, all eligible Entries become PROMOTED, no matching Work remains nonterminal, and every Slice conserves capacity.",
+          "threshold": "Both 10,000-record backlogs drain in <= 90 seconds after replacement spawn; oversubscription, stale commit, and unexpected failure counts are zero.",
+          "timer": "Start when both replacement workers spawn and stop on the first point-in-time snapshot proving all 20,000 transitions and invariants.",
+          "target": "expire 10,000 Holds and promote 10,000 waiting requests within 90 s after recovery"
+        }
+      ]
+    }
+  }
+}

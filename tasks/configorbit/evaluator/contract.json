@@ -1,0 +1,27 @@
+{
+  "seedKeys":["tenants","applications","environments","configRevisions","releases","clientObservations","invalidations","auditEntries"],
+  "publicPaths":[
+    "/api/v1/tenants","/api/v1/applications","/api/v1/environments","/api/v1/config-revisions",
+    "/api/v1/config-revisions/:revisionId","/api/v1/config-revisions/:revisionId/publish",
+    "/api/v1/environments/:environmentId/rollout","/api/v1/environments/:environmentId/rollback",
+    "/api/v1/environments/:environmentId/releases","/api/v1/client-config","/api/v1/client-observations",
+    "/api/v1/audit","/api/v1/verification-snapshot",
+    "/api/v1/promotion-trains","/api/v1/promotion-trains/:trainId/start",
+    "/api/v1/promotion-trains/:trainId/advance","/api/v1/promotion-trains/:trainId/rollback"
+  ],
+  "snapshot":{"resources":[
+    {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+    {"key":"applications","shape":"Application","sort":["applicationId"]},
+    {"key":"environments","shape":"Environment","sort":["environmentId"]},
+    {"key":"configRevisions","shape":"ConfigRevision","sort":["environmentId","revision"]},
+    {"key":"releases","shape":"Release","sort":["environmentId","generation"]},
+    {"key":"clientObservations","shape":"ClientObservation","sort":["environmentId","clientId"]},
+    {"key":"invalidations","shape":"Invalidation","sort":["environmentId","generation"]},
+    {"key":"auditEntries","shape":"AuditEntry","sort":["tenantId","sequence"]}
+  ],"managerResources":[
+    {"key":"promotionTrains","shape":"PromotionTrain","sort":["trainId"]},
+    {"key":"promotionStages","shape":"PromotionStage","sort":["trainId","position"]}
+  ]},
+  "workKinds":{"v1":["DRAFT_EXPIRY","RELEASE_ACTIVATE","CACHE_INVALIDATE","EVENT_DELIVERY"],"manager":["PROMOTION_ADVANCE","PROMOTION_ROLLBACK"]},
+  "perfScenarios":[{"id":"client-fetch-mix"},{"id":"rollout-rollback-contention"},{"id":"invalidation-recovery"}]
+}

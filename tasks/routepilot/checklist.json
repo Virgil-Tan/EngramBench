@@ -1,0 +1,14 @@
+{"schemaVersion":1,"personaId":"routepilot-platform-lead","taskId":"routepilot","items":[
+  {"id":"clean-operation","category":"correctness","requirement":"Clean checkout installs, migrates, atomically seeds, builds, and boots API, Worker, dispatcher, and production UI from published commands.","weight":5,"testGates":["H-01"]},
+  {"id":"routing-contract","category":"correctness","requirement":"Strict OpenAPI, route normalization, deterministic precedence, ambiguity rejection, and frozen request decisions match the public contract.","weight":10,"testGates":["H-02","H-03","H-04"]},
+  {"id":"release-atomicity","category":"correctness","requirement":"Config releases, hot activation, rollback, history, idempotency, events, and Work are atomic and never expose partial configuration.","weight":13,"testGates":["H-03","H-04","H-05","H-09"]},
+  {"id":"canary-stability","category":"correctness","requirement":"Published SHA-256 affinity bucketing and weighted backend versions remain stable across processes, retries, restarts, and releases.","weight":11,"testGates":["H-03","H-06","H-12"]},
+  {"id":"rate-and-circuit-conservation","category":"correctness","requirement":"Shared rate windows and circuit transitions conserve capacity, fence OPEN/HALF_OPEN calls, and recover without overspend.","weight":11,"testGates":["H-06","H-07","H-12"]},
+  {"id":"recovery-and-events","category":"correctness","requirement":"Worker and outbox recovery preserve one effect, stable event identity/body, aggregate order, fenced leases, and terminal Work.","weight":10,"testGates":["H-07","H-08"]},
+  {"id":"manager-regional-rollout","category":"correctness","requirement":"RegionalRollout freezes stages, gates activation, supports pause/cancel/rollback, survives races and crashes, and preserves V1 state.","weight":12,"testGates":["H-09","H-10","H-11"]},
+  {"id":"performance","category":"correctness","requirement":"All three RoutePilot sustained scenarios meet latency, throughput, recovery, and post-load correctness thresholds.","weight":10,"testGates":["H-12"]},
+  {"id":"project-tests","category":"correctness","requirement":"The repository owns meaningful unit, real PostgreSQL/HTTP integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance gates.","weight":7,"testGates":["H-13"]},
+  {"id":"security-isolation","category":"correctness","requirement":"Tenant state, origins, credentials, private headers, tokens, and paths never cross boundaries or leak.","weight":4,"testGates":["H-02","H-06","H-12"]},
+  {"id":"explanation-quality","category":"persona","requirement":"Codex explains control/data-plane ownership, release state, routing, rate/circuit authority, and failures clearly.","weight":3},
+  {"id":"evidence-quality","category":"persona","requirement":"Each stage and handoff reports actual commands, results, metrics, findings, risks, and checks not run.","weight":4}
+]}

@@ -1,0 +1,2791 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CarbonLedger",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "health",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "const": "ok"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "openapi",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "openapi",
+                    "info",
+                    "paths",
+                    "components"
+                  ],
+                  "properties": {
+                    "openapi": {
+                      "type": "string",
+                      "pattern": "^3\\.1\\."
+                    },
+                    "info": {
+                      "type": "object"
+                    },
+                    "paths": {
+                      "type": "object"
+                    },
+                    "components": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "operationId": "production-ui",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "contentMediaType": "text/html"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/retirements": {
+      "get": {
+        "operationId": "list-retirements",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Retirement"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "create-retirement",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "x-body-transport-errors": [
+          {
+            "path": "/quantityGrams",
+            "when": "number",
+            "status": 400,
+            "code": "INVALID_ELIGIBILITY_FILTER"
+          },
+          {
+            "path": "/eligibility",
+            "status": 400,
+            "code": "INVALID_ELIGIBILITY_FILTER"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "beneficiaryId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "quantityGrams": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "eligibility": {
+                    "type": "object",
+                    "properties": {
+                      "projectId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "vintageFrom": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "vintageTo": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "methodology": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "beneficiaryId",
+                  "quantityGrams",
+                  "eligibility"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetirementReply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/retirements/{retirementId}": {
+      "get": {
+        "operationId": "get-retirement",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "retirementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Retirement"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/retirements/{retirementId}/release": {
+      "post": {
+        "operationId": "release-retirement",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "retirementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetirementReply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/retirements/{retirementId}/certificate": {
+      "get": {
+        "operationId": "get-certificate",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "retirementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "description": "For status 200, the SHA-256 certificateDigest of the exact RFC 8785 JSON bytes."
+                }
+              }
+            },
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/Certificate"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SplitCertificate"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "202": {
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "description": "For status 200, the SHA-256 certificateDigest of the exact RFC 8785 JSON bytes."
+                }
+              }
+            },
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertificatePending"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/credit-lots": {
+      "get": {
+        "operationId": "list-credit-lots",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "vintage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "methodology",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CreditLot"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/credit-lots/{creditLotId}": {
+      "get": {
+        "operationId": "get-credit-lot",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "creditLotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditLot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/retirements/{retirementId}/allocations": {
+      "get": {
+        "operationId": "retirement-allocations",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "retirementId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LotAllocation"
+                      },
+                      "minItems": 1,
+                      "maxItems": 20
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/domain-events": {
+      "get": {
+        "operationId": "domain-events",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "aggregateId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "afterSequence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DomainEvent"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-snapshot": {
+      "get": {
+        "operationId": "verification-snapshot",
+        "x-public-source": "docs/frontal-legacy/README.md",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JsonValue": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          }
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "details"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "Tenant": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "AuditCheckpoint": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "sequence",
+          "digest",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "AuditEntry": {
+        "type": "object",
+        "properties": {
+          "auditEntryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "eventType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "subjectRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "payloadDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "priorDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "auditEntryId",
+          "tenantId",
+          "sequence",
+          "eventType",
+          "subjectRef",
+          "payloadDigest",
+          "priorDigest",
+          "digest",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "Work": {
+        "type": "object",
+        "properties": {
+          "workId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "kind": {
+            "enum": [
+              "CERTIFICATE_GENERATION",
+              "RETIREMENT_EXPIRY"
+            ]
+          },
+          "aggregateId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "LEASED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "terminal": {
+            "type": "boolean"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "leaseOwner": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leaseExpiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "workId",
+          "kind",
+          "aggregateId",
+          "state",
+          "terminal",
+          "attempt",
+          "leaseOwner",
+          "leaseExpiresAt"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "const": "LEASED"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "leaseOwner": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "leaseExpiresAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "leaseOwner": {
+                  "type": "null"
+                },
+                "leaseExpiresAt": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "state": {
+                  "enum": [
+                    "SUCCEEDED",
+                    "FAILED",
+                    "CANCELLED"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "terminal": {
+                  "const": true
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "terminal": {
+                  "const": false
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DomainEvent": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "aggregateId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "type": {
+            "enum": [
+              "retirement.reserved",
+              "retirement.released",
+              "retirement.expired",
+              "retirement.completed",
+              "certificate.published"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "schemaVersion": {
+            "const": 1
+          },
+          "payload": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "eventId",
+          "aggregateId",
+          "sequence",
+          "type",
+          "occurredAt",
+          "schemaVersion",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "CarbonProject": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "Beneficiary": {
+        "type": "object",
+        "properties": {
+          "beneficiaryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "beneficiaryId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "CreditLot": {
+        "type": "object",
+        "properties": {
+          "creditLotId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "vintage": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "methodology": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "issuedGrams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "availableGrams": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reservedGrams": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "retiredGrams": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "provenanceDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "creditLotId",
+          "projectId",
+          "vintage",
+          "methodology",
+          "priority",
+          "issuedGrams",
+          "availableGrams",
+          "reservedGrams",
+          "retiredGrams",
+          "provenanceDigest"
+        ],
+        "additionalProperties": false
+      },
+      "LegacyRetirement": {
+        "type": "object",
+        "properties": {
+          "retirementId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "beneficiaryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantityGrams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "enum": [
+              "RESERVED",
+              "CERTIFYING",
+              "RETIRED",
+              "RELEASED",
+              "EXPIRED",
+              "FAILED"
+            ]
+          },
+          "allocation": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "creditLotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "quantityGrams": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "creditLotId",
+                  "quantityGrams"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "certificateDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "terminalAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "retirementId",
+          "beneficiaryId",
+          "quantityGrams",
+          "state",
+          "allocation",
+          "expiresAt",
+          "certificateDigest",
+          "createdAt",
+          "terminalAt",
+          "sequence"
+        ],
+        "additionalProperties": false
+      },
+      "Retirement": {
+        "type": "object",
+        "properties": {
+          "retirementId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "beneficiaryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantityGrams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "enum": [
+              "RESERVED",
+              "CERTIFYING",
+              "RETIRED",
+              "RELEASED",
+              "EXPIRED",
+              "FAILED"
+            ]
+          },
+          "allocation": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "creditLotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "quantityGrams": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "creditLotId",
+                  "quantityGrams"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "certificateDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "terminalAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotAllocation"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "retirementId",
+          "beneficiaryId",
+          "quantityGrams",
+          "state",
+          "allocation",
+          "expiresAt",
+          "certificateDigest",
+          "createdAt",
+          "terminalAt",
+          "sequence",
+          "allocations"
+        ],
+        "additionalProperties": false
+      },
+      "RetirementReply": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/LegacyRetirement"
+          },
+          {
+            "$ref": "#/components/schemas/Retirement"
+          }
+        ]
+      },
+      "LotAllocation": {
+        "type": "object",
+        "properties": {
+          "lotAllocationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "retirementId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "creditLotId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantityGrams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "vintage": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "methodology": {
+            "type": "string"
+          },
+          "provenanceDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "lotAllocationId",
+          "retirementId",
+          "ordinal",
+          "creditLotId",
+          "quantityGrams",
+          "projectId",
+          "vintage",
+          "methodology",
+          "provenanceDigest"
+        ],
+        "additionalProperties": false
+      },
+      "Certificate": {
+        "type": "object",
+        "properties": {
+          "certificateVersion": {
+            "const": 1
+          },
+          "retirementId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "beneficiaryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantityGrams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "creditLotId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "vintage": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "methodology": {
+            "type": "string"
+          },
+          "provenanceDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "retiredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "certificateVersion",
+          "retirementId",
+          "beneficiaryId",
+          "quantityGrams",
+          "creditLotId",
+          "projectId",
+          "vintage",
+          "methodology",
+          "provenanceDigest",
+          "retiredAt"
+        ],
+        "additionalProperties": false
+      },
+      "SplitCertificate": {
+        "type": "object",
+        "properties": {
+          "certificateVersion": {
+            "const": 2
+          },
+          "retirementId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "beneficiaryId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "totalQuantityGrams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ordinal": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "creditLotId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "quantityGrams": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "projectId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "vintage": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "methodology": {
+                  "type": "string"
+                },
+                "provenanceDigest": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "ordinal",
+                "creditLotId",
+                "quantityGrams",
+                "projectId",
+                "vintage",
+                "methodology",
+                "provenanceDigest"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 2,
+            "maxItems": 20
+          },
+          "retiredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "certificateVersion",
+          "retirementId",
+          "beneficiaryId",
+          "totalQuantityGrams",
+          "allocations",
+          "retiredAt"
+        ],
+        "additionalProperties": false
+      },
+      "CertificatePending": {
+        "type": "object",
+        "properties": {
+          "retirementId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "state": {
+            "enum": [
+              "RESERVED",
+              "CERTIFYING"
+            ]
+          }
+        },
+        "required": [
+          "retirementId",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "Seed": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "seedVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CarbonProject"
+            }
+          },
+          "beneficiaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Beneficiary"
+            }
+          },
+          "creditLots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditLot"
+            }
+          },
+          "retirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegacyRetirement"
+            }
+          },
+          "certificates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            }
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "seedVersion",
+          "projects",
+          "beneficiaries",
+          "creditLots",
+          "retirements",
+          "certificates"
+        ],
+        "additionalProperties": false
+      },
+      "SnapshotResources": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CarbonProject"
+            }
+          },
+          "beneficiaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Beneficiary"
+            }
+          },
+          "creditLots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditLot"
+            }
+          },
+          "retirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Retirement"
+            }
+          },
+          "certificates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            }
+          },
+          "lotAllocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LotAllocation"
+            }
+          },
+          "splitCertificates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SplitCertificate"
+            }
+          }
+        },
+        "required": [
+          "projects",
+          "beneficiaries",
+          "creditLots",
+          "retirements",
+          "certificates",
+          "lotAllocations",
+          "splitCertificates"
+        ],
+        "additionalProperties": false
+      },
+      "VerificationSnapshot": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "resources": {
+            "$ref": "#/components/schemas/SnapshotResources"
+          },
+          "work": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Work"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "asOf",
+          "resources",
+          "work",
+          "events"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

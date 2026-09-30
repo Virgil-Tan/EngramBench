@@ -1,0 +1,3636 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ImportWorks",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/api/v1/tenants": {
+      "post": {
+        "operationId": "createTenant",
+        "x-public-source": "contract/README.md — explicit V2 public wire clarification",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tenant"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schemas": {
+      "post": {
+        "operationId": "createSchema",
+        "x-public-source": "contract/README.md — explicit V2 public wire clarification",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "datasetKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "datasetKey",
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schemas/{schemaId}/revisions": {
+      "post": {
+        "operationId": "createSchemaRevision",
+        "x-public-source": "contract/README.md — explicit V2 public wire clarification",
+        "parameters": [
+          {
+            "name": "schemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchemaRevision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaRevision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports": {
+      "post": {
+        "operationId": "createImport",
+        "x-public-source": "docs/frontal-legacy/README.md — Upload and resume",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateImport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}": {
+      "get": {
+        "operationId": "getImport",
+        "x-public-source": "docs/frontal-legacy/README.md — Upload and resume",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}/chunks/{chunkNumber}": {
+      "put": {
+        "operationId": "putChunk",
+        "x-public-source": "docs/frontal-legacy/README.md — Upload and resume",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "chunkNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "Content-Range",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^bytes [0-9]+-[0-9]+/[0-9]+$"
+            }
+          },
+          {
+            "name": "X-Chunk-SHA256",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "contentMediaType": "application/octet-stream",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadChunk"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}/complete": {
+      "post": {
+        "operationId": "completeImport",
+        "x-public-source": "docs/frontal-legacy/README.md — Upload and resume / Validation, commit, and reports",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}/commit": {
+      "post": {
+        "operationId": "commitImport",
+        "x-public-source": "docs/frontal-legacy/README.md — Upload and resume / Validation, commit, and reports",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}/cancel": {
+      "post": {
+        "operationId": "cancelImport",
+        "x-public-source": "docs/frontal-legacy/README.md — Upload and resume / Validation, commit, and reports",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}/findings": {
+      "get": {
+        "operationId": "getFindings",
+        "x-public-source": "docs/frontal-legacy/README.md — HTTP contract",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ValidationFinding"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}/error-report": {
+      "get": {
+        "operationId": "getErrorReport",
+        "x-public-source": "docs/frontal-legacy/README.md — Exact public shapes / HTTP contract",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/imports/{importId}/error-report/content": {
+      "get": {
+        "operationId": "downloadErrorReport",
+        "x-public-source": "contract/README.md — explicit V2 public wire clarification",
+        "parameters": [
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string",
+                  "contentMediaType": "application/x-ndjson"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/records": {
+      "get": {
+        "operationId": "listRecords",
+        "x-public-source": "docs/frontal-legacy/README.md — HTTP contract",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "datasetKey",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CommittedRecord"
+                      }
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-bundles": {
+      "post": {
+        "operationId": "createBundle",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tenantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "tenantId",
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBundle"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-bundles/{bundleId}/members": {
+      "post": {
+        "operationId": "addBundleMember",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "bundleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "importId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  }
+                },
+                "required": [
+                  "importId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleMember"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-bundles/{bundleId}/stage": {
+      "post": {
+        "operationId": "stageBundle",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "bundleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBundle"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-bundles/{bundleId}/publish": {
+      "post": {
+        "operationId": "publishBundle",
+        "x-public-source": "docs/frontal-legacy/manager-requirements.md",
+        "parameters": [
+          {
+            "name": "bundleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBundle"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-snapshot": {
+      "get": {
+        "operationId": "snapshot",
+        "x-public-source": "docs/frontal-legacy/README.md — Seed and snapshot",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "health",
+        "x-public-source": "contract/README.md — explicit V2 public wire clarification",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "openapi",
+        "x-public-source": "docs/frontal-legacy/README.md — HTTP contract",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenApi"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "operationId": "productionUi",
+        "x-public-source": "contract/README.md — explicit V2 public wire clarification",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Published public success shape",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1,
+                  "contentMediaType": "text/html"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Public error envelope; exact business conditions remain defined by README",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Application errors must use the public error envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JsonValue": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            }
+          }
+        ]
+      },
+      "Tenant": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "details"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "OpenApi": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "const": "3.1.0"
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Schema": {
+        "type": "object",
+        "properties": {
+          "schemaId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "datasetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "schemaId",
+          "tenantId",
+          "datasetKey",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "SchemaField": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "type": {
+            "enum": [
+              "string",
+              "integer",
+              "number",
+              "boolean",
+              "object"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "maxLength": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "minimum": {
+            "type": "number"
+          },
+          "maximum": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "required"
+        ],
+        "additionalProperties": false
+      },
+      "SchemaRevision": {
+        "type": "object",
+        "properties": {
+          "schemaId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "externalIdField": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "additionalProperties": {
+            "const": false
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaField"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "schemaId",
+          "revision",
+          "externalIdField",
+          "additionalProperties",
+          "fields"
+        ],
+        "additionalProperties": false
+      },
+      "ImportJob": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "datasetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "schemaRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "commitMode": {
+            "enum": [
+              "ALL_OR_NOTHING",
+              "VALID_ROWS"
+            ]
+          },
+          "state": {
+            "enum": [
+              "UPLOADING",
+              "UPLOADED",
+              "VALIDATING",
+              "VALIDATED",
+              "COMMITTING",
+              "COMMITTED",
+              "PARTIALLY_COMMITTED",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "expectedBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "expectedSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "receivedBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "totalRows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "validRows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "invalidRows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "importId",
+          "tenantId",
+          "datasetKey",
+          "schemaRevision",
+          "commitMode",
+          "state",
+          "expectedBytes",
+          "expectedSha256",
+          "receivedBytes",
+          "totalRows",
+          "validRows",
+          "invalidRows",
+          "createdAt",
+          "completedAt",
+          "sequence"
+        ],
+        "additionalProperties": false
+      },
+      "UploadChunk": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "chunkNumber": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "importId",
+          "chunkNumber",
+          "start",
+          "end",
+          "size",
+          "sha256",
+          "receivedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ValidationFinding": {
+        "type": "object",
+        "properties": {
+          "findingId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "rowNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "externalRowId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "field": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "valueDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "findingId",
+          "importId",
+          "rowNumber",
+          "externalRowId",
+          "field",
+          "code",
+          "message",
+          "valueDigest"
+        ],
+        "additionalProperties": false
+      },
+      "CommittedRecord": {
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "datasetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "externalRowId": {
+            "type": "string"
+          },
+          "sourceImportId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "payloadDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "committedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "recordId",
+          "tenantId",
+          "datasetKey",
+          "externalRowId",
+          "sourceImportId",
+          "payload",
+          "payloadDigest",
+          "committedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ErrorReport": {
+        "type": "object",
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "READY",
+              "FAILED"
+            ]
+          },
+          "rowCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "readyAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reportId",
+          "importId",
+          "state",
+          "rowCount",
+          "sha256",
+          "createdAt",
+          "readyAt"
+        ],
+        "additionalProperties": false
+      },
+      "ImportBundle": {
+        "type": "object",
+        "properties": {
+          "bundleId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "state": {
+            "enum": [
+              "DRAFT",
+              "STAGED",
+              "PUBLISHING",
+              "PUBLISHED",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "stagedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "bundleId",
+          "tenantId",
+          "name",
+          "state",
+          "createdAt",
+          "stagedAt",
+          "publishedAt"
+        ],
+        "additionalProperties": false
+      },
+      "BundleMember": {
+        "type": "object",
+        "properties": {
+          "bundleId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "schemaRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "sourceSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "commitMode": {
+            "enum": [
+              "ALL_OR_NOTHING",
+              "VALID_ROWS"
+            ]
+          }
+        },
+        "required": [
+          "bundleId",
+          "importId",
+          "position",
+          "schemaRevision",
+          "sourceSha256",
+          "commitMode"
+        ],
+        "additionalProperties": false
+      },
+      "ByteRange": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      },
+      "Work": {
+        "type": "object",
+        "properties": {
+          "workId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "kind": {
+            "enum": [
+              "UPLOAD_EXPIRY",
+              "IMPORT_VALIDATE",
+              "IMPORT_COMMIT",
+              "ERROR_REPORT",
+              "EVENT_DELIVERY",
+              "BUNDLE_PUBLISH"
+            ]
+          },
+          "aggregateId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "state": {
+            "enum": [
+              "PENDING",
+              "LEASED",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "terminal": {
+            "type": "boolean"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "leaseOwner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leaseExpiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "workId",
+          "kind",
+          "aggregateId",
+          "state",
+          "terminal",
+          "attempt",
+          "leaseOwner",
+          "leaseExpiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "DomainEvent": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "aggregateId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "aggregateType": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "import.created",
+              "import.uploaded",
+              "import.validated",
+              "import.committed",
+              "import.partially_committed",
+              "import.cancelled",
+              "import_bundle.staged",
+              "import_bundle.published",
+              "import_bundle.rejected"
+            ]
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "importId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "bundleId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "state": {
+                "type": "string"
+              },
+              "sourceSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "committedCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "eventId",
+          "tenantId",
+          "aggregateId",
+          "aggregateType",
+          "type",
+          "sequence",
+          "occurredAt",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "CreateSchemaRevision": {
+        "type": "object",
+        "properties": {
+          "externalIdField": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "additionalProperties": {
+            "const": false
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaField"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "externalIdField",
+          "additionalProperties",
+          "fields"
+        ],
+        "additionalProperties": false
+      },
+      "CreateImport": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "datasetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "schemaRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "commitMode": {
+            "enum": [
+              "ALL_OR_NOTHING",
+              "VALID_ROWS"
+            ]
+          },
+          "expectedBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "expectedSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "datasetKey",
+          "schemaRevision",
+          "commitMode",
+          "expectedBytes",
+          "expectedSha256"
+        ],
+        "additionalProperties": false
+      },
+      "ImportRead": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "datasetKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "schemaRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "commitMode": {
+            "enum": [
+              "ALL_OR_NOTHING",
+              "VALID_ROWS"
+            ]
+          },
+          "state": {
+            "enum": [
+              "UPLOADING",
+              "UPLOADED",
+              "VALIDATING",
+              "VALIDATED",
+              "COMMITTING",
+              "COMMITTED",
+              "PARTIALLY_COMMITTED",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "expectedBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "expectedSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "receivedBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "totalRows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "validRows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "invalidRows": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "receivedRanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ByteRange"
+            }
+          },
+          "missingRanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ByteRange"
+            }
+          }
+        },
+        "required": [
+          "importId",
+          "tenantId",
+          "datasetKey",
+          "schemaRevision",
+          "commitMode",
+          "state",
+          "expectedBytes",
+          "expectedSha256",
+          "receivedBytes",
+          "totalRows",
+          "validRows",
+          "invalidRows",
+          "createdAt",
+          "completedAt",
+          "sequence",
+          "receivedRanges",
+          "missingRanges"
+        ],
+        "additionalProperties": false
+      },
+      "Snapshot": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "resources": {
+            "type": "object",
+            "properties": {
+              "tenants": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tenant"
+                }
+              },
+              "schemas": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Schema"
+                }
+              },
+              "schemaRevisions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SchemaRevision"
+                }
+              },
+              "imports": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              },
+              "uploadChunks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UploadChunk"
+                }
+              },
+              "validationFindings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidationFinding"
+                }
+              },
+              "committedRecords": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CommittedRecord"
+                }
+              },
+              "errorReports": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ErrorReport"
+                }
+              },
+              "importBundles": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ImportBundle"
+                }
+              },
+              "bundleMembers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BundleMember"
+                }
+              }
+            },
+            "required": [
+              "tenants",
+              "schemas",
+              "schemaRevisions",
+              "imports",
+              "uploadChunks",
+              "validationFindings",
+              "committedRecords",
+              "errorReports",
+              "importBundles",
+              "bundleMembers"
+            ],
+            "additionalProperties": false
+          },
+          "work": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Work"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "resources",
+          "work",
+          "events"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

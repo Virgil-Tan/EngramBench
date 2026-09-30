@@ -1,0 +1,14 @@
+{"schemaVersion":1,"personaId":"routeweave-operations-lead","taskId":"routeweave","items":[
+  {"id":"clean-operation","category":"correctness","requirement":"Clean checkout installs, migrates, atomically seeds, builds, and boots API, Worker, dispatcher, and production UI.","weight":5,"testGates":["H-01"]},
+  {"id":"route-contract","category":"correctness","requirement":"OpenAPI, strict validation, connected immutable route revisions, identities, and tenant isolation match the public contract.","weight":9,"testGates":["H-02","H-03","H-04"]},
+  {"id":"scan-evidence","category":"correctness","requirement":"Scanner identities, canonical replay, conflicts, immutable evidence, and observed-time total order remain exact under duplicates and disorder.","weight":13,"testGates":["H-03","H-05","H-06","H-12"]},
+  {"id":"projection-consistency","category":"correctness","requirement":"Every stored journey equals deterministic full replay, respects leg dependencies, and never regresses from late evidence.","weight":14,"testGates":["H-03","H-06","H-07","H-12"]},
+  {"id":"loss-and-reassignment","category":"correctness","requirement":"Loss/found/reassignment races converge to one fenced outcome and stale old-plan evidence cannot move the current route.","weight":12,"testGates":["H-06","H-07","H-12"]},
+  {"id":"recovery-and-events","category":"correctness","requirement":"Projection and outbox recovery retain one logical effect, stable event identity/body, sequence, and terminal Work after SIGKILL.","weight":10,"testGates":["H-07","H-08"]},
+  {"id":"manager-consignments","category":"correctness","requirement":"Multi-piece Consignments isolate piece evidence, compute aggregate state, reroute atomically, and preserve V1 identities through migration.","weight":12,"testGates":["H-09","H-10","H-11"]},
+  {"id":"performance","category":"correctness","requirement":"All three RouteWeave sustained scenarios meet throughput, latency, recovery, replay, and post-load invariants.","weight":9,"testGates":["H-12"]},
+  {"id":"project-tests","category":"correctness","requirement":"The repository owns real unit, PostgreSQL/HTTP integration, Chromium, multi-process concurrency, controlled recovery, aggregate, and performance gates.","weight":7,"testGates":["H-13"]},
+  {"id":"security-isolation","category":"correctness","requirement":"Carrier secrets, private facility/address data, tokens, paths, and cross-tenant journeys never leak.","weight":3,"testGates":["H-02","H-12"]},
+  {"id":"explanation-quality","category":"persona","requirement":"Codex clearly explains evidence versus projection, route revisions, fences, recovery, and review findings.","weight":3},
+  {"id":"evidence-quality","category":"persona","requirement":"Every stage and handoff reports truthful commands, results, metrics, risks, and checks not run.","weight":3}
+]}

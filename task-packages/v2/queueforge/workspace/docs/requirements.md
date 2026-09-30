@@ -1,0 +1,462 @@
+# QueueForge — Complete system requirements
+
+Public scope revision: **learning-final-system-2026-09-08.1**. This is a single final-system task, not a historical upgrade benchmark.
+
+## Scope and authority
+
+- Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.
+- V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.
+- Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.
+- Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.
+- Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.
+- Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.
+- No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.
+- Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes.
+
+The original source documents are retained under frontal-legacy/ only for provenance. The complete active business requirements are reproduced below; the withdrawn historical orchestration and cross-version-only clauses are not a second source of obligations. contract/ fixes public representation.
+
+## Base product requirements
+
+# QueueForge
+
+Build QueueForge from this intentionally blank repository. This README is the complete product
+contract. Do not invent behavior outside it. Ask before making a product choice that the contract
+does not settle.
+
+## Required stack
+
+- Node.js 22, TypeScript, React, PostgreSQL 16, npm, and the preinstalled Chromium.
+- PostgreSQL is the sole authority for business state, idempotency, leases, events, and ordering.
+- The production UI must use the public HTTP API; no mock, in-memory database, or browser-only state
+  may provide correctness.
+- Use integer domain quantities and UTC ISO-8601 timestamps. Do not use floating point for money,
+  capacity, sequence, duration units, or conserved quantities.
+
+## Required non-interactive commands
+
+| Command | Contract |
+| --- | --- |
+| 'npm run db:migrate' | Apply all versioned migrations repeatedly and safely. |
+| 'npm run db:seed -- --file <path>' | Atomically import the versioned JSON seed. |
+| 'npm run dev' | Start development API and UI. |
+| 'npm run build' | Produce the production API, worker, dispatcher, and UI assets. |
+| 'npm run start:api' | Start one production API/UI process. |
+| 'npm run start:worker' | Start one Execution Lease worker. |
+| 'npm run start:dispatcher' | Start the Domain Event webhook dispatcher. |
+| 'npm run test:unit' | Run pure logic and boundary tests. |
+| 'npm run test:integration' | Run real PostgreSQL plus public HTTP integration tests. |
+| 'npm run test:e2e' | Run production-build Chromium tests through visible controls. |
+| 'npm run test:concurrency' | Run at least two API and two worker processes against one database. |
+| 'npm run test:recovery' | Use observable barriers, SIGKILL, restart, and persistent recovery. |
+| 'npm run test:all' | Run every non-performance gate above from a clean database. |
+| 'npm run test:perf' | Run the fixed sustained load and verify all post-load invariants. |
+
+Every command exits non-zero on failure, cleans up its own child processes, and requires no prompts.
+
+## Environment
+
+| Variable | Default | Rules |
+| --- | --- | --- |
+| 'DATABASE_URL' | 'postgresql://postgres@127.0.0.1:5432/queueforge' | Production/development authority. |
+| 'TEST_DATABASE_URL' | 'postgresql://postgres@127.0.0.1:5432/queueforge_test' | Required by all stateful tests. |
+| 'PORT' | '3000' | Integer 1-65535; API and production UI origin. |
+| 'ADMIN_TOKEN' | task-local value | Required only for documented admin mutation routes; never log it. |
+| 'WEBHOOK_URL' | 'http://127.0.0.1:4010/events' | HTTP endpoint for Domain Event delivery. |
+| 'WORK_LEASE_SECONDS' | '3' | Integer 1-60; persisted lease duration used by workers and recovery tests. |
+| 'CHROMIUM_PATH' | '/usr/bin/chromium' | Browser executable for project-owned E2E. |
+| 'MANAGED_DATA_ROOT' | '/tmp/queueforge-data' | Writable root for staged or generated bytes; never serve a path directly. |
+| 'TEST_BARRIER_URL' | empty | Optional localhost HTTP receiver used only by controlled recovery tests. |
+| 'TEST_BARRIER_TOKEN' | empty | Required barrier header value when the URL is set; never log it. |
+
+Bind only to '127.0.0.1'. Logs must not contain tokens, idempotency keys, raw seed input, webhook
+bodies, or private absolute paths.
+
+## Domain and V1 behavior
+
+| Term | Canonical definition | Avoid |
+| --- | --- | --- |
+| Job Definition | An immutable versioned command descriptor and retry policy. | Task, script |
+| Run | One requested execution of a Job Definition version. | Job, process |
+| Execution Lease | A time-bounded ownership record for one worker attempt. | Lock, claim |
+| Attempt | One immutable execution interval and outcome for a Run. | Retry, process |
+| Queue | A tenant-scoped ordered set with concurrency capacity. | Array, topic |
+| Run Event | A sequenced durable fact for one Run. | Log line, webhook |
+
+Run: QUEUED -> RUNNING -> SUCCEEDED | FAILED | CANCELLED; expired RUNNING leases return to QUEUED until attempts are exhausted.
+
+1. Create versioned Job Definitions and enqueue Runs with priority and notBefore.
+2. Let multiple workers lease Runs fairly while respecting per-Queue concurrency capacity.
+3. Retry published failure classes with deterministic backoff and recover expired leases after SIGKILL.
+4. Cancel queued or running Runs with one winner against completion and no duplicate terminal event.
+5. Expose queue depth, attempts, live state, histories, and at-least-once Run Event webhooks.
+
+### Deterministic policy
+
+1. priority is -100..100, maxAttempts is 1..10, timeoutSeconds is 1..300, and notBefore may be at most 30 days ahead. Claim order is priority descending, notBefore ascending, createdAt ascending, runId ascending.
+2. ECHO returns canonical input; SHA256 returns {sha256} of RFC 8785 canonical input; SUM_INTEGERS accepts {values:[int]} with 1..10000 members and returns {sum:int}, rejecting overflow as PERMANENT_FAILURE.
+3. A RETRYABLE_FAILURE schedules notBefore = finishedAt + min(100 * 2^(attempt-1),5000) milliseconds with no jitter. PERMANENT_FAILURE or exhausting maxAttempts makes Run FAILED.
+4. Queue capacity counts unexpired RUNNING leases. A claim transaction may return at most maxRuns 1..20 and cannot skip an earlier eligible Run unless capacity is exhausted.
+5. Claiming a QUEUED Run atomically increments attemptCount, creates one Attempt with that number and outcome null, creates its ExecutionLease, and changes the Run to RUNNING. When a lease expires, the recovery transaction finishes that Attempt as TIMED_OUT at the recovery transaction time, removes the lease, and either applies the published retry backoff from that finishedAt or changes the Run to FAILED when maxAttempts is exhausted.
+6. Cancelling a QUEUED Run creates no Attempt. Cancelling a RUNNING Run atomically fences and removes its lease, finishes the current Attempt as CANCELLED, and changes the Run to CANCELLED; a concurrent valid attempt result and cancellation have exactly one winner.
+
+## Mandatory invariants
+
+1. A Run has at most one live Execution Lease and at most one terminal outcome.
+2. Active leases in a Queue never exceed its configured capacity.
+3. Each Attempt number is unique and strictly increasing for its Run.
+4. A retry uses the immutable Job Definition version captured when the Run was created.
+5. Priority, notBefore, createdAt, and ID produce a deterministic claim order among eligible Runs.
+
+These invariants must hold after success, validation failure, unknown HTTP outcome, duplicate request,
+concurrent request, worker or dispatcher SIGKILL, restart, migration, and sustained load.
+
+## HTTP and OpenAPI 3.1
+
+Serve canonical OpenAPI at 'GET /openapi.json' and health at 'GET /healthz'. The OpenAPI document and
+runtime behavior must agree. API routes use JSON except explicitly documented raw content. Reject an
+unsupported media type with 415 'UNSUPPORTED_MEDIA_TYPE', malformed JSON with 400 'MALFORMED_JSON',
+unknown object keys with 400 'UNKNOWN_FIELD', and a shape or range violation without a more specific
+published code with 400 'INVALID_REQUEST'. Semantic or state conflicts use their published 409 code. A
+missing, malformed, or incorrect Bearer token on a documented ADMIN_TOKEN route returns 401
+'ADMIN_AUTH_REQUIRED'.
+
+Successful paginated collection reads return '{items,nextCursor}'. 'limit' defaults to 50 and is an
+integer from 1 through 100. Cursor order is stable and opaque; malformed cursors return 400
+'INVALID_CURSOR'. Fields typed 'uuid' are lowercase UUID strings; untyped string identifiers retain
+their published syntax. Timestamps are UTC with a trailing 'Z'. A resource miss returns 404 'NOT_FOUND'.
+
+Errors use exactly:
+
+~~~json
+{"error":{"code":"STABLE_CODE","message":"human-readable text","details":{}}}
+~~~
+
+Wire notation below is normative: 'uuid' is lowercase RFC 4122 text, 'int' is a JSON safe integer,
+'timestamp' is UTC ISO-8601 with millisecond precision and trailing Z, 'date' is strict YYYY-MM-DD,
+'sha256' is 64 lowercase hex, 'currency' is three uppercase ASCII letters, and 'json' is any value
+accepted by RFC 8785. 'http-url' is an absolute http or https URL without credentials or a fragment.
+'interval' is exactly '{startAt:timestamp,endAt:timestamp}', has startAt before endAt, and denotes the
+half-open range '[startAt,endAt)'. A '|null' field is required and nullable. Every unlisted field is
+rejected and arrays preserve their stated order. Responses use exactly these resource shapes:
+
+Successful response contracts are closed:
+
+- A mutation route without a literally stated success status returns 200.
+- Unless a route literally publishes another object, array, or empty body, a success described by a named resource, named resource state, or named resource fields returns that exact resource shape at the JSON top level. Any response-only fields literally named by the route are additional top-level fields.
+- If a mutation publishes no success body, it returns the exact current shape of the single primary resource created or changed by that route at the JSON top level.
+- When a route explicitly returns multiple named resources, the body is one object keyed by their lower-camel resource names unless the route publishes another literal shape.
+- Wrappers such as `{data:...}`, `{result:...}`, or an extra single-resource envelope are invalid unless the route literally declares them. OpenAPI must publish the same success status and closed response schema as runtime.
+
+- JobDefinition = {jobDefinitionId:uuid,version:int,operation:ECHO|SHA256|SUM_INTEGERS,maxAttempts:int,timeoutSeconds:int,createdAt:timestamp}
+- Run = {runId:uuid,jobDefinitionId:uuid,jobVersion:int,queueId:uuid,priority:int,notBefore:timestamp,input:json,state:QUEUED|RUNNING|SUCCEEDED|FAILED|CANCELLED,attemptCount:int,output:json|null,errorCode:string|null,createdAt:timestamp,startedAt:timestamp|null,terminalAt:timestamp|null,sequence:int}
+- ExecutionLease = {runId:uuid,attempt:int,workerId:string,leaseToken:string,leasedAt:timestamp,expiresAt:timestamp}
+- Attempt = {runId:uuid,attempt:int,workerId:string,startedAt:timestamp,finishedAt:timestamp|null,outcome:SUCCEEDED|RETRYABLE_FAILURE|PERMANENT_FAILURE|TIMED_OUT|CANCELLED|null,outputDigest:sha256|null}
+- AttemptResult = {run:Run,attempt:Attempt}; a SUCCEEDED result stores Run.output and Attempt.outputDigest equal to SHA-256 of its RFC 8785 bytes, while every non-success result has Run.output null and Attempt.outputDigest null
+- WorkerClaimResponse = {items:[{run:Run,executionLease:ExecutionLease}]}; items are in published claim order, each Run is RUNNING with attemptCount equal to executionLease.attempt, and an empty successful claim is exactly {items:[]}
+
+The public aggregate routes are:
+
+- 'GET /api/v1/runs?limit&cursor' and
+  'GET /api/v1/runs/:runId'.
+- POST /api/v1/runs with {jobDefinitionId,jobVersion,queueId,priority,notBefore,input}; return 202 QUEUED with durable idempotency.
+- POST /api/v1/job-definitions with {operation,maxAttempts,timeoutSeconds} creates version 1 and returns 201 JobDefinition; POST /api/v1/job-definitions/:jobDefinitionId/versions with {expectedLatestVersion,operation,maxAttempts,timeoutSeconds} atomically creates exactly the next version or returns 409 JOB_DEFINITION_VERSION_CHANGED.
+- POST /api/v1/runs/:runId/cancel with {reason} races safely with worker completion.
+- POST /api/v1/workers/:workerId/claim with {queueIds,maxRuns} atomically returns the exact WorkerClaimResponse; every returned ExecutionLease contains the token required by attempt-result.
+- POST /api/v1/runs/:runId/attempt-result with {attempt,leaseToken,outcome,output,errorCode} accepts outcome SUCCEEDED|RETRYABLE_FAILURE|PERMANENT_FAILURE. SUCCEEDED requires the exact operation output and errorCode null; failures require output null and a non-empty stable errorCode. It validates the output, computes outputDigest server-side, rejects stale leases, and returns the exact AttemptResult.
+- GET /api/v1/queues/:queueId returns {queueId,name,capacity,activeLeaseCount,queuedCount} and GET /api/v1/runs/:runId/attempts returns {items:[Attempt]}.
+- 'GET /api/v1/domain-events?aggregateId&afterSequence&limit' returns committed events in sequence.
+- 'GET /api/v1/verification-snapshot' requires 'Authorization: Bearer <ADMIN_TOKEN>' and returns one
+  serializable snapshot '{asOf:timestamp,resources:{...},work:[Work],events:[DomainEvent]}'.
+
+### V1 verification snapshot
+
+The complete snapshot is read from one PostgreSQL point-in-time; 'asOf', every resource array, 'work',
+and 'events' must describe that same database snapshot. The V1 'resources' object has exactly these keys
+and no others:
+
+- 'queues' uses exact shape 'Queue = {queueId:uuid,name:string,capacity:int}' and sorts ascending by scalar field-path tuple 'queueId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'jobDefinitions' uses exact shape 'JobDefinition' and sorts ascending by scalar field-path tuple 'jobDefinitionId', 'version', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'runs' uses exact shape 'Run' and sorts ascending by scalar field-path tuple 'runId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'executionLeases' uses exact shape 'ExecutionLease' and sorts ascending by scalar field-path tuple 'runId', 'attempt', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'attempts' uses exact shape 'Attempt' and sorts ascending by scalar field-path tuple 'runId', 'attempt', then by RFC 8785 canonical JSON as the tie-breaker.
+
+Each resource array contains every current or immutable instance named by its declared shape exactly
+once. Each listed sort path resolves to a scalar. Scalar order is null first, then false before true,
+integers numerically, and every other string-form scalar by UTF-8 bytes. Sort ascending by the complete
+tuple, then use RFC 8785 canonical JSON only as the tie-breaker.
+Recursively omit every object field whose name ends in 'Token', at every nesting depth.
+
+'Work' is exactly
+'{workId:uuid,kind:RUN_EXECUTION,aggregateId:uuid,state:PENDING|LEASED|SUCCEEDED|FAILED|CANCELLED,terminal:boolean,attempt:int,leaseOwner:string|null,leaseExpiresAt:timestamp|null}'.
+'kind' is one of exactly 'RUN_EXECUTION'. Both lease fields are non-null exactly
+when state is 'LEASED' and are null in every other state. 'terminal' is true exactly when state is
+'SUCCEEDED', 'FAILED', or 'CANCELLED'; terminal Work is retained.
+A backlog is drained exactly when no matching Work has 'terminal:false'. The 'work' array sorts by
+workId.
+
+'events' contains exact Domain Event objects sorted by aggregateId, then sequence, then eventId. Apply
+the same recursive '*Token' omission to every event payload. Omit authentication and business fencing
+tokens, idempotency keys, raw webhook bodies, private filesystem paths, and secrets. This is the
+external invariant query surface.
+
+Domain errors below are exhaustive for well-formed requests, in addition to the common errors published
+above plus 400 'INVALID_REQUEST', 400 'INVALID_CURSOR', 404 'NOT_FOUND', and 409
+'IDEMPOTENCY_CONFLICT':
+
+| HTTP | Code | Exact trigger |
+| ---: | --- | --- |
+| 409 | JOB_DEFINITION_VERSION_CHANGED | expectedLatestVersion is not the current Job Definition version |
+| 409 | QUEUE_CAPACITY_EXHAUSTED | no requested Queue has available execution capacity |
+| 409 | STALE_EXECUTION_LEASE | attempt result token is not the current unexpired lease |
+| 409 | RUN_NOT_CANCELLABLE | Run is terminal |
+| 409 | ATTEMPT_RESULT_CONFLICT | the same attempt already has a different result |
+| 400 | INVALID_JOB_INPUT | input does not match the captured operation contract |
+
+### Durable idempotency
+
+Every mutation requires 'Idempotency-Key', 1-128 visible ASCII characters. Scope is method, canonical
+path, and key. Persist a canonical semantic request
+fingerprint and the complete status/body before acknowledging success. An identical retry, including
+after restart or unknown response loss, returns the original status and semantic JSON with no second
+effect. Reusing a key with different semantics returns 409 'IDEMPOTENCY_CONFLICT'. Concurrent identical
+requests converge on one result; a process-local map is not authority. Do not expire records during the
+benchmark or rewrite saved replay bodies during migration.
+
+## Seed contract
+
+'npm run db:seed -- --file <path>' accepts exactly:
+
+'{schemaVersion:1,seedVersion,queues,jobDefinitions,runs,attempts,executionLeases}; capacities and retry limits are positive bounded integers, versions are unique, and run, Attempt, and ExecutionLease references are valid.'
+
+Member schemas are exact:
+
+- queues[] = {queueId:uuid,name:string,capacity:int}; capacity is 1..100
+- jobDefinitions[] use the exact JobDefinition schema and versions are contiguous per jobDefinitionId
+- runs[] use the exact Run schema; attempts[] use the exact Attempt schema; executionLeases[] use the exact ExecutionLease schema. Each RUNNING Run has exactly one matching current lease, other Runs have none, and attemptCount equals its greatest Attempt number or zero when no Attempt exists
+
+'seedVersion' is a non-empty string up to 64 characters. The importer records the canonical file digest.
+The same version and digest is a no-op replay; the same version with different content fails with
+'SEED_VERSION_CONFLICT'. Reject unknown keys, duplicate IDs, missing references, invalid states, broken
+invariants, out-of-range integers, and malformed times. Any invalid member rejects the complete import
+without changing business rows, tasks, idempotency, or Domain Events.
+
+## Workers, events, and recovery
+
+Workers claim bounded persisted leases using 'WORK_LEASE_SECONDS'. Lease ownership must be proven again
+inside the short transaction that commits a result. Do not hold a database transaction while waiting on
+HTTP, files, clocks, or another process. An expired lease is reclaimable, but a stale token cannot commit.
+
+Business state and its Domain Event commit in one transaction. Event fields are 'eventId', 'aggregateId',
+positive integer 'sequence', 'type', 'occurredAt', 'schemaVersion:1', and 'payload'. Required event types:
+`run.queued`, `run.started`, `run.retry-scheduled`, `run.succeeded`, `run.failed`, `run.cancelled`. 'payload' is exactly '{}' for every V1 event; a later Manager event also uses '{}' unless
+its published contract literally supplies another payload shape. A rollback creates no event. Sequence
+is contiguous per aggregate.
+
+The dispatcher sends JSON with 'X-QueueForge-Event-Id' and 'X-QueueForge-Event-Type'. Network errors,
+timeouts, and non-2xx responses retry indefinitely with bounded backoff. Every retry keeps the same
+eventId and semantic body. Successful delivery order is increasing aggregate sequence. At-least-once
+delivery may repeat a request; it must not invent another event identity.
+
+### Controlled recovery barrier
+
+When 'TEST_BARRIER_URL' is empty, no barrier request exists. When both test variables are set, workers
+POST before continuing at 'worker.claimed', 'worker.effect-complete', and 'worker.before-commit'; the
+dispatcher posts at 'dispatcher.response-received'. The exact JSON is
+'{schemaVersion:1,processRole:worker|dispatcher,point,workId,aggregateId,attempt,leaseTokenHash}' and the
+header is 'X-Test-Barrier-Token: <TEST_BARRIER_TOKEN>'. IDs and point stay identical across retries;
+leaseTokenHash is SHA-256 of the token, never the token. A 204 response releases the process. A held
+response pauses it without an open database transaction. Connection loss or non-204 retries every
+100 ms with the same body until lease loss or process termination. Only localhost URLs are accepted.
+
+## Real UI
+
+Provide desktop and mobile flows for creating the V1 aggregate, viewing collections and detail,
+performing every public user action, observing asynchronous Execution Lease progress, browsing event and
+history evidence, and recovering after refresh. Show loading, empty, validation, conflict, stale,
+offline/retry, terminal, and permission-error states. Use visible semantic controls, keyboard navigation,
+associated labels, focus management, and WCAG AA contrast. Never require devtools or direct API calls to
+complete the primary flow.
+
+## Project-owned verification
+
+- Unit tests cover deterministic policy, state transitions, canonicalization, and boundary values.
+- Integration tests start real PostgreSQL and real HTTP processes; they never call internal services.
+- Browser E2E uses the production build, real Chromium, real API/database/workers, and visible controls.
+- Concurrency tests use at least two API processes and two workers against one PostgreSQL database.
+- Recovery tests use a public test-only barrier to observe claim/commit or receiver/ACK boundaries before
+  SIGKILL; random sleeps are not fault control.
+- Performance tests run the production build for the fixed intervals below, report p50/p95/p99, throughput,
+  successful mutations, expected conflicts, unexpected 5xx, backlog drain, and post-load invariants.
+
+Fixed V1-compatible performance scenarios:
+
+### Scenario 'run-enqueue'
+
+- Target: enqueue 300 Runs/s with p95 <= 250 ms
+- Mode: 'http'
+- Method: 'POST'
+- Path: '/api/v1/runs'
+- Setup: Choose one seeded ECHO JobDefinition and queues with unused measured capacity; warm-up and measured Run IDs are server-generated from disjoint Idempotency-Keys.
+- Selector: Round-robin queues by queueId; use priority 50 and notBefore equal to the setup transaction timestamp.
+- Request: {jobDefinitionId,jobVersion,queueId,priority:50,notBefore,input:{value:"64 ASCII bytes, fixed per request ordinal"}}.
+- Concurrency: 64
+- Warm-up seconds: 10
+- Measure seconds: 60
+- Success: Only 202 QUEUED responses count; each Run captures the requested JobDefinition version exactly.
+- Threshold: At least 300 successful enqueues/s for 60 seconds and p95 <= 250 ms; unexpected 5xx = 0.
+- Timer: The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.
+
+### Scenario 'short-run-execution'
+
+- Target: claim and complete 5,000 short Runs within 60 s using four workers
+- Mode: 'http'
+- Method: 'POST'
+- Path: '/api/v1/workers/:workerId/claim; /api/v1/runs/:runId/attempt-result'
+- Setup: Use exactly 5,000 QUEUED ECHO Runs whose input JSON is <= 128 bytes; no other Run is eligible in their queues.
+- Selector: Four worker clients claim maxRuns:25 from the same bytewise queueId list and immediately return the exact echoed value with outcome SUCCEEDED.
+- Request: Claim body is {queueIds,maxRuns:25}; result body is {attempt,leaseToken,outcome:"SUCCEEDED",output:{value},errorCode:null}; the service computes and stores outputDigest.
+- Concurrency: 4
+- Warm-up seconds: 0
+- Measure seconds: 60
+- Success: All 5,000 Runs reach SUCCEEDED with one successful Attempt, no lease exceeds Queue capacity, and no Run remains QUEUED or RUNNING.
+- Threshold: The complete set finishes in <= 60 seconds; stale-lease responses and unexpected 5xx are zero.
+- Timer: Start immediately before the four clients issue their first claim and stop on the verification snapshot proving all 5,000 terminal results.
+
+### Scenario 'expired-lease-recovery'
+
+- Target: recover 2,000 expired leases within 45 s without capacity oversubscription
+- Mode: 'worker'
+- Method: 'N/A'
+- Path: 'work:RUN_EXECUTION'
+- Setup: Use exactly 2,000 seeded RUNNING Runs whose sole ExecutionLeases are expired. Start four workers with the published queue capacity limits.
+- Selector: Reclaim in priority descending,notBefore,createdAt,runId order and execute each captured operation once.
+- Request: No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.
+- Concurrency: 4
+- Warm-up seconds: 0
+- Measure seconds: 45
+- Success: All 2,000 Runs become terminal through one new Attempt, expired tokens cannot commit, and active leases never exceed any Queue capacity.
+- Threshold: All expired leases recover in <= 45 seconds; unexpected worker failures = 0.
+- Timer: Start when all four recovery workers are spawned and stop at the first verification snapshot proving no selected Run is nonterminal.
+
+Fixed performance seed: seedVersion perf-v1 contains exactly 100 queues, 1,000 jobDefinitions, 27,000 runs, 22,000 attempts, and 2,000 executionLeases: 20,000 SUCCEEDED Runs, 5,000 QUEUED Runs, and 2,000 RUNNING Runs whose sole leases are expired.
+
+The three scenarios are independent runs from a freshly migrated database and the exact seed above;
+complete each scenario's Setup before its Timer begins. Mode 'http' means 'method' and 'path' name the
+only measured public request operations and 'concurrency' is the exact closed-loop client count. Mode
+'worker' means method 'N/A', 'path' names the measured Work kinds, and 'concurrency' is the exact worker
+process count. Use exactly each scenario's Selector and Request; there is no inferred mixed workload.
+Run exactly 'warmupSeconds' unmeasured seconds, then exactly 'measureSeconds' measured seconds or until
+the Timer's stated terminal condition. Stateful warm-up and measured identities must be disjoint. Count
+complete HTTP response bodies for latency. Expected published conflicts are reported separately unless
+the scenario's Success and Threshold explicitly count them.
+
+The benchmark container has 4 logical CPUs and 8 GiB RAM; PostgreSQL 16, Chromium, two API processes,
+the specified workers, and one dispatcher share that limit. Every later compatible binary must rerun
+these same three scenarios without changing any field or threshold.
+
+Unexpected 5xx count must be zero. Meeting latency or throughput while any mandatory invariant is false
+is a failed performance run.
+
+## Out of scope
+
+- executing arbitrary untrusted shell
+- container orchestration
+- cron expressions
+- billing
+- cross-database queues
+
+## Handoff
+
+Keep README and OpenAPI current. Finish with a findings-first review and report architecture, module and
+process ownership, public interfaces, success/failure data flow, transaction and lease boundaries,
+migrations, compatibility, exact commands run, test and performance results, recovery evidence, known
+risks, and every check not run. Do not claim a check that was not actually executed.
+
+## Additional product requirements — required in the same final system
+
+
+
+
+完整系统包含“dependency-aware run graphs”。
+以下业务规则、wire schema、接口和错误全部是公开产品合同。
+
+业务规则：
+
+1. A Workflow Run contains 1-50 node Runs connected by an acyclic dependency graph.
+2. Nodes become eligible only after all required predecessors succeed
+independent nodes may execute concurrently.
+3. When a node becomes FAILED, every non-terminal transitive descendant with that failed ancestor becomes BLOCKED.
+A BLOCKED Run has no Execution Lease, consumes no Attempt, and cannot be claimed.
+4. Cancelling a Workflow Run cancels every non-terminal node atomically and never changes completed nodes.
+5. Retry is legal for any FAILED node below its captured maxAttempts, including a leaf node.
+The retry transaction changes that node to QUEUED and changes only BLOCKED descendants whose sole FAILED ancestor was that node to QUEUED without changing their attemptCount
+other BLOCKED descendants remain unchanged.
+It changes a FAILED Workflow Run back to RUNNING with terminalAt null and leaves claim eligibility gated on all immediate predecessors being SUCCEEDED.
+6. Workflow Run is QUEUED before its first claim, RUNNING after that point while any node is QUEUED or RUNNING, SUCCEEDED when every node succeeds, FAILED when no node is QUEUED or RUNNING and at least one node is FAILED or BLOCKED, and CANCELLED after workflow cancellation.
+7. Legacy standalone Run endpoints and response bodies remain unchanged
+graph nodes expose workflowRunId and nodeKey.
+8. Existing Runs remain standalone with workflowRunId null and unchanged histories.
+
+10. Existing idempotency records and Run Event sequences remain replayable.
+11. The versioned seed schema remains exactly V1
+Manager-only state is created through the public APIs above, and tests must not require unpublished seed members.
+12. The only new Domain Event type names are those written literally in the Manager rules or contracts above.
+Other Manager transitions reuse a V1 event type only for the same aggregate transition and otherwise emit no Domain Event.
+13. Update OpenAPI and runtime API, workers, real UI, Integration Test, production Chromium E2E, multi-process concurrency, SIGKILL recovery, and sustained performance coverage.
+14. Preserve all V1 data, public error semantics, saved idempotency replay results, and already committed event identity, body, and sequence unless a rule above explicitly changes a new response field.
+
+新增 wire schema：
+
+- WorkflowNode = {nodeKey:string,runId:uuid,dependsOn:[string],state:QUEUED|RUNNING|SUCCEEDED|FAILED|BLOCKED|CANCELLED}
+Run adds workflowRunId:uuid|null and nodeKey:string|null, and workflow node Runs additionally permit state BLOCKED
+- WorkflowRun = {workflowRunId:uuid,state:QUEUED|RUNNING|SUCCEEDED|FAILED|CANCELLED,nodes:[WorkflowNode],createdAt:timestamp,terminalAt:timestamp|null,sequence:int}
+
+新增或变更接口：
+
+- POST /api/v1/workflow-runs with {nodes:[{nodeKey,jobDefinitionId,jobVersion,queueId,priority,input,dependsOn:[nodeKey]}]} atomically creates 1..50 Runs after validating a DAG
+- GET /api/v1/workflow-runs/:workflowRunId returns WorkflowRun in nodeKey order
+POST /api/v1/workflow-runs/:workflowRunId/cancel with {reason} cancels all non-terminal nodes
+- POST /api/v1/workflow-runs/:workflowRunId/nodes/:nodeKey/retry with {} performs the published FAILED/BLOCKED-to-QUEUED transaction
+the next worker claim creates the next Attempt and Execution Lease
+
+新增稳定错误：
+
+- 400 WORKFLOW_GRAPH_CYCLE: dependsOn contains a cycle, missing key, duplicate key, or self-edge
+- 409 WORKFLOW_NODE_NOT_RETRYABLE: node state or dependent state makes retry illegal
+
+FINAL snapshot 与性能兼容合同：
+
+The FINAL verification snapshot 'resources' object has exactly the union of these V1 and Manager resource specifications, with no other keys:
+
+- 'queues' uses exact shape 'Queue = {queueId:uuid,name:string,capacity:int}' and sorts ascending by scalar field-path tuple 'queueId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'jobDefinitions' uses exact shape 'JobDefinition' and sorts ascending by scalar field-path tuple 'jobDefinitionId', 'version', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'runs' uses exact shape 'Run' and sorts ascending by scalar field-path tuple 'runId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'executionLeases' uses exact shape 'ExecutionLease' and sorts ascending by scalar field-path tuple 'runId', 'attempt', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'attempts' uses exact shape 'Attempt' and sorts ascending by scalar field-path tuple 'runId', 'attempt', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'workflowRuns' uses exact shape 'WorkflowRun' and sorts ascending by scalar field-path tuple 'workflowRunId', then by RFC 8785 canonical JSON as the tie-breaker.
+
+The Manager-added resource specifications are exactly:
+
+- 'workflowRuns' uses exact shape 'WorkflowRun' and sorts ascending by scalar field-path tuple 'workflowRunId', then by RFC 8785 canonical JSON as the tie-breaker.
+
+The FINAL Work kind enum is exactly the union 'RUN_EXECUTION'.
+The Manager-added Work kinds are exactly (none).
+All V1 snapshot point-in-time, recursive '*Token' omission, sorting, Work state/lease/retention/drain, and Domain Event rules remain mandatory.
+The FINAL binary reruns exactly these three V1-compatible scenarios:
+
+- 'run-enqueue': enqueue 300 Runs/s with p95 <= 250 ms
+threshold: At least 300 successful enqueues/s for 60 seconds and p95 <= 250 ms
+unexpected 5xx = 0.
+- 'short-run-execution': claim and complete 5,000 short Runs within 60 s using four workers
+threshold: The complete set finishes in <= 60 seconds
+stale-lease responses and unexpected 5xx are zero.
+- 'expired-lease-recovery': recover 2,000 expired leases within 45 s without capacity oversubscription
+threshold: All expired leases recover in <= 45 seconds
+unexpected worker failures = 0.
+
+Their published setup, selector, request, concurrency, warm-up, measurement, timer, success condition, and threshold remain unchanged.
+This Manager change adds correctness, concurrency, and recovery assertions only
+it does not replace or relax a performance scenario.
+
+
+

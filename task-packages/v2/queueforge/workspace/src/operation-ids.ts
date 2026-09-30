@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-runs" | "read-run" | "create-run" | "create-job-definition" | "version-job-definition" | "cancel-run" | "claim-runs" | "complete-attempt" | "read-queue" | "run-attempts" | "create-workflow-run" | "read-workflow-run" | "cancel-workflow-run" | "retry-workflow-node" | "domain-events" | "verification-snapshot";

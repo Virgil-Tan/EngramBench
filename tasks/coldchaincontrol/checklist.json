@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "personaId": "coldchaincontrol-operations-engineer",
+  "taskId": "coldchaincontrol",
+  "items": [
+    {"id":"clean-delivery","category":"correctness","requirement":"Clean checkout installs, builds, migrates, atomically seeds, and boots independent API, worker, dispatcher, and production UI using every published command.","weight":5,"testGates":["H-01"]},
+    {"id":"contract-security","category":"correctness","requirement":"OpenAPI, strict validation, stable errors, tenant isolation, credential redaction, and real browser behavior match the public contract.","weight":8,"testGates":["H-02","H-04","H-14"]},
+    {"id":"shipment-lifecycle","category":"correctness","requirement":"Shipment creation, connected frozen route, activation, cancellation, delivery, and terminal fences preserve one coherent authority.","weight":8,"testGates":["H-03","H-04","H-06"]},
+    {"id":"device-identity","category":"correctness","requirement":"Credential rotation, revocation, signed ingest, replay, and tenant boundaries serialize without accepting a stale or invalid Device identity.","weight":8,"testGates":["H-05","H-14","H-20"]},
+    {"id":"configuration-rollout","category":"correctness","requirement":"Gapless immutable configuration publication, assignment, poll, acknowledgement, expiry, supersession, and recovery never downgrade Device state.","weight":8,"testGates":["H-07","H-09","H-15"]},
+    {"id":"telemetry-projection","category":"correctness","requirement":"Signed duplicate and out-of-order telemetry remains exactly once and deterministically rebuilds route, temperature, and excursion history without current-state regression.","weight":11,"testGates":["H-03","H-06","H-07","H-16"]},
+    {"id":"notifications","category":"correctness","requirement":"Excursion notifications use transactional events, durable tenant quota, stable unknown-ACK retry, terminal fences, and no sensitive payload leakage.","weight":8,"testGates":["H-08","H-17"]},
+    {"id":"durability-recovery","category":"correctness","requirement":"Lost responses, restarts, SIGKILL, expired leases, stale workers, and dispatcher recovery preserve one logical effect and contiguous Event identity.","weight":8,"testGates":["H-05","H-07","H-08","H-20"]},
+    {"id":"migration-compatibility","category":"correctness","requirement":"FINAL migration preserves all V1 records, saved replay, pending Work, Event/Audit identities, projection state, and credentials while adding empty Manager resources.","weight":7,"testGates":["H-09"]},
+    {"id":"manager-custody","category":"correctness","requirement":"The sole Manager change validates a connected multi-Carrier chain and advances attested handoffs under database-time, revision, identity, and lease fences without split authority.","weight":9,"testGates":["H-10","H-11","H-18","H-20"]},
+    {"id":"manager-recall","category":"correctness","requirement":"Recall atomically freezes every affected Shipment and converges quarantine, notifications, custody fences, and recovery without omission or duplicate action.","weight":9,"testGates":["H-11","H-19","H-20"]},
+    {"id":"performance","category":"correctness","requirement":"All five sustained scenarios meet throughput, latency, recovery, and exact post-load identity, projection, custody, and quarantine invariants.","weight":6,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"Project-owned unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and five-scenario performance commands are meaningful and pass.","weight":3,"testGates":["H-13"]},
+    {"id":"communication","category":"persona","requirement":"Codex explains ownership, data flow, security, recovery, evidence, risks, and checks not run accurately without claiming unsupported success.","weight":2}
+  ]
+}

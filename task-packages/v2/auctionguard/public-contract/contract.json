@@ -1,0 +1,2305 @@
+{
+  "taskId": "auctionguard",
+  "title": "AuctionGuard",
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "bidders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Bidder"
+          }
+        },
+        "lots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Lot"
+          }
+        },
+        "auctions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAuction"
+          }
+        },
+        "bids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Bid"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "bidders",
+        "lots",
+        "auctions",
+        "bids"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "v2-public-auctionguard-1",
+      "bidders": [
+        {
+          "bidderId": "70000000-0000-4000-8000-000000000023",
+          "displayName": "Public Bidder"
+        }
+      ],
+      "lots": [
+        {
+          "lotId": "70000000-0000-4000-8000-000000000022",
+          "title": "Public Seed Lot",
+          "description": "Independent public seed"
+        },
+        {
+          "lotId": "70000000-0000-4000-8000-000000000024",
+          "title": "Public Write Lot",
+          "description": "Available for a separate auction"
+        }
+      ],
+      "auctions": [
+        {
+          "auctionId": "70000000-0000-4000-8000-000000000021",
+          "lotId": "70000000-0000-4000-8000-000000000022",
+          "currency": "USD",
+          "reservePriceMinor": 100,
+          "minimumIncrementMinor": 10,
+          "startAt": "2099-01-01T00:00:00.000Z",
+          "effectiveEndAt": "2099-01-02T00:00:00.000Z",
+          "state": "SCHEDULED",
+          "leadingBidId": null,
+          "winnerId": null,
+          "winningAmountMinor": null,
+          "sequence": 0,
+          "antiSnipingWindowSeconds": 120
+        }
+      ],
+      "bids": []
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "minimum": -1.7976931348623157e+308,
+          "maximum": 1.7976931348623157e+308
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "AUCTION_CLOSE"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "auction.opened",
+            "bid.accepted",
+            "auction.extended",
+            "auction.closed",
+            "auction.cancelled"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Bidder": {
+      "type": "object",
+      "properties": {
+        "bidderId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "bidderId",
+        "displayName"
+      ],
+      "additionalProperties": false
+    },
+    "Lot": {
+      "type": "object",
+      "properties": {
+        "lotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "lotId",
+        "title",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "Auction": {
+      "type": "object",
+      "properties": {
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "reservePriceMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "minimumIncrementMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "SCHEDULED",
+            "OPEN",
+            "CLOSING",
+            "CLOSED",
+            "CANCELLED"
+          ]
+        },
+        "leadingBidId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winnerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winningAmountMinor": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "auctionId",
+        "lotId",
+        "currency",
+        "reservePriceMinor",
+        "minimumIncrementMinor",
+        "startAt",
+        "effectiveEndAt",
+        "state",
+        "leadingBidId",
+        "winnerId",
+        "winningAmountMinor",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "Bid": {
+      "type": "object",
+      "properties": {
+        "bidId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "bidderId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "committedSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACCEPTED",
+            "OUTBID",
+            "WINNING"
+          ]
+        },
+        "acceptedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveEndAtAfter": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "bidId",
+        "auctionId",
+        "bidderId",
+        "amountMinor",
+        "committedSequence",
+        "state",
+        "acceptedAt",
+        "effectiveEndAtAfter"
+      ],
+      "additionalProperties": false
+    },
+    "AuctionOutcome": {
+      "type": "object",
+      "properties": {
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "result": {
+          "type": "string",
+          "enum": [
+            "WINNER",
+            "NO_SALE"
+          ]
+        },
+        "winnerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winningBidId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winningAmountMinor": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "closedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auctionId",
+        "result",
+        "winnerId",
+        "winningBidId",
+        "winningAmountMinor",
+        "closedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Award": {
+      "type": "object",
+      "properties": {
+        "awardId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "bidId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "bidderId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "allocatedQuantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "clearingUnitPriceMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "totalAmountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "allocationRank": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "awardId",
+        "auctionId",
+        "bidId",
+        "bidderId",
+        "allocatedQuantity",
+        "clearingUnitPriceMinor",
+        "totalAmountMinor",
+        "allocationRank",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "MultiUnitAuctionOutcome": {
+      "type": "object",
+      "properties": {
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "result": {
+          "type": "string",
+          "enum": [
+            "WINNER",
+            "NO_SALE"
+          ]
+        },
+        "unitCount": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 100
+        },
+        "allocatedUnitCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "unallocatedUnitCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "clearingUnitPriceMinor": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "awards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Award"
+          }
+        },
+        "closedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auctionId",
+        "result",
+        "unitCount",
+        "allocatedUnitCount",
+        "unallocatedUnitCount",
+        "clearingUnitPriceMinor",
+        "awards",
+        "closedAt"
+      ],
+      "additionalProperties": false
+    },
+    "MultiUnitBid": {
+      "type": "object",
+      "properties": {
+        "bidId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "bidderId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "committedSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACCEPTED",
+            "OUTBID",
+            "WINNING"
+          ]
+        },
+        "acceptedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveEndAtAfter": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      },
+      "required": [
+        "bidId",
+        "auctionId",
+        "bidderId",
+        "amountMinor",
+        "committedSequence",
+        "state",
+        "acceptedAt",
+        "effectiveEndAtAfter",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "AuctionDetail": {
+      "type": "object",
+      "properties": {
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "reservePriceMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "minimumIncrementMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "SCHEDULED",
+            "OPEN",
+            "CLOSING",
+            "CLOSED",
+            "CANCELLED"
+          ]
+        },
+        "leadingBidId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winnerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winningAmountMinor": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "unitCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "awards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Award"
+          }
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/AuctionOutcome"
+                },
+                {
+                  "$ref": "#/$defs/MultiUnitAuctionOutcome"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "auctionId",
+        "lotId",
+        "currency",
+        "reservePriceMinor",
+        "minimumIncrementMinor",
+        "startAt",
+        "effectiveEndAt",
+        "state",
+        "leadingBidId",
+        "winnerId",
+        "winningAmountMinor",
+        "sequence",
+        "unitCount",
+        "awards",
+        "outcome"
+      ],
+      "additionalProperties": false
+    },
+    "BidAcceptance": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "bidId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "auctionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "bidderId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "amountMinor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "committedSequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "ACCEPTED",
+                "OUTBID",
+                "WINNING"
+              ]
+            },
+            "acceptedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "effectiveEndAtAfter": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "effectiveEndAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            }
+          },
+          "required": [
+            "bidId",
+            "auctionId",
+            "bidderId",
+            "amountMinor",
+            "committedSequence",
+            "state",
+            "acceptedAt",
+            "effectiveEndAtAfter",
+            "effectiveEndAt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "bidId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "auctionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "bidderId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "amountMinor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "committedSequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "ACCEPTED",
+                "OUTBID",
+                "WINNING"
+              ]
+            },
+            "acceptedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "effectiveEndAtAfter": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "effectiveEndAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            }
+          },
+          "required": [
+            "bidId",
+            "auctionId",
+            "bidderId",
+            "amountMinor",
+            "committedSequence",
+            "state",
+            "acceptedAt",
+            "effectiveEndAtAfter",
+            "quantity",
+            "effectiveEndAt"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AuctionWriteResponse": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Auction"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "auctionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "lotId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "reservePriceMinor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "minimumIncrementMinor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "startAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "effectiveEndAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "SCHEDULED",
+                "OPEN",
+                "CLOSING",
+                "CLOSED",
+                "CANCELLED"
+              ]
+            },
+            "leadingBidId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "winnerId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "winningAmountMinor": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "unitCount": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 100
+            },
+            "awards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Award"
+              }
+            },
+            "outcome": {
+              "anyOf": [
+                {
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/AuctionOutcome"
+                    },
+                    {
+                      "$ref": "#/$defs/MultiUnitAuctionOutcome"
+                    }
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "auctionId",
+            "lotId",
+            "currency",
+            "reservePriceMinor",
+            "minimumIncrementMinor",
+            "startAt",
+            "effectiveEndAt",
+            "state",
+            "leadingBidId",
+            "winnerId",
+            "winningAmountMinor",
+            "sequence",
+            "unitCount",
+            "awards",
+            "outcome"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "SeedAuction": {
+      "type": "object",
+      "properties": {
+        "auctionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lotId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "reservePriceMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "minimumIncrementMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "SCHEDULED",
+            "OPEN",
+            "CLOSING",
+            "CLOSED",
+            "CANCELLED"
+          ]
+        },
+        "leadingBidId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winnerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winningAmountMinor": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "antiSnipingWindowSeconds": {
+          "const": 120
+        }
+      },
+      "required": [
+        "auctionId",
+        "lotId",
+        "currency",
+        "reservePriceMinor",
+        "minimumIncrementMinor",
+        "startAt",
+        "effectiveEndAt",
+        "state",
+        "leadingBidId",
+        "winnerId",
+        "winningAmountMinor",
+        "sequence",
+        "antiSnipingWindowSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "bidders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Bidder"
+          }
+        },
+        "lots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Lot"
+          }
+        },
+        "auctions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAuction"
+          }
+        },
+        "bids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Bid"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "bidders",
+        "lots",
+        "auctions",
+        "bids"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "bidders": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Bidder"
+              }
+            },
+            "lots": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Lot"
+              }
+            },
+            "auctions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Auction"
+              }
+            },
+            "bids": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Bid"
+              }
+            },
+            "auctionOutcomes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AuctionOutcome"
+              }
+            },
+            "awards": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Award"
+              }
+            }
+          },
+          "required": [
+            "bidders",
+            "lots",
+            "auctions",
+            "bids",
+            "auctionOutcomes",
+            "awards"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#real-ui",
+      "response": {
+        "type": "string",
+        "minLength": 1
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "list-auctions",
+      "method": "GET",
+      "path": "/api/v1/auctions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Auction"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "read-auction",
+      "method": "GET",
+      "path": "/api/v1/auctions/:auctionId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/AuctionDetail"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "auctionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "auctionId": "70000000-0000-4000-8000-000000000021"
+        }
+      }
+    },
+    {
+      "id": "create-auction",
+      "method": "POST",
+      "path": "/api/v1/admin/auctions",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/AuctionWriteResponse"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "reservePriceMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "minimumIncrementMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "unitCount": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "lotId",
+          "currency",
+          "reservePriceMinor",
+          "minimumIncrementMinor",
+          "startAt",
+          "endAt"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "lotId": "70000000-0000-4000-8000-000000000024",
+          "currency": "USD",
+          "reservePriceMinor": 100,
+          "minimumIncrementMinor": 10,
+          "startAt": "2099-01-01T00:00:00.000Z",
+          "endAt": "2099-01-02T00:00:00.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-auction",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "create-bid",
+      "method": "POST",
+      "path": "/api/v1/auctions/:auctionId/bids",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/BidAcceptance"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "bidderId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          }
+        },
+        "required": [
+          "bidderId",
+          "amountMinor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "auctionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "auctionId": "70000000-0000-4000-8000-000000000021"
+        },
+        "body": {
+          "bidderId": "70000000-0000-4000-8000-000000000023",
+          "amountMinor": 100,
+          "quantity": 1
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-bid"
+        }
+      }
+    },
+    {
+      "id": "cancel-auction",
+      "method": "POST",
+      "path": "/api/v1/auctions/:auctionId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/AuctionWriteResponse"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "auctionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "auctionId": "70000000-0000-4000-8000-000000000021"
+        },
+        "body": {
+          "reason": "Withdraw unsold lot"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-cancel-auction"
+        }
+      }
+    },
+    {
+      "id": "open-auction",
+      "method": "POST",
+      "path": "/api/v1/admin/auctions/:auctionId/open",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/AuctionWriteResponse"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "auctionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "auctionId": "70000000-0000-4000-8000-000000000021"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "v2-public-open-auction",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "list-bids",
+      "method": "GET",
+      "path": "/api/v1/auctions/:auctionId/bids",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/Bid"
+                },
+                {
+                  "$ref": "#/$defs/MultiUnitBid"
+                }
+              ]
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "auctionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "auctionId": "70000000-0000-4000-8000-000000000021"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "server-time",
+      "method": "GET",
+      "path": "/api/v1/time",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "now": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "now"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "70000000-0000-4000-8000-000000000001",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "ok"
+      }
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "bidders"
+          ],
+          "match": {
+            "bidderId": "70000000-0000-4000-8000-000000000023"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "lots"
+          ],
+          "match": {
+            "lotId": "70000000-0000-4000-8000-000000000022"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "lots"
+          ],
+          "match": {
+            "lotId": "70000000-0000-4000-8000-000000000024"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "auctions"
+          ],
+          "match": {
+            "auctionId": "70000000-0000-4000-8000-000000000021",
+            "lotId": "70000000-0000-4000-8000-000000000022",
+            "state": "SCHEDULED",
+            "leadingBidId": null
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "read-auction",
+      "params": {
+        "auctionId": "70000000-0000-4000-8000-000000000021"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "auctionId": "70000000-0000-4000-8000-000000000021",
+        "unitCount": 1,
+        "awards": [],
+        "outcome": null
+      }
+    },
+    {
+      "operationId": "create-auction",
+      "body": {
+        "lotId": "70000000-0000-4000-8000-000000000024",
+        "currency": "USD",
+        "reservePriceMinor": 100,
+        "minimumIncrementMinor": 10,
+        "startAt": "2099-01-01T00:00:00.000Z",
+        "endAt": "2099-01-02T00:00:00.000Z"
+      },
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}",
+        "Idempotency-Key": "v2-public-create-auction"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "lotId": "70000000-0000-4000-8000-000000000024",
+        "state": "SCHEDULED"
+      },
+      "capture": {
+        "createdAuction": [
+          "auctionId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-auction",
+      "params": {
+        "auctionId": "${createdAuction}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "auctionId": "${createdAuction}",
+        "lotId": "70000000-0000-4000-8000-000000000024",
+        "reservePriceMinor": 100,
+        "minimumIncrementMinor": 10,
+        "state": "SCHEDULED",
+        "unitCount": 1,
+        "awards": [],
+        "outcome": null
+      }
+    }
+  ],
+  "notes": [
+    "Authority: the complete original public README and Manager requirements. This contract uses no private evaluator cases or submitted implementation. Wire validation does not establish workflow, recovery or performance correctness.",
+    "V2 wire clarification: unspecified health body is exactly {status:\"ok\"}; production UI is HTML at /. GET domain-events returns {items:[DomainEvent]} with aggregateId required and optional afterSequence (default 0), limit (default 50, range 1..100), ordered by sequence. No other query keys are accepted.",
+    "Original error details is an exact empty object. Every mutation requires its published Idempotency-Key. Only documented admin routes require ADMIN_TOKEN. Output timestamps retain the original UTC millisecond precision.",
+    "The FINAL snapshot has exactly its published resource keys and explicitly typed Work/DomainEvent records. It is one database snapshot; recursive *Token omission, stable ordering, retained terminal Work and event identity remain business requirements. Manager-only data is created by public APIs, never inserted through the V1 seed.",
+    "Examples are independent public transport examples, not a required stateful sequence. A success requires the state/time/lease/revision prerequisites in the original public documents. Smoke checks identity and a separate write/read path, not every operation or concurrency invariant.",
+    "V2 wire clarification: the bid-create phrase \"Bid and effectiveEndAt\" is the exact Bid (or MultiUnitBid) fields plus top-level effectiveEndAt, equal to effectiveEndAtAfter; it is not {bid,effectiveEndAt}. A fresh legacy one-unit request returns the original Bid fields; a multi-unit bid also returns quantity. Persisted legacy replay bodies remain unchanged.",
+    "V2 wire clarification: create/open/cancel return Auction for one-unit auctions and AuctionDetail for multi-unit auctions. GET detail always returns AuctionDetail. GET auction collection retains the original Auction projection, while bid history returns the applicable Bid or MultiUnitBid shape.",
+    "The Manager FINAL snapshot literally specifies Auction, Bid and AuctionOutcome plus awards. Those three legacy projection shapes are retained exactly here; multi-unit quantity/outcome are available from bid history and AuctionDetail, and immutable allocations are in resources.awards. This clarifies an otherwise ambiguous distinction between final detail and snapshot projections.",
+    "Stateful admission enforces quantity presence for multi-unit auctions and quantity 1 for one-unit auctions; JSON Schema alone cannot know the referenced auction. Product overflow, deadline, increment and winner checks remain required. Explicit unitCount:1 is invalid; omit unitCount for legacy creation.",
+    "The seed is a nonempty scheduled Auction/Lot/Bidder graph with no accepted bids and a second unused Lot for independent creation. Fixed future deadlines prevent the smoke relying on a seeded OPEN auction surviving the wall clock. There is no unpublished Lot or Bidder creation route.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

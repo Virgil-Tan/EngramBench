@@ -1,0 +1,1 @@
+export type OperationId = "openapi" | "production-ui" | "health" | "create-event" | "list-events" | "read-event" | "create-hold" | "read-hold" | "confirm-hold" | "release-hold" | "customer-holds" | "customer-orders" | "join-waitlist" | "read-waitlist" | "withdraw-waitlist" | "verification-snapshot";

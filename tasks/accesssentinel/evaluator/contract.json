@@ -1,0 +1,59 @@
+{
+  "seedKeys": [
+    "tenants","principals","devices","deviceTrustRevisions","sessions",
+    "policyBundles","policyRevisions","riskModelRevisions","locationObservations","deviceLocations",
+    "accessRequests","riskDecisions","accessReviews","accessGrants","revocations","auditEntries"
+  ],
+  "publicPaths": [
+    "/api/v1/tenants","/api/v1/tenants/:tenantId/revoke","/api/v1/principals","/api/v1/principals/:principalId/revoke","/api/v1/devices","/api/v1/devices/:deviceId/trust-revisions","/api/v1/devices/:deviceId/revoke",
+    "/api/v1/sessions","/api/v1/sessions/:sessionId/refresh","/api/v1/sessions/:sessionId/revoke",
+    "/api/v1/policy-bundles","/api/v1/policy-bundles/:policyBundleId/publish","/api/v1/policy-bundles/:policyBundleId/rollback",
+    "/api/v1/location-observations","/api/v1/access-requests","/api/v1/access-requests:batch","/api/v1/access-requests/:accessRequestId",
+    "/api/v1/access-requests/:accessRequestId/reviews","/api/v1/access-requests/:accessRequestId/grant",
+    "/api/v1/grants/:grantId/check","/api/v1/grants/:grantId/revoke","/api/v1/verification-snapshot",
+    "/api/v1/break-glass-sessions","/api/v1/break-glass-sessions/:breakGlassSessionId/approvals",
+    "/api/v1/break-glass-sessions/:breakGlassSessionId/activate","/api/v1/break-glass-sessions/:breakGlassSessionId/close","/api/v1/break-glass-sessions/:breakGlassSessionId/check",
+    "/api/v1/regions/:region/quarantine","/api/v1/regions/:region/release",
+    "/api/v1/break-glass-sessions/:breakGlassSessionId/retrospective-reviews"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"principals","shape":"Principal","sort":["principalId"]},
+      {"key":"devices","shape":"Device","sort":["deviceId"]},
+      {"key":"deviceTrustRevisions","shape":"DeviceTrustRevision","sort":["deviceId","revision"]},
+      {"key":"sessions","shape":"Session","sort":["sessionId"]},
+      {"key":"policyBundles","shape":"PolicyBundle","sort":["policyBundleId"]},
+      {"key":"policyRevisions","shape":"PolicyRevision","sort":["policyBundleId","revision"]},
+      {"key":"riskModelRevisions","shape":"RiskModelRevision","sort":["tenantId","revision"]},
+      {"key":"locationObservations","shape":"LocationObservation","sort":["deviceId","deviceSequence"]},
+      {"key":"deviceLocations","shape":"DeviceLocation","sort":["deviceId"]},
+      {"key":"accessRequests","shape":"AccessRequest","sort":["accessRequestId"]},
+      {"key":"riskDecisions","shape":"RiskDecision","sort":["riskDecisionId"]},
+      {"key":"accessReviews","shape":"AccessReview","sort":["accessRequestId","reviewerId"]},
+      {"key":"accessGrants","shape":"AccessGrant","sort":["grantId"]},
+      {"key":"revocations","shape":"Revocation","sort":["tenantId","subjectType","subjectId","epoch"]},
+      {"key":"auditEntries","shape":"AuditEntry","sort":["tenantId","sequence"]}
+    ],
+    "managerResources": [
+      {"key":"breakGlassSessions","shape":"BreakGlassSession","sort":["breakGlassSessionId"]},
+      {"key":"breakGlassApprovals","shape":"BreakGlassApproval","sort":["breakGlassSessionId","approverId"]},
+      {"key":"regionalQuarantines","shape":"RegionalQuarantine","sort":["tenantId","region","revision"]},
+      {"key":"retrospectiveReviews","shape":"RetrospectiveReview","sort":["breakGlassSessionId","reviewerId"]}
+    ]
+  },
+  "workKinds": {
+    "v1": ["RISK_EVALUATION","LOCATION_REPLAY","GRANT_EXPIRY","REVOCATION_PROPAGATE","AUDIT_CHECKPOINT","EVENT_DELIVERY"],
+    "manager": ["BREAK_GLASS_EXPIRE","REGION_QUARANTINE","RETROSPECTIVE_DUE"]
+  },
+  "perfScenarios": [
+    {"id":"session-refresh-storm"},
+    {"id":"access-decision-ingest"},
+    {"id":"policy-evaluation-hotset"},
+    {"id":"location-replay-convergence"},
+    {"id":"grant-revocation-fanout"},
+    {"id":"audit-chain-append"},
+    {"id":"outbox-ack-recovery"},
+    {"id":"revocation-fence-recovery"}
+  ]
+}

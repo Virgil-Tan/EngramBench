@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "artifactvault",
+  "cases": [
+    {
+      "caseId": "STREAM-01",
+      "requirement": {
+        "id": "AV-RANGE-REPLAY",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Sequential inclusive Content-Range writes and identical replay advance one durable offset."
+      },
+      "privateFailureCodePrefix": "AV_STREAM01_",
+      "publicFeedbackCategory": "stream-range-contract"
+    },
+    {
+      "caseId": "STREAM-02",
+      "requirement": {
+        "id": "AV-RANGE-REJECT",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Gap overlap bounds and different-byte replay reject atomically."
+      },
+      "privateFailureCodePrefix": "AV_STREAM02_",
+      "publicFeedbackCategory": "atomic-rejection"
+    },
+    {
+      "caseId": "STREAM-03",
+      "requirement": {
+        "id": "AV-STREAM-VERIFY",
+        "source": "workspace/README.md#domain-and-v1-behavior",
+        "summary": "Streaming verification commits only exact declared size and digest."
+      },
+      "privateFailureCodePrefix": "AV_STREAM03_",
+      "publicFeedbackCategory": "stream-verify"
+    },
+    {
+      "caseId": "STREAM-04",
+      "requirement": {
+        "id": "AV-CONTENT-ADDRESS",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Equal bytes deduplicate to one Blob protected by every committed reference."
+      },
+      "privateFailureCodePrefix": "AV_STREAM04_",
+      "publicFeedbackCategory": "content-addressing"
+    },
+    {
+      "caseId": "STREAM-05",
+      "requirement": {
+        "id": "AV-IMMUTABLE-DOWNLOAD",
+        "source": "workspace/README.md#http-and-openapi-31",
+        "summary": "Committed full and ranged downloads retain exact ETag bytes and metadata."
+      },
+      "privateFailureCodePrefix": "AV_STREAM05_",
+      "publicFeedbackCategory": "immutable-download"
+    },
+    {
+      "caseId": "RELEASE-01",
+      "requirement": {
+        "id": "AV-RELEASE-STAGING",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md",
+        "summary": "Release members verify independently without early versions references or manifest."
+      },
+      "privateFailureCodePrefix": "AV_RELEASE01_",
+      "publicFeedbackCategory": "release-staging"
+    },
+    {
+      "caseId": "RELEASE-02",
+      "requirement": {
+        "id": "AV-ATOMIC-RELEASE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md",
+        "summary": "Canonical sorted manifest and every member publish in one transaction."
+      },
+      "privateFailureCodePrefix": "AV_RELEASE02_",
+      "publicFeedbackCategory": "atomic-release"
+    },
+    {
+      "caseId": "RELEASE-03",
+      "requirement": {
+        "id": "AV-RELEASE-REJECTION",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md",
+        "summary": "Failed abandoned and replacement members never expose partial publication."
+      },
+      "privateFailureCodePrefix": "AV_RELEASE03_",
+      "publicFeedbackCategory": "release-atomic-rejection"
+    },
+    {
+      "caseId": "RELEASE-04",
+      "requirement": {
+        "id": "AV-PLATFORM-RESOLUTION",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md",
+        "summary": "OpenAPI UI snapshot and platform downloads resolve the same committed Blob authority."
+      },
+      "privateFailureCodePrefix": "AV_RELEASE04_",
+      "publicFeedbackCategory": "platform-resolution"
+    },
+    {
+      "caseId": "RELEASE-05",
+      "requirement": {
+        "id": "AV-REFERENCE-GC",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "GC honors grace and a second reference check before deleting an orphan Blob."
+      },
+      "privateFailureCodePrefix": "AV_RELEASE05_",
+      "publicFeedbackCategory": "reference-safe-gc"
+    },
+    {
+      "caseId": "RACE-01",
+      "requirement": {
+        "id": "AV-DURABLE-IDEMPOTENCY",
+        "source": "workspace/README.md#durable-idempotency",
+        "summary": "Unknown and concurrent complete or publish replay preserves one saved result and effect."
+      },
+      "privateFailureCodePrefix": "AV_RACE01_",
+      "publicFeedbackCategory": "durable-idempotency"
+    },
+    {
+      "caseId": "RACE-02",
+      "requirement": {
+        "id": "AV-VERSION-RACE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md",
+        "summary": "V1 and Release creation share one package and version authority across API UI and snapshot."
+      },
+      "privateFailureCodePrefix": "AV_RACE02_",
+      "publicFeedbackCategory": "uniqueness-race"
+    },
+    {
+      "caseId": "RACE-03",
+      "requirement": {
+        "id": "AV-LEASE-FENCE",
+        "source": "workspace/README.md#controlled-recovery-barrier",
+        "summary": "Claim effect-complete and before-commit crashes recover without stale terminal effects."
+      },
+      "privateFailureCodePrefix": "AV_RACE03_",
+      "publicFeedbackCategory": "lease-fencing"
+    },
+    {
+      "caseId": "RACE-04",
+      "requirement": {
+        "id": "AV-OUTBOX-REPLAY",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Unknown webhook acknowledgement retries one stable Event identity body and sequence."
+      },
+      "privateFailureCodePrefix": "AV_RACE04_",
+      "publicFeedbackCategory": "outbox-replay"
+    },
+    {
+      "caseId": "MIGRATE-01",
+      "requirement": {
+        "id": "AV-MIGRATE-DEFAULT",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current artifact bytes, ETag and replay survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "AV_MIGRATE01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-02",
+      "requirement": {
+        "id": "AV-MIGRATE-INFLIGHT",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current partial uploads and leased verification survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "AV_MIGRATE02_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-03",
+      "requirement": {
+        "id": "AV-SEED-COMPAT",
+        "source": "workspace/README.md#seed-contract",
+        "summary": "V1 seed assets import atomically replay exactly and remain FINAL compatible."
+      },
+      "privateFailureCodePrefix": "AV_MIGRATE03_",
+      "publicFeedbackCategory": "wire-compatibility"
+    },
+    {
+      "caseId": "MIGRATE-04",
+      "requirement": {
+        "id": "AV-COMPAT-UI",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current singular and multi-platform API, OpenAPI and UI closure. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "AV_MIGRATE04_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "LOAD-01",
+      "requirement": {
+        "id": "AV-PERF-STREAM",
+        "source": "workspace/README.md#scenario-concurrent-upload-stream",
+        "summary": "Twenty exact 64 MiB streams meet the published throughput and correctness contract."
+      },
+      "privateFailureCodePrefix": "AV_LOAD01_",
+      "publicFeedbackCategory": "performance-stream"
+    },
+    {
+      "caseId": "LOAD-02",
+      "requirement": {
+        "id": "AV-PERF-READ",
+        "source": "workspace/README.md#scenario-artifact-metadata-read",
+        "summary": "One hundred thousand seeded versions sustain exact metadata reads for sixty seconds."
+      },
+      "privateFailureCodePrefix": "AV_LOAD02_",
+      "publicFeedbackCategory": "performance-read"
+    },
+    {
+      "caseId": "LOAD-03",
+      "requirement": {
+        "id": "AV-PERF-RECOVERY",
+        "source": "workspace/README.md#scenario-verification-recovery",
+        "summary": "A two GiB backlog recovers within ninety seconds under both worker RSS limits."
+      },
+      "privateFailureCodePrefix": "AV_LOAD03_",
+      "publicFeedbackCategory": "performance-recovery"
+    },
+    {
+      "caseId": "LOAD-04",
+      "requirement": {
+        "id": "AV-POST-LOAD",
+        "source": "workspace/README.md#project-owned-verification",
+        "summary": "Every formal load closes through snapshot downloads Events Work and visible UI evidence."
+      },
+      "privateFailureCodePrefix": "AV_LOAD04_",
+      "publicFeedbackCategory": "post-load-invariants"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

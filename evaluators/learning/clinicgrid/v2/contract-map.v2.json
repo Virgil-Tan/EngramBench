@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 2,
+  "taskId": "clinicgrid",
+  "cases": [
+    {
+      "caseId": "SLOT-01",
+      "requirement": {
+        "id": "CG-HALF-OPEN-INTERVAL",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Appointment intervals are half-open, aligned to 15 UTC minutes and exactly match Service Type duration."
+      },
+      "privateFailureCodePrefix": "CG_SLOT01_",
+      "publicFeedbackCategory": "half-open-interval"
+    },
+    {
+      "caseId": "SLOT-02",
+      "requirement": {
+        "id": "CG-RESOURCE-ORDER",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "A requested Clinician receives the lowest-priority then bytewise Room and Equipment bundle covering the complete interval."
+      },
+      "privateFailureCodePrefix": "CG_SLOT02_",
+      "publicFeedbackCategory": "resource-order"
+    },
+    {
+      "caseId": "SLOT-03",
+      "requirement": {
+        "id": "CG-ATOMIC-HOLD",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "A hold owns its complete Clinician, Room and Equipment bundle or leaves no business, Work or Event effect."
+      },
+      "privateFailureCodePrefix": "CG_SLOT03_",
+      "publicFeedbackCategory": "atomic-multi-resource-hold"
+    },
+    {
+      "caseId": "SLOT-04",
+      "requirement": {
+        "id": "CG-EXPIRY-AUTHORITY",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Verify the stored 120-second timer, safely early confirmation, due hold expiry by the real Worker and rejection after persisted expiry. Exact transaction equality is not asserted."
+      },
+      "privateFailureCodePrefix": "CG_SLOT04_",
+      "publicFeedbackCategory": "expiry-authority",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "SLOT-05",
+      "requirement": {
+        "id": "CG-WAITLIST-HEAD",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Waitlist promotion never bypasses the ordered head and selects its earliest feasible slot and normal resources."
+      },
+      "privateFailureCodePrefix": "CG_SLOT05_",
+      "publicFeedbackCategory": "head-blocking"
+    },
+    {
+      "caseId": "PLAN-01",
+      "requirement": {
+        "id": "CG-ATOMIC-CARE-PLAN",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "A two-through-twelve visit Care Plan freezes ordered visits and atomically holds all or creates nothing."
+      },
+      "privateFailureCodePrefix": "CG_PLAN01_",
+      "publicFeedbackCategory": "atomic-care-plan"
+    },
+    {
+      "caseId": "PLAN-02",
+      "requirement": {
+        "id": "CG-CARE-PLAN-AGGREGATE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Care Plan state and expiresAt are recomputed from member states and the minimum remaining HELD expiry."
+      },
+      "privateFailureCodePrefix": "CG_PLAN02_",
+      "publicFeedbackCategory": "care-plan-aggregate"
+    },
+    {
+      "caseId": "PLAN-03",
+      "requirement": {
+        "id": "CG-MEMBER-TRANSITION",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Per-visit confirmation changes exactly one HELD member while preserving every other identity and authority."
+      },
+      "privateFailureCodePrefix": "CG_PLAN03_",
+      "publicFeedbackCategory": "member-transition"
+    },
+    {
+      "caseId": "PLAN-04",
+      "requirement": {
+        "id": "CG-TERMINATION-FANOUT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "One cancellation, expiry or explicit termination preserves CONFIRMED visits and cancels and releases every other HELD visit once."
+      },
+      "privateFailureCodePrefix": "CG_PLAN04_",
+      "publicFeedbackCategory": "termination-fanout"
+    },
+    {
+      "caseId": "PLAN-05",
+      "requirement": {
+        "id": "CG-MULTI-VISIT-PROMOTION",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "A multi-visit Waitlist head promotes through the real UI and Work only when every visit can be held together."
+      },
+      "privateFailureCodePrefix": "CG_PLAN05_",
+      "publicFeedbackCategory": "multi-visit-promotion"
+    },
+    {
+      "caseId": "RACE-01",
+      "requirement": {
+        "id": "CG-DURABLE-IDEMPOTENCY",
+        "source": "workspace/README.md#durable-idempotency",
+        "summary": "Unknown hold, confirm and terminate outcomes replay one durable status, body, identity, sequence and effect across APIs and restart."
+      },
+      "privateFailureCodePrefix": "CG_RACE01_",
+      "publicFeedbackCategory": "durable-idempotency"
+    },
+    {
+      "caseId": "RACE-02",
+      "requirement": {
+        "id": "CG-RESOURCE-CONTENTION",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Concurrent hot-slot contenders have one complete winner while adjacent intervals coexist across HTTP, UI, calendars and snapshot."
+      },
+      "privateFailureCodePrefix": "CG_RACE02_",
+      "publicFeedbackCategory": "resource-contention"
+    },
+    {
+      "caseId": "RACE-03",
+      "requirement": {
+        "id": "CG-EXPIRY-RECOVERY",
+        "source": "workspace/README.md#controlled-recovery-barrier",
+        "summary": "Expiry, confirm and Plan termination converge under observable Worker barriers, SIGKILL, lease reclamation and stale fencing."
+      },
+      "privateFailureCodePrefix": "CG_RACE03_",
+      "publicFeedbackCategory": "expiry-recovery"
+    },
+    {
+      "caseId": "RACE-04",
+      "requirement": {
+        "id": "CG-OUTBOX-RECOVERY",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Dispatcher unknown acknowledgements retry stable event identities and semantic bodies in contiguous aggregate order without secrets."
+      },
+      "privateFailureCodePrefix": "CG_RACE04_",
+      "publicFeedbackCategory": "outbox-recovery"
+    },
+    {
+      "caseId": "MIGRATE-01",
+      "requirement": {
+        "id": "CG-V1-WIRE-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current standalone Appointments and CarePlans after FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "CG_MIGRATE01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-02",
+      "requirement": {
+        "id": "CG-INFLIGHT-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current expiry, promotion and event delivery recover after FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "CG_MIGRATE02_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-03",
+      "requirement": {
+        "id": "CG-SEED-ONLINE-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current seed atomicity and live repeated initialization. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "CG_MIGRATE03_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-04",
+      "requirement": {
+        "id": "CG-CROSS-LAYER-COMPATIBILITY",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "OpenAPI, runtime, FINAL snapshot and production UI close standalone Appointment and Care Plan flows without impossible aggregate state."
+      },
+      "privateFailureCodePrefix": "CG_MIGRATE04_",
+      "publicFeedbackCategory": "cross-layer-compatibility"
+    },
+    {
+      "caseId": "LOAD-01",
+      "requirement": {
+        "id": "CG-PERF-AVAILABILITY",
+        "source": "workspace/README.md#scenario-availability-read",
+        "summary": "The exact 64-client availability workload runs ten warm-up and sixty measured seconds at published throughput, latency and correctness."
+      },
+      "privateFailureCodePrefix": "CG_LOAD01_",
+      "publicFeedbackCategory": "performance-availability"
+    },
+    {
+      "caseId": "LOAD-02",
+      "requirement": {
+        "id": "CG-PERF-CONTENTION",
+        "source": "workspace/README.md#scenario-competing-holds",
+        "summary": "The exact warm-up and 180 measured hot slots produce one hold and nine exact conflicts per slot at published performance."
+      },
+      "privateFailureCodePrefix": "CG_LOAD02_",
+      "publicFeedbackCategory": "performance-contention"
+    },
+    {
+      "caseId": "LOAD-03",
+      "requirement": {
+        "id": "CG-PERF-BACKLOG",
+        "source": "workspace/README.md#scenario-expiry-and-promotion-recovery",
+        "summary": "Two killed claimed Workers and two replacements expire and promote all 2000 due records within 45 seconds without stale effects."
+      },
+      "privateFailureCodePrefix": "CG_LOAD03_",
+      "publicFeedbackCategory": "performance-backlog"
+    },
+    {
+      "caseId": "LOAD-04",
+      "requirement": {
+        "id": "CG-POST-LOAD-INVARIANTS",
+        "source": "workspace/README.md#project-owned-verification",
+        "summary": "Each independent formal load closes with full calendar, resource bundle, release, Waitlist, Care Plan, Work and Event reconciliation."
+      },
+      "privateFailureCodePrefix": "CG_LOAD04_",
+      "publicFeedbackCategory": "post-load-invariants"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

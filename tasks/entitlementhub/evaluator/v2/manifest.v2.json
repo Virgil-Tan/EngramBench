@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "taskId": "entitlementhub",
+  "profile": "learning-v2",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "CONTRACT 公共接口与主流程", "weight": 30 },
+    "B": { "title": "DATA 不变量、幂等与并发", "weight": 25 },
+    "C": { "title": "RECOVERY Work 与 dispatcher 持久恢复", "weight": 20 },
+    "D": { "title": "LAYER OpenAPI、UI 与 snapshot", "weight": 15 },
+    "E": { "title": "OPERATE 迁移与正式性能", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "TRIAL_UNIQUENESS", "cap": 35, "publicInvariant": "A subject consumes one trial per Plan family across revisions and losing requests have no durable side effects." },
+    { "id": "GRANT_INTERVAL_AUTHORITY", "cap": 35, "publicInvariant": "Frozen Grant intervals never overlap or gap and only the newest valid lifecycle authority changes access." },
+    { "id": "REFUND_CONSERVATION", "cap": 35, "publicInvariant": "Successful plus unresolved reserved refunds never exceed the frozen period charge and full-only revocation remains atomic." },
+    { "id": "REVOCATION_FAIL_CLOSED", "cap": 35, "publicInvariant": "Revocation versions are monotonic and every API denies stale access within two seconds." },
+    { "id": "POOL_CAPACITY_AUTHORITY", "cap": 35, "publicInvariant": "Pool versions are gapless, active subjects are unique, capacity never oversells, and terminal Pools never revive." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "Unknown responses, restart, and cross-process replay cannot create a second business effect or rewrite saved JSON." },
+    { "id": "STALE_WORK_OR_LOST_WORK", "cap": 40, "publicInvariant": "Persisted Work remains recoverable and an expired worker lease cannot commit." },
+    { "id": "MIGRATION_COMPATIBILITY", "cap": 35, "publicInvariant": "FINAL preserves V1 identities, frozen terms, UNKNOWN reservations, fences, events, Work, and replay without synthesizing Pools." }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-EH-01", "summary": "subscriptionKind is added only to the create request; Subscription response and snapshot shape remain V1." },
+    { "id": "SPEC-GAP-EH-02", "summary": "No Pool or Seat Domain Event type is published." },
+    { "id": "SPEC-GAP-EH-03", "summary": "Pool uniqueness per Subscription and feature is not specified." },
+    { "id": "SPEC-GAP-EH-04", "summary": "Renewal, subject suspension, and PlanRevision retirement or edit have no public mutation seam." },
+    { "id": "SPEC-GAP-EH-05", "summary": "Exact integer proration formula and rounding are not published." }
+  ],
+  "cases": [
+    { "id": "CONTRACT-01", "title": "Plan Revision publish and trial start public contract", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-02", "title": "Upgrade downgrade cancel and access check", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-03", "title": "Refund provider and reconcile public state machine", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-04", "title": "Pool create assign revoke and list exact wire", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-05", "title": "Pool limit revoke expire and terminal history", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "DATA-01", "title": "Trial uniqueness and frozen PlanRevision terms", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-02", "title": "Grant intervals downgrade authority and revocation fence", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-03", "title": "Refund reservation UNKNOWN and full-only revoke conservation", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-04", "title": "Pool version capacity uniqueness and OVER_LIMIT", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-05", "title": "Durable replay provider precedence and terminal Pool contention", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RECOVERY-01", "title": "Activate change and expiry Work claimed SIGKILL takeover", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "RECOVERY-02", "title": "Refund UNKNOWN reconcile claimed takeover", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "RECOVERY-03", "title": "Pool reconcile and revoke all-seat closure", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "RECOVERY-04", "title": "Outbox unknown ACK and reordered revocation", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "SIGKILL"] },
+    { "id": "LAYER-01", "title": "V1 and Pool OpenAPI runtime exact surface", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "LAYER-02", "title": "Browser individual trial change refund and check", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "LAYER-03", "title": "Browser organization Pool seat over-limit and revoke", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "LAYER-04", "title": "FINAL point-in-time Subscription Pool closure", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "OPERATE-01", "title": "One hundred thousand subject entitlement decisions", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-02", "title": "Twenty thousand upgrade refund lifecycle race", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-03", "title": "Fifty thousand expiry revocation recovery", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF", "SIGKILL"] },
+    { "id": "OPERATE-04", "title": "V1 individual in-flight and seed atomic compatibility", "dimension": "E", "weight": 2.5, "prerequisites": ["V1", "FINAL"] }
+  ]
+}

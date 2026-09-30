@@ -1,0 +1,33 @@
+{
+  "seedKeys":["tenants","policies","policyVersions","contentItems","evidenceVersions","moderationCases","reviewStages","moderationDecisions","appeals","auditEntries","auditCheckpoints"],
+  "publicPaths":[
+    "/api/v1/tenants","/api/v1/policies","/api/v1/policies/:policyId/versions",
+    "/api/v1/policy-versions/:policyVersionId/activate","/api/v1/content-items",
+    "/api/v1/content-items/:contentItemId/evidence-versions","/api/v1/moderation-cases/:caseId",
+    "/api/v1/review-stages","/api/v1/review-stages/:stageId/claim","/api/v1/review-stages/:stageId/decisions",
+    "/api/v1/moderation-cases/:caseId/appeals","/api/v1/appeals/:appealId/decision",
+    "/api/v1/audit/verify","/api/v1/audit","/api/v1/verification-snapshot",
+    "/api/v1/policy-recall-runs","/api/v1/policy-recall-runs/:runId","/api/v1/policy-recall-runs/:runId/cancel"
+  ],
+  "snapshot":{
+    "resources":[
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"policies","shape":"Policy","sort":["policyId"]},
+      {"key":"policyVersions","shape":"PolicyVersion","sort":["policyId","version"]},
+      {"key":"contentItems","shape":"ContentItem","sort":["contentItemId"]},
+      {"key":"evidenceVersions","shape":"EvidenceVersion","sort":["contentItemId","version"]},
+      {"key":"moderationCases","shape":"ModerationCase","sort":["caseId"]},
+      {"key":"reviewStages","shape":"ReviewStage","sort":["stageId"]},
+      {"key":"moderationDecisions","shape":"ModerationDecision","sort":["decisionId"]},
+      {"key":"appeals","shape":"Appeal","sort":["appealId"]},
+      {"key":"auditEntries","shape":"AuditEntry","sort":["tenantId","sequence"]},
+      {"key":"auditCheckpoints","shape":"AuditCheckpoint","sort":["tenantId"]}
+    ],
+    "managerResources":[
+      {"key":"policyRecallRuns","shape":"PolicyRecallRun","sort":["policyRecallRunId"]},
+      {"key":"reconsiderations","shape":"Reconsideration","sort":["policyRecallRunId","caseId"]}
+    ]
+  },
+  "workKinds":{"v1":["CASE_OPEN","STAGE_EXPIRY","APPEAL_OPEN","AUDIT_DELIVERY"],"manager":["POLICY_RECALL"]},
+  "perfScenarios":[{"id":"moderation-ingest"},{"id":"evidence-appeal-contention"},{"id":"policy-boundary-recovery"}]
+}

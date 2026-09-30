@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 2,
+  "taskId": "routeweave",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Evidence projection, route authority and Consignment closure",
+      "weight": 30
+    },
+    "B": {
+      "title": "Replay, uniqueness and concurrent authority",
+      "weight": 25
+    },
+    "C": {
+      "title": "Projection recovery, fencing and outbox",
+      "weight": 20
+    },
+    "D": {
+      "title": "HTTP, production UI and FINAL snapshot",
+      "weight": 15
+    },
+    "E": {
+      "title": "V1 compatibility and published workloads",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "JOURNEY_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Evidence replay is deterministic, duplicate scans advance once, route and loss fences hold, Consignment mutation is atomic, and terminal state never regresses."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Durable replay and scanner identity never create a second evidence, projection, Work, Event, route or piece effect."
+    },
+    {
+      "id": "WORK_RECOVERY_CORRECTNESS",
+      "cap": 40,
+      "publicInvariant": "Projection and Consignment Work survives process death and stale lease owners cannot commit across a newer authority fence."
+    },
+    {
+      "id": "MIGRATION_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "V1 migration preserves Shipment, RoutePlan, scan, projection, Event, Work and saved replay identities while adding exactly one stable legacy piece."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-RW-01",
+      "summary": "Non-scoring scope note: Consignment GET has no literal wrapper schema; the evaluator checks exact member shapes, pieceRef order and semantic contents without inventing wrapper keys."
+    },
+    {
+      "id": "SPEC-GAP-RW-02",
+      "summary": "Non-scoring scope note: No Consignment-specific Domain Event type is published; the evaluator requires no invented type."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "ScanEvent total-order replay and deterministic Projection",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "RoutePlan leg dependency and terminal fence",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Loss, found and reassignment target fence",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Atomic Consignment creation with 1 through 100 pieces",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Piece-derived Consignment aggregate and shared reassignment",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Scan mutation durable replay and identity scope",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Concurrent duplicate scannerEventId advances once",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "All shuffled scan interleavings converge",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Loss, found and reassignment revision race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Shared reassignment and piece terminal all-or-none race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Projection Work reclaim and stale lease fencing",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Deterministic shuffled storm across crash and restart",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Consignment cancel or reassignment fences old Work",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Shipment and Consignment Event unknown acknowledgement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "V1 and Consignment wire, errors, sorting and tenant scope",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production Chromium V1 route, scan, loss and reassignment",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production Chromium multi-piece journey and aggregate",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "FINAL point-in-time projection closure",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current Shipment and multi-piece Consignment survive FINAL restart",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Published shipment-plan-ingest workload",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Published out-of-order-scan-storm workload",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Published loss-reroute-recovery workload",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

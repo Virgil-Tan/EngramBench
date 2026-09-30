@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "personaId": "notifyroute-delivery-lead",
+  "taskId": "notifyroute",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, worker, dispatcher, and production UI using only published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"contract-and-routing","category":"correctness","requirement":"OpenAPI, strict validation, frozen template and route revisions, deterministic channel order, fallback, and terminal notification state agree with the public contract.","weight":10,"testGates":["H-02","H-03","H-04"]},
+    {"id":"preferences-and-suppression","category":"correctness","requirement":"Unsubscribe and resubscribe revisions are tenant-scoped, monotonic, auditable, and rechecked before every external send so stale work cannot bypass consent.","weight":12,"testGates":["H-05","H-06","H-07"]},
+    {"id":"rate-limit-conservation","category":"correctness","requirement":"Tenant-channel and recipient-channel fixed-window limits remain exact across API processes, workers, retries, restarts, and window rollover.","weight":10,"testGates":["H-06","H-12"]},
+    {"id":"delivery-exactness","category":"correctness","requirement":"Idempotency, dedupe keys, provider identities, UNKNOWN resolution, retry policy, and duplicate or reordered receipts converge without a second logical send.","weight":14,"testGates":["H-05","H-06","H-07"]},
+    {"id":"recovery-and-events","category":"correctness","requirement":"Worker lease and outbox recovery preserve one logical effect, stable event identity and body, aggregate ordering, and terminal Work under process death.","weight":11,"testGates":["H-07","H-08","H-09"]},
+    {"id":"manager-campaigns","category":"correctness","requirement":"Manager Campaigns freeze and deduplicate audiences, fan out once, honor pause and cancellation fences, recover from worker death, and preserve V1 state.","weight":12,"testGates":["H-09","H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three sustained scenarios meet their throughput, latency, quota, recovery, duplicate-protection, and post-load invariant requirements.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The repository owns meaningful unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, invariant, aggregate, and performance commands.","weight":7,"testGates":["H-13"]},
+    {"id":"security-isolation","category":"correctness","requirement":"Tenant state, contact data, endpoint secrets, provider credentials, signing material, and private paths never cross boundaries or leak.","weight":4,"testGates":["H-02","H-06","H-12"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains ownership, routing, consent, quota, failure recovery, and review findings clearly.","weight":2},
+    {"id":"evidence-quality","category":"persona","requirement":"Every stage and final handoff reports actual commands, results, risks, and checks not run accurately.","weight":3}
+  ]
+}

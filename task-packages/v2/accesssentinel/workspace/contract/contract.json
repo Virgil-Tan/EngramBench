@@ -1,0 +1,4564 @@
+{
+  "taskId": "accesssentinel",
+  "title": "AccessSentinel",
+  "policyRevision": "accesssentinel-2026-09-08.1",
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:perf",
+    "npm run test:all"
+  ],
+  "seed": {
+    "replay": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string"
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "principals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Principal"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Device"
+          }
+        },
+        "deviceTrustRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceTrustRevision"
+          }
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Session"
+          }
+        },
+        "policyBundles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PolicyBundle"
+          }
+        },
+        "policyRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PolicyRevision"
+          }
+        },
+        "riskModelRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RiskModelRevision"
+          }
+        },
+        "locationObservations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LocationObservation"
+          }
+        },
+        "deviceLocations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceLocation"
+          }
+        },
+        "accessRequests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessRequest"
+          }
+        },
+        "riskDecisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RiskDecision"
+          }
+        },
+        "accessReviews": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessReview"
+          }
+        },
+        "accessGrants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessGrant"
+          }
+        },
+        "revocations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Revocation"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "principals",
+        "devices",
+        "deviceTrustRevisions",
+        "sessions",
+        "policyBundles",
+        "policyRevisions",
+        "riskModelRevisions",
+        "locationObservations",
+        "deviceLocations",
+        "accessRequests",
+        "riskDecisions",
+        "accessReviews",
+        "accessGrants",
+        "revocations",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-linked-trust-risk-v2",
+      "importedAt": "2026-01-01T00:00:00Z",
+      "tenants": [
+        {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "name": "Public policy tenant",
+          "revocationEpoch": 0,
+          "createdAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "principals": [
+        {
+          "principalId": "32000000-0000-4000-8000-000000000002",
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "displayName": "Public operator",
+          "state": "ACTIVE",
+          "revocationEpoch": 0,
+          "createdAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "devices": [
+        {
+          "deviceId": "32000000-0000-4000-8000-000000000003",
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "principalId": "32000000-0000-4000-8000-000000000002",
+          "publicKeyFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "state": "ACTIVE",
+          "currentTrustRevision": 1,
+          "revocationEpoch": 0,
+          "createdAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "deviceTrustRevisions": [
+        {
+          "deviceTrustRevisionId": "32000000-0000-4000-8000-000000000004",
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "deviceId": "32000000-0000-4000-8000-000000000003",
+          "revision": 1,
+          "state": "TRUSTED",
+          "assurance": 2,
+          "validFrom": "2026-01-01T00:00:00Z",
+          "validUntil": "2099-01-01T00:00:00Z",
+          "evidenceDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "createdAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "sessions": [],
+      "policyBundles": [],
+      "policyRevisions": [],
+      "riskModelRevisions": [
+        {
+          "riskModelRevisionId": "32000000-0000-4000-8000-000000000008",
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "revision": 1,
+          "effectiveFrom": "2026-01-01T00:00:00Z",
+          "lowMax": 20,
+          "reviewMax": 50,
+          "maxLocationAgeSeconds": 3600,
+          "maxTravelKph": 900,
+          "createdAt": "2026-01-01T00:00:00Z",
+          "weights": {
+            "oldSession": 10,
+            "staleLocation": 20,
+            "regionMismatch": 30,
+            "impossibleTravel": 40
+          },
+          "digest": "a551f44a3f35994a89a16cad6433e6200a902bf0e1bb3ec8bf82cc57fbfa0f8e"
+        }
+      ],
+      "locationObservations": [],
+      "deviceLocations": [],
+      "accessRequests": [],
+      "riskDecisions": [],
+      "accessReviews": [],
+      "accessGrants": [],
+      "revocations": [],
+      "auditEntries": []
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Explicit free JSON business metadata; all recursive secret exclusions still apply."
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "revocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "name",
+        "revocationEpoch",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Principal": {
+      "type": "object",
+      "properties": {
+        "principalId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED",
+            "REVOKED"
+          ]
+        },
+        "revocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "principalId",
+        "tenantId",
+        "displayName",
+        "state",
+        "revocationEpoch",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Device": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "principalId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "publicKeyFingerprint": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REVOKED"
+          ]
+        },
+        "currentTrustRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "revocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "deviceId",
+        "tenantId",
+        "principalId",
+        "publicKeyFingerprint",
+        "state",
+        "currentTrustRevision",
+        "revocationEpoch",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceTrustRevision": {
+      "type": "object",
+      "properties": {
+        "deviceTrustRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string"
+        },
+        "assurance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "validFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "validUntil": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "evidenceDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "deviceTrustRevisionId",
+        "deviceId",
+        "tenantId",
+        "revision",
+        "state",
+        "assurance",
+        "validFrom",
+        "validUntil",
+        "evidenceDigest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Session": {
+      "type": "object",
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "principalId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceTrustRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "familyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "refreshTokenDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "revocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "sessionId",
+        "tenantId",
+        "principalId",
+        "deviceId",
+        "deviceTrustRevisionId",
+        "familyId",
+        "generation",
+        "refreshTokenDigest",
+        "state",
+        "expiresAt",
+        "revocationEpoch",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "PolicyBundle": {
+      "type": "object",
+      "properties": {
+        "policyBundleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "currentRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currentPolicyRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "policyBundleId",
+        "tenantId",
+        "name",
+        "currentRevision",
+        "currentPolicyRevisionId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "PolicyRule": {
+      "type": "object",
+      "properties": {
+        "ruleId": {
+          "type": "string"
+        },
+        "effect": {
+          "type": "string",
+          "enum": [
+            "ALLOW",
+            "DENY"
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "resourcePattern": {
+          "type": "string"
+        },
+        "minAssurance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "ruleId",
+        "effect",
+        "actions",
+        "resourcePattern",
+        "minAssurance",
+        "regions"
+      ],
+      "additionalProperties": false
+    },
+    "PolicyRevision": {
+      "type": "object",
+      "properties": {
+        "policyRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "policyBundleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PolicyRule"
+          },
+          "minItems": 1,
+          "maxItems": 500
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "policyRevisionId",
+        "policyBundleId",
+        "tenantId",
+        "revision",
+        "effectiveFrom",
+        "rules",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RiskModelRevision": {
+      "type": "object",
+      "properties": {
+        "riskModelRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "lowMax": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "reviewMax": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxLocationAgeSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxTravelKph": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "weights": {
+          "type": "object",
+          "properties": {
+            "oldSession": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "staleLocation": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "regionMismatch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "impossibleTravel": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "oldSession",
+            "staleLocation",
+            "regionMismatch",
+            "impossibleTravel"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "riskModelRevisionId",
+        "tenantId",
+        "revision",
+        "effectiveFrom",
+        "lowMax",
+        "reviewMax",
+        "maxLocationAgeSeconds",
+        "maxTravelKph",
+        "digest",
+        "createdAt",
+        "weights"
+      ],
+      "additionalProperties": false
+    },
+    "LocationObservation": {
+      "type": "object",
+      "properties": {
+        "observationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "region": {
+          "type": "string"
+        },
+        "acceptedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "observationId",
+        "tenantId",
+        "deviceId",
+        "deviceSequence",
+        "observedAt",
+        "longitude",
+        "latitude",
+        "region",
+        "acceptedAt"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceLocation": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lastSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "watermarkObservedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "region": {
+          "type": "string"
+        },
+        "riskFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "deviceId",
+        "tenantId",
+        "lastSequence",
+        "watermarkObservedAt",
+        "longitude",
+        "latitude",
+        "region",
+        "riskFlags",
+        "revision",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "AccessRequest": {
+      "type": "object",
+      "properties": {
+        "accessRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "principalId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "action": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "requestedTtlSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "justification": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING_RISK",
+            "DENIED",
+            "PENDING_REVIEW",
+            "APPROVED",
+            "GRANTED",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "policyRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "riskModelRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceTrustRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sessionGeneration": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "tenantRevocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "principalRevocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "locationWatermark": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "accessRequestId",
+        "tenantId",
+        "principalId",
+        "deviceId",
+        "sessionId",
+        "action",
+        "resource",
+        "region",
+        "requestedTtlSeconds",
+        "justification",
+        "state",
+        "policyRevisionId",
+        "riskModelRevisionId",
+        "deviceTrustRevisionId",
+        "sessionGeneration",
+        "tenantRevocationEpoch",
+        "principalRevocationEpoch",
+        "locationWatermark",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "RiskDecision": {
+      "type": "object",
+      "properties": {
+        "riskDecisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "accessRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "REVIEW",
+            "HIGH"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "policyEffect": {
+          "type": "string"
+        },
+        "inputDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "riskDecisionId",
+        "accessRequestId",
+        "tenantId",
+        "score",
+        "level",
+        "reasons",
+        "policyEffect",
+        "inputDigest",
+        "decidedAt"
+      ],
+      "additionalProperties": false
+    },
+    "AccessReview": {
+      "type": "object",
+      "properties": {
+        "accessReviewId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "accessRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "reviewerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVE",
+            "REJECT"
+          ]
+        },
+        "comment": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "accessReviewId",
+        "accessRequestId",
+        "tenantId",
+        "reviewerId",
+        "decision",
+        "comment",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AccessGrant": {
+      "type": "object",
+      "properties": {
+        "grantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "accessRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "principalId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "action": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "policyRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "riskDecisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "notBefore": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "revocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "grantId",
+        "accessRequestId",
+        "tenantId",
+        "principalId",
+        "deviceId",
+        "sessionId",
+        "action",
+        "resource",
+        "region",
+        "policyRevisionId",
+        "riskDecisionId",
+        "state",
+        "notBefore",
+        "expiresAt",
+        "revocationEpoch",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Revocation": {
+      "type": "object",
+      "properties": {
+        "revocationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectType": {
+          "type": "string",
+          "enum": [
+            "TENANT",
+            "PRINCIPAL",
+            "DEVICE",
+            "SESSION",
+            "GRANT",
+            "REGION"
+          ]
+        },
+        "subjectId": {
+          "type": "string"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "reason": {
+          "type": "string"
+        },
+        "effectiveAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "revocationId",
+        "tenantId",
+        "subjectType",
+        "subjectId",
+        "epoch",
+        "reason",
+        "effectiveAt",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "actorType": {
+          "type": "string"
+        },
+        "actorId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "action": {
+          "type": "string"
+        },
+        "subjectType": {
+          "type": "string"
+        },
+        "subjectId": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Explicit free JSON business metadata; all recursive secret exclusions still apply."
+        },
+        "previousDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "occurredAt",
+        "actorType",
+        "actorId",
+        "action",
+        "subjectType",
+        "subjectId",
+        "data",
+        "previousDigest",
+        "digest"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "aggregateId": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "availableAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseToken": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastError": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "workId",
+        "tenantId",
+        "kind",
+        "aggregateId",
+        "state",
+        "attempt",
+        "availableAt",
+        "leaseOwner",
+        "leaseToken",
+        "leaseExpiresAt",
+        "lastError",
+        "terminal",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Event": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateType": {
+          "type": "string"
+        },
+        "aggregateId": {
+          "type": "string"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Explicit free JSON business metadata; all recursive secret exclusions still apply."
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "aggregateType",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "BreakGlassSession": {
+      "type": "object",
+      "properties": {
+        "breakGlassSessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceTrustRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sessionGeneration": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sessionRevocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "principalRevocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "deviceRevocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "region": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "resourcePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "reason": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING_APPROVAL",
+            "READY",
+            "ACTIVE",
+            "CLOSED",
+            "EXPIRED",
+            "REJECTED"
+          ]
+        },
+        "requiredApprovals": {
+          "const": 2
+        },
+        "policyRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "riskModelRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantRevocationEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "regionQuarantineRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "notBefore": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "closedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "breakGlassSessionId",
+        "tenantId",
+        "requesterId",
+        "sessionId",
+        "deviceId",
+        "deviceTrustRevisionId",
+        "sessionGeneration",
+        "sessionRevocationEpoch",
+        "principalRevocationEpoch",
+        "deviceRevocationEpoch",
+        "region",
+        "actions",
+        "resourcePatterns",
+        "reason",
+        "state",
+        "requiredApprovals",
+        "policyRevisionId",
+        "riskModelRevisionId",
+        "tenantRevocationEpoch",
+        "regionQuarantineRevision",
+        "notBefore",
+        "expiresAt",
+        "activatedAt",
+        "closedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "BreakGlassApproval": {
+      "type": "object",
+      "properties": {
+        "breakGlassApprovalId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "breakGlassSessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "approverId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVE",
+            "REJECT"
+          ]
+        },
+        "comment": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "breakGlassApprovalId",
+        "breakGlassSessionId",
+        "tenantId",
+        "approverId",
+        "decision",
+        "comment",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RegionalQuarantine": {
+      "type": "object",
+      "properties": {
+        "regionalQuarantineId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "region": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "RELEASED"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "effectiveAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "releasedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "regionalQuarantineId",
+        "tenantId",
+        "region",
+        "revision",
+        "state",
+        "reason",
+        "createdBy",
+        "effectiveAt",
+        "releasedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "RetrospectiveReview": {
+      "type": "object",
+      "properties": {
+        "retrospectiveReviewId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "breakGlassSessionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "reviewerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "JUSTIFIED",
+            "POLICY_GAP",
+            "MISUSE"
+          ]
+        },
+        "findings": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "retrospectiveReviewId",
+        "breakGlassSessionId",
+        "tenantId",
+        "reviewerId",
+        "outcome",
+        "findings",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "tenants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Tenant"
+              }
+            },
+            "principals": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Principal"
+              }
+            },
+            "devices": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Device"
+              }
+            },
+            "deviceTrustRevisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DeviceTrustRevision"
+              }
+            },
+            "sessions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Session"
+              }
+            },
+            "policyBundles": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PolicyBundle"
+              }
+            },
+            "policyRevisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PolicyRevision"
+              }
+            },
+            "riskModelRevisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RiskModelRevision"
+              }
+            },
+            "locationObservations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/LocationObservation"
+              }
+            },
+            "deviceLocations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DeviceLocation"
+              }
+            },
+            "accessRequests": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AccessRequest"
+              }
+            },
+            "riskDecisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RiskDecision"
+              }
+            },
+            "accessReviews": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AccessReview"
+              }
+            },
+            "accessGrants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AccessGrant"
+              }
+            },
+            "revocations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Revocation"
+              }
+            },
+            "auditEntries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AuditEntry"
+              }
+            },
+            "breakGlassSessions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/BreakGlassSession"
+              }
+            },
+            "breakGlassApprovals": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/BreakGlassApproval"
+              }
+            },
+            "regionalQuarantines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RegionalQuarantine"
+              }
+            },
+            "retrospectiveReviews": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RetrospectiveReview"
+              }
+            }
+          },
+          "required": [
+            "tenants",
+            "principals",
+            "devices",
+            "deviceTrustRevisions",
+            "sessions",
+            "policyBundles",
+            "policyRevisions",
+            "riskModelRevisions",
+            "locationObservations",
+            "deviceLocations",
+            "accessRequests",
+            "riskDecisions",
+            "accessReviews",
+            "accessGrants",
+            "revocations",
+            "auditEntries",
+            "breakGlassSessions",
+            "breakGlassApprovals",
+            "regionalQuarantines",
+            "retrospectiveReviews"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Event"
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "databaseBytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "databaseBytes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "resources",
+        "work",
+        "events",
+        "metrics"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "paths": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "ui",
+      "method": "GET",
+      "path": "/",
+      "response": {
+        "type": "string",
+        "minLength": 1,
+        "contentMediaType": "text/html"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "listTenants",
+      "method": "GET",
+      "path": "/api/v1/tenants",
+      "response": {
+        "type": "object",
+        "properties": {
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Tenant"
+            }
+          }
+        },
+        "required": [
+          "tenants"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "listPrincipals",
+      "method": "GET",
+      "path": "/api/v1/principals",
+      "response": {
+        "type": "object",
+        "properties": {
+          "principals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Principal"
+            }
+          }
+        },
+        "required": [
+          "principals"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "listDevices",
+      "method": "GET",
+      "path": "/api/v1/devices",
+      "response": {
+        "type": "object",
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Device"
+            }
+          }
+        },
+        "required": [
+          "devices"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "getAccessRequest",
+      "method": "GET",
+      "path": "/api/v1/access-requests/:accessRequestId",
+      "response": {
+        "type": "object",
+        "properties": {
+          "accessRequest": {
+            "$ref": "#/$defs/AccessRequest"
+          }
+        },
+        "required": [
+          "accessRequest"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "accessRequestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "accessRequestId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "createSession",
+      "method": "POST",
+      "path": "/api/v1/sessions",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "principalId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceTrustRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "requestedTtlSeconds": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 3600
+          }
+        },
+        "required": [
+          "tenantId",
+          "principalId",
+          "deviceId",
+          "deviceTrustRevisionId",
+          "requestedTtlSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "$ref": "#/$defs/Session"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "session",
+          "refreshToken"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-createSession"
+        },
+        "body": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "principalId": "32000000-0000-4000-8000-000000000002",
+          "deviceId": "32000000-0000-4000-8000-000000000003",
+          "deviceTrustRevisionId": "32000000-0000-4000-8000-000000000004",
+          "requestedTtlSeconds": 600
+        }
+      }
+    },
+    {
+      "id": "refreshSession",
+      "method": "POST",
+      "path": "/api/v1/sessions/:sessionId/refresh",
+      "request": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          },
+          "requestedTtlSeconds": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 3600
+          }
+        },
+        "required": [
+          "refreshToken",
+          "requestedTtlSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "$ref": "#/$defs/Session"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "session",
+          "refreshToken"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "sessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "sessionId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-refreshSession"
+        },
+        "body": {
+          "refreshToken": "public-example-response-token",
+          "requestedTtlSeconds": 600
+        }
+      }
+    },
+    {
+      "id": "revokeSession",
+      "method": "POST",
+      "path": "/api/v1/sessions/:sessionId/revoke",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedGeneration": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedGeneration",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Session"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "sessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "sessionId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revokeSession"
+        },
+        "body": {
+          "expectedGeneration": 1,
+          "reason": "Public session closed"
+        }
+      }
+    },
+    {
+      "id": "publishTrust",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/trust-revisions",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "assurance": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "evidenceDigest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "assurance",
+          "validFrom",
+          "validUntil",
+          "evidenceDigest"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/DeviceTrustRevision"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-publishTrust"
+        },
+        "body": {
+          "expectedRevision": 1,
+          "assurance": 2,
+          "validFrom": "2026-01-01T00:00:00Z",
+          "validUntil": "2099-01-01T00:00:00Z",
+          "evidenceDigest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      }
+    },
+    {
+      "id": "revoke-devices",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/revoke",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedEpoch": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedEpoch",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Device"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revoke-devices"
+        },
+        "body": {
+          "expectedEpoch": 0,
+          "reason": "Public revocation example"
+        }
+      }
+    },
+    {
+      "id": "revoke-principals",
+      "method": "POST",
+      "path": "/api/v1/principals/:principalId/revoke",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedEpoch": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedEpoch",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Principal"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "principalId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "principalId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revoke-principals"
+        },
+        "body": {
+          "expectedEpoch": 0,
+          "reason": "Public revocation example"
+        }
+      }
+    },
+    {
+      "id": "revoke-tenants",
+      "method": "POST",
+      "path": "/api/v1/tenants/:tenantId/revoke",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedEpoch": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedEpoch",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "tenantId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revoke-tenants"
+        },
+        "body": {
+          "expectedEpoch": 0,
+          "reason": "Public revocation example"
+        }
+      }
+    },
+    {
+      "id": "createPolicyBundle",
+      "method": "POST",
+      "path": "/api/v1/policy-bundles",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PolicyBundle"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-createPolicyBundle"
+        },
+        "body": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "name": "Public read policy"
+        }
+      }
+    },
+    {
+      "id": "publishPolicy",
+      "method": "POST",
+      "path": "/api/v1/policy-bundles/:policyBundleId/publish",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/PolicyRule"
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "effectiveFrom",
+          "rules"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PolicyRevision"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "policyBundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "policyBundleId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-publishPolicy"
+        },
+        "body": {
+          "expectedRevision": 0,
+          "effectiveFrom": "2026-01-01T00:00:00Z",
+          "rules": [
+            {
+              "ruleId": "public-basic-read",
+              "effect": "ALLOW",
+              "actions": [
+                "read"
+              ],
+              "resourcePattern": "public/*",
+              "minAssurance": 1,
+              "regions": [
+                "public"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rollbackPolicy",
+      "method": "POST",
+      "path": "/api/v1/policy-bundles/:policyBundleId/rollback",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "targetRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "targetRevision",
+          "effectiveFrom"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PolicyRevision"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "policyBundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "policyBundleId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-rollbackPolicy"
+        },
+        "body": {
+          "expectedRevision": 2,
+          "targetRevision": 1,
+          "effectiveFrom": "2026-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "observeLocation",
+      "method": "POST",
+      "path": "/api/v1/location-observations",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenantId",
+          "deviceId",
+          "deviceSequence",
+          "observedAt",
+          "longitude",
+          "latitude",
+          "region"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/LocationObservation"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-observeLocation"
+        },
+        "body": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "deviceId": "32000000-0000-4000-8000-000000000003",
+          "deviceSequence": 1,
+          "observedAt": "2026-01-01T00:00:00Z",
+          "longitude": 0,
+          "latitude": 0,
+          "region": "public"
+        }
+      }
+    },
+    {
+      "id": "createAccessRequest",
+      "method": "POST",
+      "path": "/api/v1/access-requests",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "principalId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "action": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "requestedTtlSeconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 900
+          },
+          "justification": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenantId",
+          "principalId",
+          "deviceId",
+          "sessionId",
+          "action",
+          "resource",
+          "region",
+          "requestedTtlSeconds",
+          "justification"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/AccessRequest"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-createAccessRequest"
+        },
+        "body": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "principalId": "32000000-0000-4000-8000-000000000002",
+          "deviceId": "32000000-0000-4000-8000-000000000003",
+          "sessionId": "32000000-0000-4000-8000-000000000005",
+          "action": "read",
+          "resource": "public/report",
+          "region": "public",
+          "requestedTtlSeconds": 300,
+          "justification": "Public example request"
+        }
+      }
+    },
+    {
+      "id": "batchAccessRequests",
+      "method": "POST",
+      "path": "/api/v1/access-requests:batch",
+      "request": {
+        "type": "object",
+        "properties": {
+          "requests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tenantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "principalId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "deviceId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "sessionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "resource": {
+                  "type": "string"
+                },
+                "region": {
+                  "type": "string"
+                },
+                "requestedTtlSeconds": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 900
+                },
+                "justification": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "tenantId",
+                "principalId",
+                "deviceId",
+                "sessionId",
+                "action",
+                "resource",
+                "region",
+                "requestedTtlSeconds",
+                "justification"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "requests"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "accessRequests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/AccessRequest"
+            }
+          }
+        },
+        "required": [
+          "accessRequests"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-batchAccessRequests"
+        },
+        "body": {
+          "requests": [
+            {
+              "tenantId": "10000000-0000-4000-8000-000000000041",
+              "principalId": "32000000-0000-4000-8000-000000000002",
+              "deviceId": "32000000-0000-4000-8000-000000000003",
+              "sessionId": "32000000-0000-4000-8000-000000000005",
+              "action": "read",
+              "resource": "public/report",
+              "region": "public",
+              "requestedTtlSeconds": 300,
+              "justification": "Public example request"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "reviewAccessRequest",
+      "method": "POST",
+      "path": "/api/v1/access-requests/:accessRequestId/reviews",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reviewerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVE",
+              "REJECT"
+            ]
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewerId",
+          "decision",
+          "comment"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/AccessReview"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "accessRequestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "accessRequestId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-reviewAccessRequest"
+        },
+        "body": {
+          "reviewerId": "32000000-0000-4000-8000-000000000006",
+          "decision": "APPROVE",
+          "comment": "Public independent review"
+        }
+      }
+    },
+    {
+      "id": "grantAccessRequest",
+      "method": "POST",
+      "path": "/api/v1/access-requests/:accessRequestId/grant",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedState": {
+            "type": "string",
+            "enum": [
+              "PENDING_RISK",
+              "DENIED",
+              "PENDING_REVIEW",
+              "APPROVED",
+              "GRANTED",
+              "REVOKED",
+              "EXPIRED"
+            ]
+          }
+        },
+        "required": [
+          "expectedState"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/AccessGrant"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "accessRequestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "accessRequestId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-grantAccessRequest"
+        },
+        "body": {
+          "expectedState": "APPROVED"
+        }
+      }
+    },
+    {
+      "id": "checkGrant",
+      "method": "GET",
+      "path": "/api/v1/grants/:grantId/check",
+      "response": {
+        "type": "object",
+        "properties": {
+          "grantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "policyRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "grantId",
+          "active",
+          "reason",
+          "policyRevisionId",
+          "checkedAt"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "grantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "grantId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "revokeGrant",
+      "method": "POST",
+      "path": "/api/v1/grants/:grantId/revoke",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/AccessGrant"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "grantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "grantId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revokeGrant"
+        },
+        "body": {
+          "reason": "Public completed access"
+        }
+      }
+    },
+    {
+      "id": "createBreakGlass",
+      "method": "POST",
+      "path": "/api/v1/break-glass-sessions",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "requesterId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "region": {
+            "type": "string"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "resourcePatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requestedTtlSeconds": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 900
+          }
+        },
+        "required": [
+          "tenantId",
+          "requesterId",
+          "sessionId",
+          "region",
+          "actions",
+          "resourcePatterns",
+          "reason",
+          "requestedTtlSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/BreakGlassSession"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-createBreakGlass"
+        },
+        "body": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "requesterId": "32000000-0000-4000-8000-000000000002",
+          "sessionId": "32000000-0000-4000-8000-000000000005",
+          "region": "public",
+          "actions": [
+            "read"
+          ],
+          "resourcePatterns": [
+            "public/*"
+          ],
+          "reason": "Public emergency example",
+          "requestedTtlSeconds": 300
+        }
+      }
+    },
+    {
+      "id": "approveBreakGlass",
+      "method": "POST",
+      "path": "/api/v1/break-glass-sessions/:breakGlassSessionId/approvals",
+      "request": {
+        "type": "object",
+        "properties": {
+          "approverId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVE",
+              "REJECT"
+            ]
+          },
+          "comment": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "approverId",
+          "decision",
+          "comment"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/BreakGlassApproval"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "breakGlassSessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "breakGlassSessionId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-approveBreakGlass"
+        },
+        "body": {
+          "approverId": "32000000-0000-4000-8000-000000000006",
+          "decision": "APPROVE",
+          "comment": "Public independent approval"
+        }
+      }
+    },
+    {
+      "id": "activateBreakGlass",
+      "method": "POST",
+      "path": "/api/v1/break-glass-sessions/:breakGlassSessionId/activate",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedState": {
+            "type": "string",
+            "enum": [
+              "PENDING_APPROVAL",
+              "READY",
+              "ACTIVE",
+              "CLOSED",
+              "EXPIRED",
+              "REJECTED"
+            ]
+          }
+        },
+        "required": [
+          "expectedState"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/BreakGlassSession"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "breakGlassSessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "breakGlassSessionId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-activateBreakGlass"
+        },
+        "body": {
+          "expectedState": "READY"
+        }
+      }
+    },
+    {
+      "id": "closeBreakGlass",
+      "method": "POST",
+      "path": "/api/v1/break-glass-sessions/:breakGlassSessionId/close",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/BreakGlassSession"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "breakGlassSessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "breakGlassSessionId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-closeBreakGlass"
+        },
+        "body": {
+          "reason": "Public emergency closed"
+        }
+      }
+    },
+    {
+      "id": "checkBreakGlass",
+      "method": "POST",
+      "path": "/api/v1/break-glass-sessions/:breakGlassSessionId/check",
+      "request": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "resource",
+          "region"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "breakGlassSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "authorized": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "policyRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "riskModelRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "breakGlassSessionId",
+          "authorized",
+          "reason",
+          "policyRevisionId",
+          "riskModelRevisionId",
+          "checkedAt"
+        ],
+        "additionalProperties": false
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "breakGlassSessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "breakGlassSessionId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {},
+        "body": {
+          "action": "read",
+          "resource": "public/report",
+          "region": "public"
+        }
+      }
+    },
+    {
+      "id": "quarantineRegion",
+      "method": "POST",
+      "path": "/api/v1/regions/:region/quarantine",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "expectedRevision",
+          "reason",
+          "createdBy"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RegionalQuarantine"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "region",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "region": "public"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-quarantineRegion"
+        },
+        "body": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "expectedRevision": 0,
+          "reason": "Public quarantine",
+          "createdBy": "32000000-0000-4000-8000-000000000006"
+        }
+      }
+    },
+    {
+      "id": "releaseRegion",
+      "method": "POST",
+      "path": "/api/v1/regions/:region/release",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "releasedBy": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "expectedRevision",
+          "releasedBy"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RegionalQuarantine"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "region",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "region": "public"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-releaseRegion"
+        },
+        "body": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "expectedRevision": 1,
+          "releasedBy": "32000000-0000-4000-8000-000000000006"
+        }
+      }
+    },
+    {
+      "id": "reviewRetrospective",
+      "method": "POST",
+      "path": "/api/v1/break-glass-sessions/:breakGlassSessionId/retrospective-reviews",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reviewerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "JUSTIFIED",
+              "POLICY_GAP",
+              "MISUSE"
+            ]
+          },
+          "findings": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reviewerId",
+          "outcome",
+          "findings"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RetrospectiveReview"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "parameters": [
+        {
+          "name": "breakGlassSessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "breakGlassSessionId": "32000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-reviewRetrospective"
+        },
+        "body": {
+          "reviewerId": "32000000-0000-4000-8000-000000000007",
+          "outcome": "JUSTIFIED",
+          "findings": "Public retrospective review"
+        }
+      }
+    },
+    {
+      "id": "snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "response": {
+        "$ref": "#/$defs/Snapshot"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "listTenants",
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "tenants"
+          ],
+          "match": {
+            "tenantId": "10000000-0000-4000-8000-000000000041",
+            "name": "Public policy tenant",
+            "revocationEpoch": 0,
+            "createdAt": "2026-01-01T00:00:00Z"
+          }
+        }
+      ],
+      "capture": {
+        "publicTenantId": [
+          "tenants",
+          "0",
+          "tenantId"
+        ]
+      }
+    },
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "devices"
+          ],
+          "match": {
+            "deviceId": "32000000-0000-4000-8000-000000000003",
+            "tenantId": "10000000-0000-4000-8000-000000000041",
+            "principalId": "32000000-0000-4000-8000-000000000002",
+            "publicKeyFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "state": "ACTIVE",
+            "currentTrustRevision": 1,
+            "revocationEpoch": 0,
+            "createdAt": "2026-01-01T00:00:00Z"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "deviceTrustRevisions"
+          ],
+          "match": {
+            "deviceTrustRevisionId": "32000000-0000-4000-8000-000000000004",
+            "tenantId": "10000000-0000-4000-8000-000000000041",
+            "deviceId": "32000000-0000-4000-8000-000000000003",
+            "revision": 1,
+            "state": "TRUSTED",
+            "assurance": 2,
+            "validFrom": "2026-01-01T00:00:00Z",
+            "validUntil": "2099-01-01T00:00:00Z",
+            "evidenceDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "createdAt": "2026-01-01T00:00:00Z"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "createPolicyBundle",
+      "body": {
+        "tenantId": "${publicTenantId}",
+        "name": "Public read policy"
+      },
+      "headers": {
+        "Idempotency-Key": "public-policy-create-v2"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "currentRevision": 0,
+        "currentPolicyRevisionId": null
+      },
+      "capture": {
+        "publicPolicyBundleId": [
+          "policyBundleId"
+        ],
+        "publicExpectedRevision": [
+          "currentRevision"
+        ]
+      }
+    },
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "policyBundles"
+          ],
+          "match": {
+            "policyBundleId": "${publicPolicyBundleId}",
+            "currentRevision": "${publicExpectedRevision}"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "publishPolicy",
+      "params": {
+        "policyBundleId": "${publicPolicyBundleId}"
+      },
+      "body": {
+        "expectedRevision": "${publicExpectedRevision}",
+        "effectiveFrom": "2026-01-01T00:00:00Z",
+        "rules": [
+          {
+            "ruleId": "public-basic-read",
+            "effect": "ALLOW",
+            "actions": [
+              "read"
+            ],
+            "resourcePattern": "public/*",
+            "minAssurance": 1,
+            "regions": [
+              "public"
+            ]
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "public-policy-publish-v2"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "policyBundleId": "${publicPolicyBundleId}",
+        "revision": 1,
+        "rules": [
+          {
+            "ruleId": "public-basic-read",
+            "effect": "ALLOW",
+            "actions": [
+              "read"
+            ],
+            "resourcePattern": "public/*",
+            "minAssurance": 1,
+            "regions": [
+              "public"
+            ]
+          }
+        ]
+      },
+      "capture": {
+        "publicPolicyRevisionId": [
+          "policyRevisionId"
+        ],
+        "publicPublishedRevision": [
+          "revision"
+        ]
+      }
+    },
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "policyBundles"
+          ],
+          "match": {
+            "policyBundleId": "${publicPolicyBundleId}",
+            "currentRevision": "${publicPublishedRevision}",
+            "currentPolicyRevisionId": "${publicPolicyRevisionId}"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "policyRevisions"
+          ],
+          "match": {
+            "policyRevisionId": "${publicPolicyRevisionId}",
+            "policyBundleId": "${publicPolicyBundleId}",
+            "revision": "${publicPublishedRevision}",
+            "rules": [
+              {
+                "ruleId": "public-basic-read",
+                "effect": "ALLOW",
+                "actions": [
+                  "read"
+                ],
+                "resourcePattern": "public/*",
+                "minAssurance": 1,
+                "regions": [
+                  "public"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "createSession",
+      "body": {},
+      "headers": {
+        "Idempotency-Key": "public-invalid-request"
+      },
+      "expectStatus": 400,
+      "expectBody": {
+        "error": {
+          "code": "INVALID_REQUEST"
+        }
+      }
+    },
+    {
+      "operationId": "createSession",
+      "body": {
+        "tenantId": "10000000-0000-4000-8000-000000000041",
+        "principalId": "32000000-0000-4000-8000-000000000002",
+        "deviceId": "32000000-0000-4000-8000-000000000003",
+        "deviceTrustRevisionId": "32000000-0000-4000-8000-000000000004",
+        "requestedTtlSeconds": 600
+      },
+      "headers": {
+        "Idempotency-Key": "public-session-create-v2"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "session": {
+          "tenantId": "10000000-0000-4000-8000-000000000041",
+          "principalId": "32000000-0000-4000-8000-000000000002",
+          "deviceId": "32000000-0000-4000-8000-000000000003",
+          "state": "ACTIVE"
+        }
+      },
+      "capture": {
+        "publicSessionId": [
+          "session",
+          "sessionId"
+        ],
+        "publicSessionGeneration": [
+          "session",
+          "generation"
+        ]
+      }
+    },
+    {
+      "operationId": "createAccessRequest",
+      "body": {
+        "tenantId": "10000000-0000-4000-8000-000000000041",
+        "principalId": "32000000-0000-4000-8000-000000000002",
+        "deviceId": "32000000-0000-4000-8000-000000000003",
+        "sessionId": "${publicSessionId}",
+        "action": "read",
+        "resource": "public/report",
+        "region": "public",
+        "requestedTtlSeconds": 300,
+        "justification": "Public example request"
+      },
+      "headers": {
+        "Idempotency-Key": "public-access-request-v2"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "sessionId": "${publicSessionId}",
+        "sessionGeneration": "${publicSessionGeneration}",
+        "policyRevisionId": "${publicPolicyRevisionId}",
+        "riskModelRevisionId": "32000000-0000-4000-8000-000000000008",
+        "deviceTrustRevisionId": "32000000-0000-4000-8000-000000000004"
+      },
+      "capture": {
+        "publicAccessRequestId": [
+          "accessRequestId"
+        ]
+      }
+    },
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "sessions"
+          ],
+          "match": {
+            "sessionId": "${publicSessionId}",
+            "generation": "${publicSessionGeneration}"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "accessRequests"
+          ],
+          "match": {
+            "accessRequestId": "${publicAccessRequestId}",
+            "sessionId": "${publicSessionId}",
+            "policyRevisionId": "${publicPolicyRevisionId}",
+            "riskModelRevisionId": "32000000-0000-4000-8000-000000000008"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "# AccessSentinel immutable Event protocol\n\nPolicy revision: `accesssentinel-2026-09-08.1`.\n\nThis author-approved supplement defines previously unspecified names/payloads;\nit does not change authorization, risk rules, TTLs, review independence, revocation\nor performance requirements. Old results are not judged retroactively.\n\nKeep the exact Event envelope:\n{eventId,tenantId,aggregateType,aggregateId,sequence,type,occurredAt,payload}.\nEach successful transition below atomically emits one corresponding event.\nReplays and Work retries never duplicate it. All use aggregateType AccessRequest,\naggregateId accessRequestId. Other required Events may interleave, with their\nexisting public names, so these events need not occupy fixed sequence numbers.\n\n| Transition | type | Exact payload |\n| --- | --- | --- |\n| Accept AccessRequest | ACCESS_REQUESTED | {accessRequestId,sessionId,policyRevisionId,riskModelRevisionId,deviceTrustRevisionId} |\n| Commit RiskDecision | RISK_DECIDED | {accessRequestId,riskDecisionId,score,level,reasons,policyEffect,inputDigest} |\n| Record review | ACCESS_REVIEWED | {accessRequestId,accessReviewId,reviewerId,decision,comment} |\n| Issue AccessGrant | ACCESS_GRANTED | {accessRequestId,grantId,policyRevisionId,riskDecisionId,expiresAt} |\n| Revoke / expire Grant | ACCESS_REVOKED / ACCESS_EXPIRED | {accessRequestId,grantId,state,revocationEpoch} |\n\nPayloads are closed and contain all listed fields, using their existing resource\ntypes. Copy values from the corresponding committed resource. Do not substitute\nlater policy/current projections. reasons remains the immutable sorted reason\nlist. Existing contiguous unique aggregate sequences and transactional invariants\nremain mandatory.\n\nDispatcher POSTs exactly this immutable Event to WEBHOOK_URL with Content-Type\napplication/json. Canonical JSON sorts object keys recursively in JavaScript\nUTF-16 order, preserves arrays, uses JSON.stringify without whitespace and UTF-8.\nFreeze bytes once; unknown ACK/restart retries reuse eventId and complete bytes.\nAny HTTP 2xx acknowledges; other statuses/connection failures retain retryable\nWork under original rules. Events may not contain raw refresh tokens, device\nnonces, private keys, credentials, authorization headers or administrator tokens.\n",
+    "The original README and Manager message remain complete authority. V2 clarifies only missing wire representations; all business, security, concurrency, recovery, migration, UI and performance requirements remain mandatory.",
+    "Seed uses schemaVersion:1, string seedVersion and UTC importedAt, keeps the original closed V1 collection whitelist, and provides a linked Tenant/Principal/Device/TRUSTED revision. Identical seed replay is allowed; conflicting content under the same version rejects atomically. No raw secret is in the public seed.",
+    "Every resource is closed and every field has a declared type. Resource IDs are lowercase UUIDs; generic actorId/subjectId/aggregateId are strings because actors and region subjects need not be resource UUIDs. actorId may be null for a system actor. Integer epochs, revisions, generation, assurance, risk scores/weights and sequence counters are nonnegative safe integers. Coordinates are finite numbers in their original ranges.",
+    "Digest fields are lowercase SHA-256 hex; fingerprints remain opaque public strings. Work terminal is boolean; leaseOwner/leaseToken/leaseExpiresAt and lastError are nullable. PolicyBundle currentPolicyRevisionId is null before publication. locationWatermark and not-yet-occurred lifecycle timestamps are null. reasons/riskFlags/actions/resourcePatterns are string arrays. Audit data and Event payload are explicit free JSON metadata with the original recursive secret exclusion.",
+    "Health GET /healthz returns {status:\"ok\"}; / returns nonempty text/html; /openapi.json publishes OpenAPI 3.1 from this same contract. Snapshot requires Authorization: Bearer ADMIN_TOKEN. All mutation routes require Idempotency-Key except POST BreakGlass check, which is explicitly a side-effect-free authorization check.",
+    "Batch acceptance returns 200 {accessRequests:AccessRequest[]} in input order; cardinality is exactly the number accepted and the entire input is committed or rejected atomically. It performs the same acceptance semantics and frozen authority capture as single creation.",
+    "List tenant/principal/device returns the named collection envelope; principal/device lists optionally filter tenantId. Unpublished query keys reject. Path IDs are UUIDs, region is a nonempty string, and query/path values use the common validator. JSON values never undergo numeric coercion.",
+    "Malformed JSON returns 400 MALFORMED_JSON; unknown fields/queries and invalid wire shapes return 400 INVALID_REQUEST; unsupported media returns 415 UNSUPPORTED_MEDIA_TYPE; missing snapshot authentication returns 401 UNAUTHORIZED. Original named business errors retain their original status and exact closed envelope.",
+    "Final snapshot adds exactly the four lower-camel plural Manager collections. Policy publication and rollback return the new PolicyRevision, revocation returns the subject resource. New PolicyBundle starts currentRevision:0/currentPolicyRevisionId:null; first publication creates revision:1 and moves the pointer.",
+    "The smoke reads linked identities and an immutable public example RiskModelRevision, creates/publishes a PolicyBundle, then creates a real Session and AccessRequest and verifies captured authority identities in persisted snapshot records. Risk thresholds/weights in this seed are example configuration, not new mandatory business policy. It does not certify risk worker completion, grants, full business behavior, browser, recovery or performance."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1",
+  "transportErrors": {}
+}

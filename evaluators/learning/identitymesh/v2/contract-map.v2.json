@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "identitymesh",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "IM-LOGIN-RECONCILE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Provider callback identity and UNKNOWN reconciliation create at most one terminal login result and session family."
+      },
+      "privateFailureCodePrefix": "IM_A01_",
+      "publicFeedbackCategory": "login-provider-reconcile"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "IM-REFRESH-FAMILY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Refresh is single-use and reuse atomically revokes the complete token family."
+      },
+      "privateFailureCodePrefix": "IM_A02_",
+      "publicFeedbackCategory": "refresh-family-reuse"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "IM-DEVICE-TRUST",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Device trust binds fingerprint user nonce and expiry and revocation invalidates derived identity."
+      },
+      "privateFailureCodePrefix": "IM_A03_",
+      "publicFeedbackCategory": "device-challenge-binding"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "IM-KEY-ROTATION",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Key rotation has one ACTIVE issuer, a bounded RETIRING verifier and no private material exposure."
+      },
+      "privateFailureCodePrefix": "IM_A04_",
+      "publicFeedbackCategory": "signing-rotation-window"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "IM-QUARANTINE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Quarantine atomically advances the epoch and invalidates old identity through published Incident HTTP."
+      },
+      "privateFailureCodePrefix": "IM_A05_",
+      "publicFeedbackCategory": "quarantine-contract"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "IM-IDENTITY-PRECEDENCE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Request replay and provider callback identity remain distinct durable identities with one saved effect."
+      },
+      "privateFailureCodePrefix": "IM_B01_",
+      "publicFeedbackCategory": "login-identity-precedence"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "IM-REFRESH-CONTENTION",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Concurrent use of one refresh token linearizes to at most one rotation and closes the family on reuse."
+      },
+      "privateFailureCodePrefix": "IM_B02_",
+      "publicFeedbackCategory": "refresh-contention"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "IM-DEVICE-REVOKE-RACE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "A device-revocation fence prevents later challenge approval and derived-session refresh."
+      },
+      "privateFailureCodePrefix": "IM_B03_",
+      "publicFeedbackCategory": "device-revocation-race"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "IM-REVOCATION-FENCE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Effective revocation versions are monotonic under duplicate and reordered propagation and stale verifiers fail closed."
+      },
+      "privateFailureCodePrefix": "IM_B04_",
+      "publicFeedbackCategory": "revocation-monotonic-fence"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "IM-RECOVERY-QUORUM",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Concurrent same-key final approvals and recover requests preserve one quorum transition and response identity."
+      },
+      "privateFailureCodePrefix": "IM_B05_",
+      "publicFeedbackCategory": "recovery-approval"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "IM-LOGIN-WORK-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Committed LOGIN_RECONCILIATION survives process replacement without requiring an internal checkpoint."
+      },
+      "privateFailureCodePrefix": "IM_C01_",
+      "publicFeedbackCategory": "login-reconciliation-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "IM-REVOCATION-WORK-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "REVOCATION_PROPAGATION survives worker death without changing revocation identity or reopening a subject."
+      },
+      "privateFailureCodePrefix": "IM_C02_",
+      "publicFeedbackCategory": "revocation-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "IM-QUARANTINE-WORK-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Final-system quarantine and recovery preserve Incident identity, quorum and revoked identities across process replacement."
+      },
+      "privateFailureCodePrefix": "IM_C03_",
+      "publicFeedbackCategory": "quarantine-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "IM-KEY-AUDIT-RECOVERY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Key retirement is fenced and audit redelivery preserves one immutable entry identity and body after unknown acknowledgement."
+      },
+      "privateFailureCodePrefix": "IM_C04_",
+      "publicFeedbackCategory": "key-audit-delivery-recovery"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "IM-PRODUCTION-SHELL",
+        "source": "workspace/docs/requirements.md",
+        "summary": "The production browser shell renders and reloads while public identity reads remain available, without undisclosed UI controls."
+      },
+      "privateFailureCodePrefix": "IM_D01_",
+      "publicFeedbackCategory": "ui-v1-contract"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "IM-RECOVERY-CONSOLE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Published Incident reads agree with durable approval and recovered state."
+      },
+      "privateFailureCodePrefix": "IM_D02_",
+      "publicFeedbackCategory": "ui-quarantine"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "IM-SNAPSHOT-SECRETS",
+        "source": "workspace/docs/requirements.md",
+        "summary": "OpenAPI and point-in-time snapshots expose exact final-system resources, including real Incident/Approval mutations, without secrets."
+      },
+      "privateFailureCodePrefix": "IM_D03_",
+      "publicFeedbackCategory": "snapshot-secret-absence"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "IM-AUDIT-VERIFY",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Audit verification detects deletion insertion reorder and payload mutation without repairing history."
+      },
+      "privateFailureCodePrefix": "IM_D04_",
+      "publicFeedbackCategory": "audit-chain-verification"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "IM-DURABLE-RESTART",
+        "source": "workspace/docs/requirements.md",
+        "summary": "One final-system workspace preserves identity, saved responses, Work, Events and audit across process restart."
+      },
+      "privateFailureCodePrefix": "IM_E01_",
+      "publicFeedbackCategory": "final-system-durable-restart"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "IM-DATABASE-CLOCK",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Published database-time boundaries consistently govern session expiry, key retirement and revocation."
+      },
+      "privateFailureCodePrefix": "IM_E02_",
+      "publicFeedbackCategory": "security-clock-boundary"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "IM-REVOCATION-SCOPE",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Session device user and tenant revocation affect exactly their public scope and preserve tenant isolation."
+      },
+      "privateFailureCodePrefix": "IM_E03_",
+      "publicFeedbackCategory": "revocation-scope-isolation"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "IM-AUDIT-PAGINATION",
+        "source": "workspace/docs/requirements.md",
+        "summary": "Opaque audit pagination remains stable across more than one hundred pages and closes against checkpoint and snapshot."
+      },
+      "privateFailureCodePrefix": "IM_E04_",
+      "publicFeedbackCategory": "audit-pagination-checkpoint"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

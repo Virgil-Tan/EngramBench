@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "taskId": "queueforge",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "name": "operations-ordering-and-workflow-semantics", "weight": 30 },
+    "B": { "name": "idempotency-concurrency-and-terminal-races", "weight": 25 },
+    "C": { "name": "lease-recovery-and-events", "weight": 20 },
+    "D": { "name": "http-ui-and-snapshot-evidence", "weight": 15 },
+    "E": { "name": "migration-performance-and-operability", "weight": 10 }
+  },
+  "specGaps": [
+    { "id": "SPEC-GAP-QF-01", "summary": "No unpublished Workflow Work kind or Domain Event type may be inferred." },
+    { "id": "SPEC-GAP-QF-02", "summary": "Workflow retry versus cancel has no additional published winner error." }
+  ],
+  "hardCaps": [
+    { "id": "BUILD_MIGRATION_OR_BOOT", "cap": 25, "publicInvariant": "Published build, migration, seed, and production processes must run." },
+    { "id": "QUEUE_DAG_OR_ATOMICITY", "cap": 35, "publicInvariant": "Queue capacity, one terminal outcome, DAG eligibility, and atomic rejection must hold." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "Concurrent and unknown-outcome replay cannot create a second Run or effect." },
+    { "id": "RECOVERY_OR_FENCING", "cap": 40, "publicInvariant": "Expired leases recover and stale owners cannot commit or erase Work." },
+    { "id": "EVENT_ATOMICITY_OR_IDENTITY", "cap": 40, "publicInvariant": "Committed Run transitions have stable events and rollback has none." },
+    { "id": "MIGRATION_COMPATIBILITY", "cap": 35, "publicInvariant": "FINAL migration preserves V1 identities, histories, leases, events, and replay." }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "Run creation and exact operation results", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "Claim order, notBefore, and priority", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Queue capacity, attempts, and backoff", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "WorkflowRun freezes an atomic valid DAG", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-05", "title": "Workflow eligibility, failure propagation, and closure", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+
+    { "id": "B-01", "title": "Enqueue durable idempotency and unknown response", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "Hot Queue multi-worker claim uniqueness and total order", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Run cancellation versus terminal worker commit", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "Workflow fan-out concurrency preserves dependencies", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "Retry selectively releases sole-failed-ancestor descendants", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+
+    { "id": "C-01", "title": "Expired lease reclaim and stale token fence", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-02", "title": "Effect-complete recovery has at most one operation effect", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-03", "title": "Workflow DAG closes after repeated worker crashes", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-04", "title": "Domain Event unknown ACK and aggregate order", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+
+    { "id": "D-01", "title": "Run and Workflow wire, errors, pagination, and sorting", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "D-02", "title": "Production browser V1 enqueue, execution, and cancel", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"] },
+    { "id": "D-03", "title": "Production browser Workflow DAG, blocking, and retry", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"] },
+    { "id": "D-04", "title": "FINAL point-in-time verification snapshot", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"] },
+
+    { "id": "E-01", "title": "Populated V1 to FINAL Workflow migration", "dimension": "E", "weight": 3, "prerequisites": ["V1_CHECKPOINT", "FINAL"] },
+    { "id": "E-02", "title": "run-enqueue fixed sustained load", "dimension": "E", "weight": 3, "prerequisites": ["FINAL", "PERF_V1"] },
+    { "id": "E-03", "title": "short-run-execution drains 5,000 Runs", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF_V1"] },
+    { "id": "E-04", "title": "expired-lease-recovery drains 2,000 leases", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF_V1"] }
+  ]
+}

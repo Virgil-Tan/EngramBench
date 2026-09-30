@@ -1,0 +1,14 @@
+{"schemaVersion":1,"personaId":"edgetwin-fleet-lead","taskId":"edgetwin","items":[
+  {"id":"clean-operation","category":"correctness","requirement":"Clean checkout installs, migrates, atomically seeds, builds, and boots API, Worker, dispatcher, and production UI.","weight":5,"testGates":["H-01"]},
+  {"id":"shadow-contract","category":"correctness","requirement":"OpenAPI, strict bounded Merge Patch, desired/reported version monotonicity, replay, and tenant isolation match the public contract.","weight":12,"testGates":["H-02","H-03","H-04","H-06"]},
+  {"id":"offline-command-fence","category":"correctness","requirement":"Offline queueing, stable delivery identities, database-time expiry, poll ordering, cancel, and reconnect races never deliver forbidden work.","weight":14,"testGates":["H-03","H-05","H-06","H-07","H-12"]},
+  {"id":"receipt-convergence","category":"correctness","requirement":"Duplicate, conflicting, delayed, and out-of-order receipts remain immutable evidence and converge without state/version regression.","weight":12,"testGates":["H-05","H-06","H-07","H-12"]},
+  {"id":"fleet-upgrades","category":"correctness","requirement":"V1 campaigns freeze devices, create one target and command per device, require digest confirmation, and aggregate terminal state honestly.","weight":11,"testGates":["H-03","H-06","H-07","H-12"]},
+  {"id":"recovery-and-events","category":"correctness","requirement":"Worker/outbox recovery preserves one effect, stable event identity/body/order, fenced leases, and terminal Work.","weight":10,"testGates":["H-07","H-08"]},
+  {"id":"manager-deployment-waves","category":"correctness","requirement":"Deployment waves freeze members, health-gate progress, auto-pause, rollback once, survive races/crashes, and preserve V1 state.","weight":12,"testGates":["H-09","H-10","H-11"]},
+  {"id":"performance","category":"correctness","requirement":"All three EdgeTwin sustained scenarios meet throughput, latency, recovery, expiry, confirmation, and post-load invariants.","weight":9,"testGates":["H-12"]},
+  {"id":"project-tests","category":"correctness","requirement":"The repository owns real unit, PostgreSQL/HTTP integration, production Chromium, multi-process concurrency, controlled recovery, aggregate, and performance gates.","weight":7,"testGates":["H-13"]},
+  {"id":"security-isolation","category":"correctness","requirement":"Device credentials, signing material, private endpoints, tokens, paths, and cross-tenant state never leak.","weight":3,"testGates":["H-02","H-12"]},
+  {"id":"explanation-quality","category":"persona","requirement":"Codex clearly explains shadow/command/receipt authority, expiry, upgrades, recovery, and findings.","weight":2},
+  {"id":"evidence-quality","category":"persona","requirement":"Every stage and handoff reports truthful commands, metrics, results, risks, and checks not run.","weight":3}
+]}

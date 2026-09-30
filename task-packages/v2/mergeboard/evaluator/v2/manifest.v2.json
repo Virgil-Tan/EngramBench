@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 2,
+  "taskId": "mergeboard",
+  "profile": "learning-v2",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Document Change Branch and Merge contracts",
+      "weight": 30
+    },
+    "B": {
+      "title": "Revision identity and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Snapshot and Event recovery",
+      "weight": 20
+    },
+    "D": {
+      "title": "UI OpenAPI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Compatibility and formal load",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "DOCUMENT_ATOMICITY",
+      "cap": 30,
+      "publicInvariant": "Applied revisions are gapless and a conflicted Change never partially mutates blocks or events."
+    },
+    {
+      "id": "CLIENT_IDENTITY",
+      "cap": 30,
+      "publicInvariant": "One branch-local client sequence and one idempotency identity preserve one durable semantic response."
+    },
+    {
+      "id": "MERGE_ATOMICITY",
+      "cap": 30,
+      "publicInvariant": "A reviewed merge either creates exactly one captured target revision or becomes stale with no target mutation."
+    },
+    {
+      "id": "SNAPSHOT_INTEGRITY",
+      "cap": 30,
+      "publicInvariant": "A Snapshot covers its exact immutable operation prefix and stale Work ownership cannot publish."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "V1 identities, histories, replay bodies, assets, Work and Events survive the main-branch migration."
+    }
+  ],
+  "specGaps": [],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Document revision 0 operations and canonical digest",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Deterministic rebase Conflict and resolve",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Client Sequence offline replay and semantic identity",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Revision read DocumentDiff and Snapshot provenance",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Branch merge preview review gate and merge stale",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Operation rebase and diff independent reference model",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Idempotency Key and Client Sequence replay precedence",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Concurrent same-anchor INSERT and gapless revision",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Concurrent reviewer approvals and captured policy",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Merge CAS source target heads and target revision atomicity",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "SNAPSHOT_COMPACTION claim lease recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Snapshot asset effect-complete and before-commit recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Document and Merge Event unknown acknowledgement order",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Merge-created branch Snapshot Task recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Browser V1 edit replay conflict diff and history",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Browser Branch MR review merge and stale",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI and FINAL point-in-time snapshot contract",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Source operations preview target revision diff Event closure",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current Document, Branch, revision and leased Snapshot Work survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Non-overlapping Change apply formal workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Document revision read formal workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Million-operation Snapshot recovery formal workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "semanticRevisions": [
+    {
+      "caseIds": [
+        "A-05",
+        "D-03"
+      ],
+      "summary": "Preserve real merge/quorum/stale-target invariants and nullable timestamp type. Do not invent a per-state terminalAt nullability table. Align existing public default-200 merge creation, items Branch list and response-only digest/provenance fields."
+    }
+  ]
+}

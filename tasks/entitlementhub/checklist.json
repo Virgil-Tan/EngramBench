@@ -1,0 +1,13 @@
+{"schemaVersion":1,"personaId":"entitlementhub-product-owner","taskId":"entitlementhub","items":[
+  {"id":"clean-operation","category":"correctness","requirement":"Clean install, repeatable migration, atomic seed, build, API, worker, dispatcher, and production UI run through published commands.","weight":6,"testGates":["H-01"]},
+  {"id":"contract-isolation","category":"correctness","requirement":"OpenAPI, strict errors, tenant isolation, frozen terms, cursor, seed, and snapshot match the public contract.","weight":8,"testGates":["H-02","H-04"]},
+  {"id":"subscription-lifecycle","category":"correctness","requirement":"Trial uniqueness, activation, upgrade, scheduled downgrade, renewal, cancellation, and expiry create one legal timeline and non-overlapping grants.","weight":14,"testGates":["H-03","H-04","H-06"]},
+  {"id":"refund-conservation","category":"correctness","requirement":"Duplicate, unknown, reordered, and concurrent refunds never exceed the frozen charge and full refund revokes once.","weight":11,"testGates":["H-05","H-06"]},
+  {"id":"revocation-recovery","category":"correctness","requirement":"Revocation fences are monotonic, visible within two seconds, and worker/outbox recovery cannot restore access or duplicate events.","weight":13,"testGates":["H-07","H-08"]},
+  {"id":"compatible-migration","category":"correctness","requirement":"V1 subscriptions, grants, fences, provider events, audit, work, and replay survive FINAL migration.","weight":8,"testGates":["H-09"]},
+  {"id":"manager-seat-pools","category":"correctness","requirement":"Pool capacity, expected version, over-limit behavior, assignment races, and subscription-driven revocation preserve V1 compatibility.","weight":14,"testGates":["H-10","H-11"]},
+  {"id":"performance","category":"correctness","requirement":"All three sustained scenarios meet thresholds and every post-load access and conservation invariant.","weight":10,"testGates":["H-12"]},
+  {"id":"project-tests","category":"correctness","requirement":"Project owns substantive unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance gates.","weight":8,"testGates":["H-13"]},
+  {"id":"explanation-quality","category":"persona","requirement":"Codex explains ownership, lifecycle, fences, races, and review findings clearly.","weight":3},
+  {"id":"evidence-quality","category":"persona","requirement":"Handoff reports actual commands, metrics, risks, and unrun checks without overclaiming.","weight":5}
+]}

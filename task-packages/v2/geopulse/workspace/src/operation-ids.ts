@@ -1,0 +1,1 @@
+export type OperationId = "createTenant" | "createDevice" | "createRegion" | "createRegionVersion" | "getRegion" | "ingestEvent" | "ingestBatch" | "getMemberships" | "getTransitions" | "queryRegions" | "createBundle" | "publishBundle" | "rollbackBundle" | "getBundle" | "snapshot" | "health" | "openapi" | "productionUi";

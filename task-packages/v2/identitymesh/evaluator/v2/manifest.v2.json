@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 2,
+  "taskId": "identitymesh",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Identity and security flows",
+      "weight": 30
+    },
+    "B": {
+      "title": "Identity concurrency and security fences",
+      "weight": 25
+    },
+    "C": {
+      "title": "Durable work recovery and delivery",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI snapshot audit and UI",
+      "weight": 15
+    },
+    "E": {
+      "title": "Durability and security boundaries",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "SECRET_EXPOSURE",
+      "cap": 25,
+      "publicInvariant": "Credentials, refresh tokens outside their direct mutation response, challenge nonces, provider assertions, private keys and private paths never appear on public durable surfaces."
+    },
+    {
+      "id": "IDENTITY_RESURRECTION",
+      "cap": 25,
+      "publicInvariant": "A revoked or expired session, device, user, token family or retired key cannot become usable again."
+    },
+    {
+      "id": "REVOCATION_FAIL_OPEN",
+      "cap": 25,
+      "publicInvariant": "A verifier behind the required revocation fence fails closed and reordered propagation cannot lower effective revocation state."
+    },
+    {
+      "id": "AUDIT_IMMUTABILITY",
+      "cap": 25,
+      "publicInvariant": "Tenant audit history is immutable, continuously chained and detects deletion, insertion, reorder and payload mutation."
+    }
+  ],
+  "specGaps": [],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "LoginAttempt provider callback and UNKNOWN reconcile",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Refresh single-use rotation reuse family revoke and expiry",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Device fingerprint challenge nonce trust and revoke",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "A-04",
+      "title": "Signing-key rotation retirement window and JWKS",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Tenant compromise quarantine atomic security switch",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "B-01",
+      "title": "Idempotency and provider callback identity precedence",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Concurrent refresh-token rotation and reuse linearization",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Device revoke versus challenge approval and refresh",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Monotonic revocation versions reordered propagation and fail-closed verification",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Concurrent final approval and recover unique transition",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "C-01",
+      "title": "LOGIN_RECONCILIATION durable Work and process replacement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "C-02",
+      "title": "REVOCATION_PROPAGATION durable Work and process replacement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "C-03",
+      "title": "Quarantine and recovery across final-system process replacement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "C-04",
+      "title": "KEY_RETIREMENT and AUDIT_DELIVERY unknown ACK",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "D-01",
+      "title": "Production browser shell and public identity reads",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "D-02",
+      "title": "Published Incident read and approval/recovery lineage",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI point-in-time snapshot and secret-negative oracle",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "D-04",
+      "title": "Audit verify checkpoint and tamper detection",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Final-system identity replay and durable state after restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Database-time session key and revocation boundaries",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-03",
+      "title": "Tenant user device and session revocation scope isolation",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Hundred-page audit pagination and full-chain verification",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

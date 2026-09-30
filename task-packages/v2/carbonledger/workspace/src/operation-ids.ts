@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-retirements" | "get-retirement" | "create-retirement" | "release-retirement" | "get-certificate" | "list-credit-lots" | "get-credit-lot" | "retirement-allocations" | "domain-events" | "verification-snapshot";

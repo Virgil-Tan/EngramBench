@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 2,
+  "taskId": "importworks",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Upload, validation, commit and Bundle contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Byte and identity invariants, idempotency and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Work, recovery and events",
+      "weight": 20
+    },
+    "D": {
+      "title": "Production UI, OpenAPI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Compatibility and published full-scale workloads",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "CORRECTNESS_INVARIANT",
+      "cap": 30,
+      "publicInvariant": "Atomic and tenant-scoped publication never exposes partial ALL_OR_NOTHING or Bundle results, overwrites an external-row identity, escapes the managed root, or leaks rejected raw values."
+    }
+  ],
+  "specGaps": [],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Frozen ImportJob and out-of-order resumable chunk coverage",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Complete digest, state machine and cancellation",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Frozen schema, deterministic findings and ErrorReport metadata",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Commit modes and external-row identity",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "ImportBundle freeze and all-or-none publication",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Idempotency and chunk identity precedence",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Concurrent exact interval conservation",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Complete, commit and external-row hotspot contention",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Schema publication and frozen validation race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Concurrent Bundle cohort freeze and replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "IMPORT_VALIDATE claimed-barrier recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "IMPORT_COMMIT and ERROR_REPORT claimed-barrier recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "BUNDLE_PUBLISH cross-member crash recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Import and Bundle event unknown-ACK retry",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Production browser resumable upload flow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production browser findings, commit, report and Bundle flow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI, FINAL snapshot and artifact isolation",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Source bytes to findings, records and events conservation",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Import bytes, commit replay and pending validation survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Published 2,000-import resumable-upload workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Published 5,000-import partial-commit workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Published 10,000-import validation recovery workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "semanticRevisions": [
+    {
+      "caseIds": [
+        "A-03",
+        "D-02"
+      ],
+      "summary": "Existing public report-content bytes are executable, including production browser download and cache-cleared Bundle refresh. No unpublished Bundle GET is assumed."
+    },
+    {
+      "caseIds": [
+        "C-01",
+        "C-02",
+        "C-03"
+      ],
+      "summary": "Retain real claimed-worker SIGKILL, expired-lease recovery, unique effects and stale-owner checks. Do not invent effect-complete/before-commit private checkpoints."
+    }
+  ]
+}

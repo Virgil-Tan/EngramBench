@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 2,
+  "taskId": "geopulse",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Domain contract and primary workflows",
+      "weight": 30
+    },
+    "B": {
+      "title": "Projection invariants, idempotency and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Work, recovery and Domain Events",
+      "weight": 20
+    },
+    "D": {
+      "title": "Production UI, OpenAPI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Compatibility and published full-scale workloads",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "CORRECTNESS_INVARIANT",
+      "cap": 30,
+      "publicInvariant": "Tenant locations never leak, published Transitions are never rewritten under another revision, and migration preserves watermark and durable replay behavior."
+    }
+  ],
+  "specGaps": [],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Polygon, RegionVersion and observedAt version selection",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Atomic LocationEvent and batch dual identity",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Edge hysteresis, ENTER/EXIT and one DWELL",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Ten-minute replay and LATE_IGNORED frontier",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "RegionBundle publish, rollback and revision pinning",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "B-01",
+      "title": "Independent geometry, hysteresis and dwell reference model",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Idempotency-Key and event identity precedence",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Hot Device sequence and Transition uniqueness contention",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Bundle publish/rollback CAS and cross-API cache invalidation",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "B-05",
+      "title": "Frozen evaluation racing a new Bundle publication",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "C-01",
+      "title": "LOCATION_EVALUATION recovery after public LEASED",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "LATE_REPLAY recovery and deterministic projection rebuild",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "BUNDLE_REEVALUATION fence and revision-consistent recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Location, Transition and Bundle Event unknown ACK",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Production browser Region, Device, timeline and point query",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production browser Bundle composition, publish and rollback",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI and FINAL snapshot bundle contract",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Event to Bundle, Membership, Transition and Query lineage",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Location evidence, watermark and pending Work survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Published 500,000 ordered-location-ingest workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Published 100,000 boundary-jitter-convergence workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Published one-million-point revision-consistent query",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "semanticRevisions": [
+    {
+      "caseIds": [
+        "C-01",
+        "C-02",
+        "C-03"
+      ],
+      "summary": "Optional public worker.claimed HTTP barrier makes real SIGKILL/reclaim reproducible. Existing independent geometry, timeline and frozen-revision assertions remain. This new observability protocol is not retroactive scoring authority."
+    },
+    {
+      "caseIds": [
+        "D-03"
+      ],
+      "summary": "LocationEvent snapshot already publishes bundleRevisionId; verify retained event pinning directly instead of a stale wire-gap diagnostic."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "personaId": "commercecommand-delivery-lead",
+  "taskId": "commercecommand",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout installs, builds, migrates, atomically seeds, and starts API, Worker, dispatcher, and production UI using only published commands.","weight":3,"testGates":["H-01"]},
+    {"id":"public-contract","category":"correctness","requirement":"OpenAPI, strict validation, stable errors, tenant boundaries, admin verification, and production UI agree with the complete published contract.","weight":4,"testGates":["H-02","H-15","H-20"]},
+    {"id":"offer-quote-freeze","category":"correctness","requirement":"Quotes freeze exact immutable OfferVersions, totals, pool choices, expiry, events, work, and replay identity atomically.","weight":6,"testGates":["H-03","H-05","H-22"]},
+    {"id":"inventory-conservation","category":"correctness","requirement":"Multi-pool holds, consume, release, expire, and restock remain deterministic and conserved under two-API contention.","weight":8,"testGates":["H-04","H-06","H-14","H-21"]},
+    {"id":"payment-uncertainty","category":"correctness","requirement":"UNKNOWN response, reconciliation, duplicate and out-of-order provider events converge without duplicate capture or over-refund.","weight":9,"testGates":["H-05","H-16","H-26"]},
+    {"id":"fulfillment-entitlement","category":"correctness","requirement":"Physical fulfillment and digital entitlement use durable lease/fencing and converge correctly with refund and revocation races.","weight":6,"testGates":["H-07","H-17","H-18"]},
+    {"id":"ledger-conservation","category":"correctness","requirement":"Every capture, refund, chargeback, reserve, release, and adjustment produces at most one immutable balanced journal and deterministic audit event.","weight":9,"testGates":["H-16","H-22","H-26","H-27","H-30"]},
+    {"id":"notification-outbox","category":"correctness","requirement":"Transactional notifications preserve event identity, byte body, per-order sequence, and eventual drain after unknown ACK and dispatcher crash.","weight":4,"testGates":["H-08","H-19","H-23"]},
+    {"id":"tenant-isolation","category":"correctness","requirement":"No request, reference, replay, snapshot, worker, ledger, or marketplace mutation crosses a tenant boundary.","weight":4,"testGates":["H-15","H-24","H-29"]},
+    {"id":"idempotency-multiprocess","category":"correctness","requirement":"Durable canonical idempotency and database authority converge across repeated requests, two APIs, multiple workers, restarts, and unknown responses.","weight":7,"testGates":["H-05","H-06","H-11","H-23"]},
+    {"id":"recovery-migration","category":"correctness","requirement":"Fenced work, versioned payloads, V1 data, saved replay, old clients, blue-green binaries, and mixed state survive migration and process loss.","weight":7,"testGates":["H-07","H-09","H-23","H-28","H-30"]},
+    {"id":"seller-allocations","category":"correctness","requirement":"Manager SellerAllocations are immutable, tenant-safe, idempotent, and exactly conserve every order-line quantity and amount.","weight":6,"testGates":["H-10","H-11","H-24"]},
+    {"id":"seller-settlement","category":"correctness","requirement":"Eligible allocations enter at most one immutable settlement and concurrent close freezes one correct amount and reserve set.","weight":5,"testGates":["H-25","H-30"]},
+    {"id":"dispute-adjustment","category":"correctness","requirement":"Refund/dispute reserves never exceed capture; LOST chargeback occurs once and post-close corrections append only a next-period adjustment.","weight":5,"testGates":["H-26","H-27","H-30"]},
+    {"id":"performance","category":"correctness","requirement":"All ten published sustained scenarios meet throughput, latency, drain, crash recovery, and post-load invariant requirements.","weight":8,"testGates":["H-12","H-29"]},
+    {"id":"project-tests","category":"correctness","requirement":"The repository owns meaningful unit, PostgreSQL integration, production Chromium, multi-process concurrency, SIGKILL recovery, performance, and aggregate gates.","weight":4,"testGates":["H-13"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains module ownership, state, money, leases, data flow, migration, and review findings clearly without hand-waving.","weight":2},
+    {"id":"evidence-quality","category":"persona","requirement":"Each stage and final handoff reports actual commands, outputs, metrics, risks, and checks not run accurately.","weight":3}
+  ]
+}

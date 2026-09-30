@@ -1,0 +1,2952 @@
+{
+  "taskId": "entitlementhub",
+  "title": "EntitlementHub",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "PROVIDER_BASE_URL"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Plan"
+          }
+        },
+        "planRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlanRevision"
+          }
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Subscription"
+          }
+        },
+        "trialConsumptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TrialConsumption"
+          }
+        },
+        "planChanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlanChange"
+          }
+        },
+        "refunds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Refund"
+          }
+        },
+        "providerEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProviderEvent"
+          }
+        },
+        "entitlementGrants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EntitlementGrant"
+          }
+        },
+        "revocationFences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RevocationFence"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "tenants",
+        "plans",
+        "planRevisions",
+        "subscriptions",
+        "trialConsumptions",
+        "planChanges",
+        "refunds",
+        "providerEvents",
+        "entitlementGrants",
+        "revocationFences",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-entitlementhub-v2",
+      "tenants": [
+        {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Entitlement Tenant"
+        }
+      ],
+      "plans": [
+        {
+          "planId": "00000000-0000-4000-8000-000000000002",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Basic Plan"
+        }
+      ],
+      "planRevisions": [
+        {
+          "planRevisionId": "00000000-0000-4000-8000-000000000003",
+          "planId": "00000000-0000-4000-8000-000000000002",
+          "revision": 1,
+          "state": "PUBLISHED",
+          "priceMinor": 1200,
+          "currency": "USD",
+          "interval": "MONTH",
+          "features": {
+            "projects": {
+              "limit": 5
+            }
+          },
+          "trialDays": 7,
+          "graceDays": 3,
+          "refundDays": 14,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "publishedAt": "2026-01-01T00:00:00.000Z"
+        }
+      ],
+      "subscriptions": [],
+      "trialConsumptions": [],
+      "planChanges": [],
+      "refunds": [],
+      "providerEvents": [],
+      "entitlementGrants": [],
+      "revocationFences": [],
+      "auditEntries": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "SUBSCRIPTION_ACTIVATE",
+            "PLAN_CHANGE_APPLY",
+            "SUBSCRIPTION_EXPIRE",
+            "REFUND_RECONCILE",
+            "ENTITLEMENT_REVOKE",
+            "EVENT_DELIVERY",
+            "POOL_RECONCILE",
+            "POOL_REVOKE"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "subscription.started",
+            "subscription.changed",
+            "subscription.cancelled",
+            "subscription.expired",
+            "refund.succeeded",
+            "entitlement.revoked"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Plan": {
+      "type": "object",
+      "properties": {
+        "planId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "planId",
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "PlanRevision": {
+      "type": "object",
+      "properties": {
+        "planRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "planId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "DRAFT",
+            "PUBLISHED",
+            "RETIRED"
+          ]
+        },
+        "priceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "interval": {
+          "enum": [
+            "MONTH",
+            "YEAR"
+          ]
+        },
+        "features": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "limit"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "trialDays": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "graceDays": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "refundDays": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "planRevisionId",
+        "planId",
+        "revision",
+        "state",
+        "priceMinor",
+        "currency",
+        "interval",
+        "features",
+        "trialDays",
+        "graceDays",
+        "refundDays",
+        "createdAt",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Subscription": {
+      "type": "object",
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "planRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "TRIALING",
+            "ACTIVE",
+            "FAILED",
+            "PAST_DUE",
+            "CANCELLED",
+            "EXPIRED",
+            "REFUNDED"
+          ]
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "trialEndsAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cancelAtPeriodEnd": {
+          "type": "boolean"
+        },
+        "pendingPlanRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revocationVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "subscriptionId",
+        "tenantId",
+        "subjectId",
+        "planRevisionId",
+        "state",
+        "periodStart",
+        "periodEnd",
+        "trialEndsAt",
+        "cancelAtPeriodEnd",
+        "pendingPlanRevisionId",
+        "revocationVersion",
+        "createdAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "TrialConsumption": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "planId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "consumedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "subjectId",
+        "planId",
+        "subscriptionId",
+        "consumedAt"
+      ],
+      "additionalProperties": false
+    },
+    "PlanChange": {
+      "type": "object",
+      "properties": {
+        "changeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fromPlanRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "toPlanRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "UPGRADE",
+            "DOWNGRADE"
+          ]
+        },
+        "state": {
+          "enum": [
+            "REQUESTED",
+            "APPLIED",
+            "SCHEDULED",
+            "REJECTED",
+            "CANCELLED"
+          ]
+        },
+        "effectiveAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "changeId",
+        "subscriptionId",
+        "fromPlanRevisionId",
+        "toPlanRevisionId",
+        "kind",
+        "state",
+        "effectiveAt",
+        "amountMinor",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Refund": {
+      "type": "object",
+      "properties": {
+        "refundId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "providerRequestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "state": {
+          "enum": [
+            "REQUESTED",
+            "SUCCEEDED",
+            "FAILED",
+            "UNKNOWN"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "refundId",
+        "subscriptionId",
+        "providerRequestId",
+        "amountMinor",
+        "currency",
+        "state",
+        "createdAt",
+        "resolvedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ProviderEvent": {
+      "type": "object",
+      "properties": {
+        "providerEventId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "providerRequestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "SUBSCRIPTION",
+            "REFUND"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED",
+            "UNKNOWN"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "providerEventId",
+        "providerRequestId",
+        "kind",
+        "outcome",
+        "occurredAt"
+      ],
+      "additionalProperties": false
+    },
+    "EntitlementGrant": {
+      "type": "object",
+      "properties": {
+        "grantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "feature": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "validFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "validUntil": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "grantRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "grantId",
+        "subscriptionId",
+        "feature",
+        "limit",
+        "validFrom",
+        "validUntil",
+        "grantRevision"
+      ],
+      "additionalProperties": false
+    },
+    "RevocationFence": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revocationVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "subjectId",
+        "revocationVersion",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "EntitlementView": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "feature": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "enum": [
+            "ENABLED",
+            "DISABLED"
+          ]
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "subscriptionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "revocationVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "subjectId",
+        "feature",
+        "state",
+        "limit",
+        "subscriptionId",
+        "revocationVersion",
+        "evaluatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "EntitlementPool": {
+      "type": "object",
+      "properties": {
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "feature": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seatLimit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "ACTIVE",
+            "OVER_LIMIT",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "poolId",
+        "tenantId",
+        "subscriptionId",
+        "feature",
+        "seatLimit",
+        "state",
+        "version",
+        "periodStart",
+        "periodEnd",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeatAssignment": {
+      "type": "object",
+      "properties": {
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "enum": [
+            "ACTIVE",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "assignedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "poolId",
+        "subjectId",
+        "state",
+        "assignedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Plan"
+          }
+        },
+        "planRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlanRevision"
+          }
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Subscription"
+          }
+        },
+        "trialConsumptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TrialConsumption"
+          }
+        },
+        "planChanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlanChange"
+          }
+        },
+        "refunds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Refund"
+          }
+        },
+        "providerEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProviderEvent"
+          }
+        },
+        "entitlementGrants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EntitlementGrant"
+          }
+        },
+        "revocationFences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RevocationFence"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "tenants",
+        "plans",
+        "planRevisions",
+        "subscriptions",
+        "trialConsumptions",
+        "planChanges",
+        "refunds",
+        "providerEvents",
+        "entitlementGrants",
+        "revocationFences",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "plans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Plan"
+          }
+        },
+        "planRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlanRevision"
+          }
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Subscription"
+          }
+        },
+        "trialConsumptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TrialConsumption"
+          }
+        },
+        "planChanges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlanChange"
+          }
+        },
+        "refunds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Refund"
+          }
+        },
+        "providerEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProviderEvent"
+          }
+        },
+        "entitlementGrants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EntitlementGrant"
+          }
+        },
+        "revocationFences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RevocationFence"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        },
+        "entitlementPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EntitlementPool"
+          }
+        },
+        "seatAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeatAssignment"
+          }
+        }
+      },
+      "required": [
+        "tenants",
+        "plans",
+        "planRevisions",
+        "subscriptions",
+        "trialConsumptions",
+        "planChanges",
+        "refunds",
+        "providerEvents",
+        "entitlementGrants",
+        "revocationFences",
+        "auditEntries",
+        "entitlementPools",
+        "seatAssignments"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "create-tenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "example": {
+        "body": {
+          "name": "Another Entitlement Tenant"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-tenant"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-plan",
+      "method": "POST",
+      "path": "/api/v1/plans",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Plan"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Team Plan"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-plan"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-plan-revision",
+      "method": "POST",
+      "path": "/api/v1/plans/:planId/revisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "priceMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "interval": {
+            "enum": [
+              "MONTH",
+              "YEAR"
+            ]
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "limit": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "limit"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "trialDays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "graceDays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "refundDays": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "priceMinor",
+          "currency",
+          "interval",
+          "features",
+          "trialDays",
+          "graceDays",
+          "refundDays"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PlanRevision"
+      },
+      "example": {
+        "params": {
+          "planId": "00000000-0000-4000-8000-000000000002"
+        },
+        "body": {
+          "priceMinor": 1200,
+          "currency": "USD",
+          "interval": "MONTH",
+          "features": {
+            "projects": {
+              "limit": 5
+            }
+          },
+          "trialDays": 7,
+          "graceDays": 3,
+          "refundDays": 14
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-plan-revision"
+        }
+      },
+      "parameters": [
+        {
+          "name": "planId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "publish-plan-revision",
+      "method": "POST",
+      "path": "/api/v1/plan-revisions/:planRevisionId/publish",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PlanRevision"
+      },
+      "example": {
+        "params": {
+          "planRevisionId": "00000000-0000-4000-8000-000000000003"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-publish-plan-revision"
+        }
+      },
+      "parameters": [
+        {
+          "name": "planRevisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-subscription",
+      "method": "POST",
+      "path": "/api/v1/subscriptions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "planRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "startTrial": {
+            "type": "boolean"
+          },
+          "subscriptionKind": {
+            "enum": [
+              "INDIVIDUAL",
+              "ORGANIZATION"
+            ]
+          }
+        },
+        "required": [
+          "tenantId",
+          "subjectId",
+          "planRevisionId",
+          "startTrial"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Subscription"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "subjectId": "public-subject",
+          "planRevisionId": "00000000-0000-4000-8000-000000000003",
+          "startTrial": true
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-subscription"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-subscription",
+      "method": "GET",
+      "path": "/api/v1/subscriptions/:subscriptionId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/Subscription"
+      },
+      "example": {
+        "params": {
+          "subscriptionId": "00000000-0000-4000-8000-000000000004"
+        }
+      },
+      "parameters": [
+        {
+          "name": "subscriptionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "change-plan",
+      "method": "POST",
+      "path": "/api/v1/subscriptions/:subscriptionId/change-plan",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "toPlanRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expectedPlanRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "kind": {
+            "enum": [
+              "UPGRADE",
+              "DOWNGRADE"
+            ]
+          }
+        },
+        "required": [
+          "toPlanRevisionId",
+          "expectedPlanRevisionId",
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PlanChange"
+      },
+      "example": {
+        "params": {
+          "subscriptionId": "00000000-0000-4000-8000-000000000004"
+        },
+        "body": {
+          "toPlanRevisionId": "00000000-0000-4000-8000-000000000005",
+          "expectedPlanRevisionId": "00000000-0000-4000-8000-000000000003",
+          "kind": "UPGRADE"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-change-plan"
+        }
+      },
+      "parameters": [
+        {
+          "name": "subscriptionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel-subscription",
+      "method": "POST",
+      "path": "/api/v1/subscriptions/:subscriptionId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "cancelAtPeriodEnd": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cancelAtPeriodEnd"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Subscription"
+      },
+      "example": {
+        "params": {
+          "subscriptionId": "00000000-0000-4000-8000-000000000004"
+        },
+        "body": {
+          "cancelAtPeriodEnd": false
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-cancel-subscription"
+        }
+      },
+      "parameters": [
+        {
+          "name": "subscriptionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-refund",
+      "method": "POST",
+      "path": "/api/v1/subscriptions/:subscriptionId/refunds",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "amountMinor"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Refund"
+      },
+      "example": {
+        "params": {
+          "subscriptionId": "00000000-0000-4000-8000-000000000004"
+        },
+        "body": {
+          "amountMinor": 600
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-refund"
+        }
+      },
+      "parameters": [
+        {
+          "name": "subscriptionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "provider-event",
+      "method": "POST",
+      "path": "/api/v1/provider/events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "$ref": "#/$defs/ProviderEvent"
+      },
+      "response": {
+        "$ref": "#/$defs/ProviderEvent"
+      },
+      "example": {
+        "body": {
+          "providerEventId": "public-provider-event",
+          "providerRequestId": "public-provider-request",
+          "kind": "REFUND",
+          "outcome": "SUCCEEDED",
+          "occurredAt": "2026-01-01T00:00:00.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-provider-event"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "reconcile-refund",
+      "method": "POST",
+      "path": "/api/v1/refunds/:refundId/reconcile",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Refund"
+      },
+      "example": {
+        "params": {
+          "refundId": "00000000-0000-4000-8000-000000000006"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-reconcile-refund"
+        }
+      },
+      "parameters": [
+        {
+          "name": "refundId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "check-entitlement",
+      "method": "GET",
+      "path": "/api/v1/entitlements/check",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/EntitlementView"
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "subjectId": "public-subject",
+          "feature": "projects",
+          "knownRevocationVersion": 0
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "subjectId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "feature",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "knownRevocationVersion",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-entitlements",
+      "method": "GET",
+      "path": "/api/v1/entitlements",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/EntitlementView"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "subjectId": "public-subject",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "subjectId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "expire-due",
+      "method": "POST",
+      "path": "/api/v1/admin/expire-due",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "expiredSubscriptionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          }
+        },
+        "required": [
+          "expiredSubscriptionIds"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-example-expire-due",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        },
+        "body": {}
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-audit",
+      "method": "GET",
+      "path": "/api/v1/audit",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/AuditEntry"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-entitlement-pool",
+      "method": "POST",
+      "path": "/api/v1/entitlement-pools",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "subscriptionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "feature": {
+            "type": "string",
+            "minLength": 1
+          },
+          "seatLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "tenantId",
+          "subscriptionId",
+          "feature",
+          "seatLimit"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/EntitlementPool"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "subscriptionId": "00000000-0000-4000-8000-000000000004",
+          "feature": "projects",
+          "seatLimit": 5
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-entitlement-pool"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "assign-seat",
+      "method": "POST",
+      "path": "/api/v1/entitlement-pools/:poolId/assignments",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectedPoolVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "subjectId",
+          "expectedPoolVersion"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "pool": {
+            "$ref": "#/$defs/EntitlementPool"
+          },
+          "assignment": {
+            "$ref": "#/$defs/SeatAssignment"
+          }
+        },
+        "required": [
+          "pool",
+          "assignment"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "poolId": "00000000-0000-4000-8000-000000000007"
+        },
+        "body": {
+          "subjectId": "public-member",
+          "expectedPoolVersion": 0
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-assign-seat"
+        }
+      },
+      "parameters": [
+        {
+          "name": "poolId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "revoke-seat",
+      "method": "POST",
+      "path": "/api/v1/entitlement-pools/:poolId/assignments/:subjectId/revoke",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedPoolVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedPoolVersion"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "pool": {
+            "$ref": "#/$defs/EntitlementPool"
+          },
+          "assignment": {
+            "$ref": "#/$defs/SeatAssignment"
+          }
+        },
+        "required": [
+          "pool",
+          "assignment"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "poolId": "00000000-0000-4000-8000-000000000007",
+          "subjectId": "public-member"
+        },
+        "body": {
+          "expectedPoolVersion": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revoke-seat"
+        }
+      },
+      "parameters": [
+        {
+          "name": "poolId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "subjectId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-pool-assignments",
+      "method": "GET",
+      "path": "/api/v1/entitlement-pools/:poolId/assignments",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/SeatAssignment"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "poolId": "00000000-0000-4000-8000-000000000007"
+        },
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "poolId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "tenants"
+          ],
+          "match": {
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Entitlement Tenant"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "plans"
+          ],
+          "match": {
+            "planId": "00000000-0000-4000-8000-000000000002",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Basic Plan"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "planRevisions"
+          ],
+          "match": {
+            "planRevisionId": "00000000-0000-4000-8000-000000000003",
+            "planId": "00000000-0000-4000-8000-000000000002",
+            "revision": 1,
+            "state": "PUBLISHED",
+            "priceMinor": 1200,
+            "currency": "USD",
+            "interval": "MONTH",
+            "features": {
+              "projects": {
+                "limit": 5
+              }
+            },
+            "trialDays": 7,
+            "graceDays": 3,
+            "refundDays": 14,
+            "createdAt": "2026-01-01T00:00:00.000Z",
+            "publishedAt": "2026-01-01T00:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-plan",
+      "body": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "name": "Created Through Public HTTP"
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-create-plan"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "name": "Created Through Public HTTP"
+      },
+      "capture": {
+        "newPlanId": [
+          "planId"
+        ]
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "plans"
+          ],
+          "match": {
+            "planId": "${newPlanId}",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Created Through Public HTTP"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "check-entitlement",
+      "query": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "subjectId": "unsubscribed-public-subject",
+        "feature": "projects"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "subjectId": "unsubscribed-public-subject",
+        "feature": "projects",
+        "state": "DISABLED",
+        "subscriptionId": null
+      }
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 wire clarification: Plan is {planId,tenantId,name}; PlanRevision.features is a map from enabled feature name to {limit:nonnegative integer|null}, where null means unbounded and absent means unavailable. TrialConsumption and RevocationFence shapes are published explicitly. This freezes the formerly unspecified feature-limit representation.",
+    "V2 wire clarification: subscription create takes startTrial explicitly; subscriptionKind is optional and defaults to INDIVIDUAL. The public Subscription shape remains the exact legacy fields; the server persists kind for Pool eligibility. Change-plan takes kind plus expectedPlanRevisionId and toPlanRevisionId; cancellation takes cancelAtPeriodEnd. Refund currency and provider request identity derive from the frozen period, never from caller input.",
+    "V2 wire clarification: expire-due has {} body, requires ADMIN_TOKEN, expires all currently due eligible subscriptions and returns sorted expiredSubscriptionIds. No provider credentials or raw provider bodies are published. Manager Pool state is snapshot-only beyond its documented operations.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {}
+}

@@ -1,0 +1,1844 @@
+{
+  "taskId": "commercecommand",
+  "wireErrors": {
+    "validation": "VALIDATION_ERROR",
+    "notFound": "RESOURCE_NOT_FOUND"
+  },
+  "title": "CommerceCommand",
+  "environmentVariables": [
+    "DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "BENCH_PERF_SCALE"
+  ],
+  "commands": [
+    "npm install --no-audit --no-fund",
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file /absolute/path/seed.json",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:perf",
+    "npm run test:all"
+  ],
+  "seed": {
+    "schema": {
+      "$ref": "#/$defs/Seed"
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-contract-quote-cancel-v1",
+      "tenants": [
+        {
+          "tenantId": "20000000-0000-4000-8000-000000000001",
+          "name": "Contract tenant"
+        }
+      ],
+      "buyers": [
+        {
+          "buyerId": "20000000-0000-4000-8000-000000000002",
+          "tenantId": "20000000-0000-4000-8000-000000000001",
+          "displayName": "Contract buyer"
+        }
+      ],
+      "products": [
+        {
+          "productId": "20000000-0000-4000-8000-000000000003",
+          "tenantId": "20000000-0000-4000-8000-000000000001",
+          "sku": "PUBLIC-QUOTE-ITEM",
+          "name": "Contract physical item",
+          "kind": "PHYSICAL"
+        }
+      ],
+      "offerVersions": [
+        {
+          "offerVersionId": "20000000-0000-4000-8000-000000000004",
+          "tenantId": "20000000-0000-4000-8000-000000000001",
+          "productId": "20000000-0000-4000-8000-000000000003",
+          "version": 1,
+          "currency": "USD",
+          "unitPriceMinor": 400,
+          "taxMinor": 40,
+          "fulfillmentKind": "PHYSICAL",
+          "effectiveFrom": "2020-01-01T00:00:00Z",
+          "effectiveUntil": "2099-12-31T23:59:59Z",
+          "state": "ACTIVE"
+        }
+      ],
+      "inventoryPools": [
+        {
+          "inventoryPoolId": "20000000-0000-4000-8000-000000000005",
+          "tenantId": "20000000-0000-4000-8000-000000000001",
+          "productId": "20000000-0000-4000-8000-000000000003",
+          "priority": 1,
+          "onHand": 5,
+          "reserved": 0
+        }
+      ],
+      "orders": [],
+      "orderLines": [],
+      "inventoryHolds": [],
+      "paymentAttempts": [],
+      "fulfillmentPlans": [],
+      "entitlementGrants": [],
+      "ledgerEntries": [],
+      "notificationDeliveries": []
+    }
+  },
+  "schemas": {
+    "Uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "UtcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(?:[Zz]|\\+00:00)$"
+    },
+    "MinorUnits": {
+      "type": "integer"
+    },
+    "Currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 currency code."
+    },
+    "ProviderEventId": {
+      "type": "string",
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "ProviderQueryId": {
+      "type": "string",
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "ProductKind": {
+      "type": "string",
+      "enum": [
+        "PHYSICAL",
+        "DIGITAL"
+      ],
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "Buyer": {
+      "type": "object",
+      "properties": {
+        "buyerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "displayName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "buyerId",
+        "tenantId",
+        "displayName"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "Product": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sku": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ProductKind"
+        }
+      },
+      "required": [
+        "productId",
+        "tenantId",
+        "sku",
+        "name",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "InventoryPool": {
+      "type": "object",
+      "properties": {
+        "inventoryPoolId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "productId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "onHand": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reserved": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "inventoryPoolId",
+        "tenantId",
+        "productId",
+        "priority",
+        "onHand",
+        "reserved"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "Order": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "buyerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "WEB",
+            "STORE",
+            "PARTNER"
+          ]
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUOTED",
+            "PAYMENT_PENDING",
+            "PAID",
+            "FULFILLING",
+            "FULFILLED",
+            "CANCELLED",
+            "PARTIALLY_REFUNDED",
+            "REFUNDED"
+          ]
+        },
+        "orderTotalMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "capturedMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "refundedMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "quoteExpiresAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        }
+      },
+      "required": [
+        "orderId",
+        "tenantId",
+        "buyerId",
+        "channel",
+        "currency",
+        "state",
+        "orderTotalMinor",
+        "capturedMinor",
+        "refundedMinor",
+        "quoteExpiresAt"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "OrderLine": {
+      "type": "object",
+      "properties": {
+        "orderLineId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "orderId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "productId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "offerVersionId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "unitPriceMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "taxMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "lineTotalMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "fulfillmentKind": {
+          "$ref": "#/$defs/ProductKind"
+        }
+      },
+      "required": [
+        "orderLineId",
+        "tenantId",
+        "orderId",
+        "productId",
+        "offerVersionId",
+        "quantity",
+        "currency",
+        "unitPriceMinor",
+        "taxMinor",
+        "lineTotalMinor",
+        "fulfillmentKind"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "InventoryHold": {
+      "type": "object",
+      "properties": {
+        "inventoryHoldId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "orderLineId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "inventoryPoolId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "HELD",
+            "CONSUMED",
+            "RELEASED",
+            "EXPIRED"
+          ]
+        }
+      },
+      "required": [
+        "inventoryHoldId",
+        "tenantId",
+        "orderLineId",
+        "inventoryPoolId",
+        "quantity",
+        "state"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "QuoteResponse": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "buyerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "WEB",
+            "STORE",
+            "PARTNER"
+          ]
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUOTED",
+            "PAYMENT_PENDING",
+            "PAID",
+            "FULFILLING",
+            "FULFILLED",
+            "CANCELLED",
+            "PARTIALLY_REFUNDED",
+            "REFUNDED"
+          ]
+        },
+        "orderTotalMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "capturedMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "refundedMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "quoteExpiresAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "orderLineId": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "tenantId": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "orderId": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "productId": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "offerVersionId": {
+                "$ref": "#/$defs/Uuid"
+              },
+              "quantity": {
+                "type": "integer"
+              },
+              "currency": {
+                "$ref": "#/$defs/Currency"
+              },
+              "unitPriceMinor": {
+                "$ref": "#/$defs/MinorUnits"
+              },
+              "taxMinor": {
+                "$ref": "#/$defs/MinorUnits"
+              },
+              "lineTotalMinor": {
+                "$ref": "#/$defs/MinorUnits"
+              },
+              "fulfillmentKind": {
+                "$ref": "#/$defs/ProductKind"
+              },
+              "allocations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "inventoryPoolId": {
+                      "$ref": "#/$defs/Uuid"
+                    },
+                    "quantity": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "inventoryPoolId",
+                    "quantity"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "orderLineId",
+              "tenantId",
+              "orderId",
+              "productId",
+              "offerVersionId",
+              "quantity",
+              "currency",
+              "unitPriceMinor",
+              "taxMinor",
+              "lineTotalMinor",
+              "fulfillmentKind",
+              "allocations"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "orderId",
+        "tenantId",
+        "buyerId",
+        "channel",
+        "currency",
+        "state",
+        "orderTotalMinor",
+        "capturedMinor",
+        "refundedMinor",
+        "quoteExpiresAt",
+        "lines"
+      ],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "CancelOrderRequest": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false,
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "OfferVersion": {
+      "type": "object",
+      "properties": {
+        "offerVersionId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "productId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "unitPriceMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "taxMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "fulfillmentKind": {
+          "$ref": "#/$defs/ProductKind"
+        },
+        "effectiveFrom": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "effectiveUntil": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "offerVersionId",
+        "tenantId",
+        "productId",
+        "version",
+        "currency",
+        "unitPriceMinor",
+        "taxMinor",
+        "fulfillmentKind",
+        "effectiveFrom",
+        "effectiveUntil",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "QUOTE_EXPIRY",
+            "PAYMENT_RECONCILIATION",
+            "FULFILLMENT",
+            "ENTITLEMENT_GRANT",
+            "ENTITLEMENT_REVOCATION",
+            "SELLER_SETTLEMENT_CLOSE",
+            "DISPUTE_RECONCILIATION",
+            "SETTLEMENT_ADJUSTMENT"
+          ]
+        },
+        "aggregateId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "payloadVersion": {},
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "DEAD"
+          ]
+        },
+        "attempts": {
+          "type": "integer"
+        },
+        "availableAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "leaseOwner": {},
+        "leaseExpiresAt": {},
+        "fencingToken": {
+          "type": "integer"
+        },
+        "terminal": {}
+      },
+      "required": [
+        "workId",
+        "tenantId",
+        "kind",
+        "aggregateId",
+        "payloadVersion",
+        "state",
+        "attempts",
+        "availableAt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "fencingToken",
+        "terminal"
+      ],
+      "additionalProperties": false
+    },
+    "NotificationDelivery": {
+      "type": "object",
+      "properties": {
+        "notificationDeliveryId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "orderId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "eventId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "aggregateSequence": {
+          "type": "integer"
+        },
+        "state": {
+          "type": "string"
+        },
+        "attempts": {
+          "type": "integer"
+        },
+        "bodyDigest": {
+          "type": "string"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "deliveredAt": {}
+      },
+      "required": [
+        "notificationDeliveryId",
+        "tenantId",
+        "orderId",
+        "eventId",
+        "aggregateSequence",
+        "state",
+        "attempts",
+        "bodyDigest",
+        "createdAt",
+        "deliveredAt"
+      ],
+      "additionalProperties": false
+    },
+    "QuoteLine": {
+      "type": "object",
+      "properties": {
+        "productId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "required": [
+        "productId",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "QuoteRequest": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "buyerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "channel": {
+          "type": "string",
+          "enum": [
+            "WEB",
+            "STORE",
+            "PARTNER"
+          ]
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QuoteLine"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "description": "Product IDs must be unique across lines."
+        },
+        "holdTtlSeconds": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 3600
+        }
+      },
+      "required": [
+        "tenantId",
+        "buyerId",
+        "channel",
+        "lines",
+        "holdTtlSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "CheckoutRequest": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "const": "SANDBOX"
+        },
+        "providerRequestId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "providerRequestId"
+      ],
+      "additionalProperties": false
+    },
+    "PaymentCallbackRequest": {
+      "type": "object",
+      "properties": {
+        "providerEventId": {
+          "$ref": "#/$defs/ProviderEventId"
+        },
+        "providerRequestId": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "CAPTURED",
+            "DECLINED",
+            "UNKNOWN"
+          ]
+        },
+        "capturedMinor": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "providerEventId",
+        "providerRequestId",
+        "outcome",
+        "capturedMinor"
+      ],
+      "additionalProperties": false
+    },
+    "PaymentReconcileRequest": {
+      "type": "object",
+      "properties": {
+        "providerQueryId": {
+          "$ref": "#/$defs/ProviderQueryId"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "CAPTURED",
+            "DECLINED",
+            "UNKNOWN"
+          ]
+        },
+        "capturedMinor": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "providerQueryId",
+        "outcome",
+        "capturedMinor"
+      ],
+      "additionalProperties": false
+    },
+    "RestockLine": {
+      "type": "object",
+      "properties": {
+        "orderLineId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "quantity": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "orderLineId",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "RefundRequest": {
+      "type": "object",
+      "properties": {
+        "amountMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "restockLines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RestockLine"
+          }
+        }
+      },
+      "required": [
+        "amountMinor",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "SellerAllocationInput": {
+      "type": "object",
+      "properties": {
+        "orderLineId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sellerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "amountMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        }
+      },
+      "required": [
+        "orderLineId",
+        "sellerId",
+        "quantity",
+        "amountMinor"
+      ],
+      "additionalProperties": false
+    },
+    "SellerAllocationsRequest": {
+      "type": "object",
+      "properties": {
+        "allocations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SellerAllocationInput"
+          }
+        }
+      },
+      "required": [
+        "allocations"
+      ],
+      "additionalProperties": false
+    },
+    "SellerSettlementRequest": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sellerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "periodStart": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "periodEnd": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sellerId",
+        "periodStart",
+        "periodEnd",
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "SellerSettlementCloseRequest": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "CommerceDisputeRequest": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "paymentAttemptId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "providerDisputeId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "amountMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        }
+      },
+      "required": [
+        "tenantId",
+        "paymentAttemptId",
+        "providerDisputeId",
+        "amountMinor"
+      ],
+      "additionalProperties": false
+    },
+    "CommerceDisputeResolveRequest": {
+      "type": "object",
+      "properties": {
+        "providerEventId": {
+          "$ref": "#/$defs/ProviderEventId"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "WON",
+            "LOST"
+          ]
+        }
+      },
+      "required": [
+        "providerEventId",
+        "outcome"
+      ],
+      "additionalProperties": false
+    },
+    "SettlementAdjustmentRequest": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sellerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sourceSettlementId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sourceAllocationId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "amountMinor": {
+          "$ref": "#/$defs/MinorUnits"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sellerId",
+        "sourceSettlementId",
+        "sourceAllocationId",
+        "amountMinor",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "buyers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Buyer"
+          }
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Product"
+          }
+        },
+        "offerVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OfferVersion"
+          }
+        },
+        "inventoryPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InventoryPool"
+          }
+        },
+        "orders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Order"
+          }
+        },
+        "orderLines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OrderLine"
+          }
+        },
+        "inventoryHolds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InventoryHold"
+          }
+        },
+        "paymentAttempts": {
+          "type": "array",
+          "items": {}
+        },
+        "fulfillmentPlans": {
+          "type": "array",
+          "items": {}
+        },
+        "entitlementGrants": {
+          "type": "array",
+          "items": {}
+        },
+        "ledgerEntries": {
+          "type": "array",
+          "items": {}
+        },
+        "notificationDeliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationDelivery"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "tenants",
+        "buyers",
+        "products",
+        "offerVersions",
+        "inventoryPools",
+        "orders",
+        "orderLines",
+        "inventoryHolds",
+        "paymentAttempts",
+        "fulfillmentPlans",
+        "entitlementGrants",
+        "ledgerEntries",
+        "notificationDeliveries"
+      ],
+      "additionalProperties": {
+        "type": "array",
+        "items": {}
+      },
+      "$comment": "contract/README.md (v4 wire clarification)"
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "tenants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Tenant"
+              }
+            },
+            "buyers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Buyer"
+              }
+            },
+            "products": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Product"
+              }
+            },
+            "offerVersions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OfferVersion"
+              }
+            },
+            "inventoryPools": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/InventoryPool"
+              }
+            },
+            "orders": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Order"
+              }
+            },
+            "orderLines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OrderLine"
+              }
+            },
+            "inventoryHolds": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/InventoryHold"
+              }
+            },
+            "paymentAttempts": {
+              "type": "array",
+              "items": {}
+            },
+            "fulfillmentPlans": {
+              "type": "array",
+              "items": {}
+            },
+            "entitlementGrants": {
+              "type": "array",
+              "items": {}
+            },
+            "ledgerEntries": {
+              "type": "array",
+              "items": {}
+            },
+            "notificationDeliveries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/NotificationDelivery"
+              }
+            }
+          },
+          "required": [
+            "tenants",
+            "buyers",
+            "products",
+            "offerVersions",
+            "inventoryPools",
+            "orders",
+            "orderLines",
+            "inventoryHolds",
+            "paymentAttempts",
+            "fulfillmentPlans",
+            "entitlementGrants",
+            "ledgerEntries",
+            "notificationDeliveries"
+          ],
+          "additionalProperties": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {}
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "events",
+        "work"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "getUi",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)"
+    },
+    {
+      "id": "getOpenApi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "source": "docs/frontal-legacy/README.md#required-stack-and-delivery"
+    },
+    {
+      "id": "getHealth",
+      "method": "GET",
+      "path": "/healthz",
+      "source": "docs/frontal-legacy/README.md#required-stack-and-delivery"
+    },
+    {
+      "id": "listTenants",
+      "method": "GET",
+      "path": "/api/v1/tenants",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency"
+    },
+    {
+      "id": "listProducts",
+      "method": "GET",
+      "path": "/api/v1/products",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency"
+    },
+    {
+      "id": "createOfferVersion",
+      "method": "POST",
+      "path": "/api/v1/offer-versions",
+      "source": "docs/frontal-legacy/README.md#product-and-immutable-offerversion",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/OfferVersion"
+      }
+    },
+    {
+      "id": "adjustInventoryPool",
+      "method": "POST",
+      "path": "/api/v1/inventory-pools/:inventoryPoolId/adjustments",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency",
+      "status": 200
+    },
+    {
+      "id": "createQuote",
+      "method": "POST",
+      "path": "/api/v1/orders/quotes",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 201,
+      "request": {
+        "$ref": "#/$defs/QuoteRequest"
+      },
+      "response": {
+        "$ref": "#/$defs/QuoteResponse"
+      },
+      "example": {
+        "request": {
+          "tenantId": "20000000-0000-4000-8000-000000000001",
+          "buyerId": "20000000-0000-4000-8000-000000000002",
+          "channel": "WEB",
+          "lines": [
+            {
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "quantity": 2
+            }
+          ],
+          "holdTtlSeconds": 3600
+        }
+      }
+    },
+    {
+      "id": "listOrders",
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency"
+    },
+    {
+      "id": "getOrder",
+      "method": "GET",
+      "path": "/api/v1/orders/:orderId",
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Order"
+      }
+    },
+    {
+      "id": "checkoutOrder",
+      "method": "POST",
+      "path": "/api/v1/orders/:orderId/checkout",
+      "source": "docs/frontal-legacy/README.md#checkout-and-uncertain-payment",
+      "status": 200,
+      "request": {
+        "$ref": "#/$defs/CheckoutRequest"
+      },
+      "example": {
+        "request": {
+          "provider": "SANDBOX",
+          "providerRequestId": "merchant-unique-string"
+        }
+      }
+    },
+    {
+      "id": "cancelOrder",
+      "method": "POST",
+      "path": "/api/v1/orders/:orderId/cancel",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 200,
+      "request": {
+        "$ref": "#/$defs/CancelOrderRequest"
+      },
+      "response": {
+        "$ref": "#/$defs/Order"
+      }
+    },
+    {
+      "id": "refundOrder",
+      "method": "POST",
+      "path": "/api/v1/orders/:orderId/refunds",
+      "source": "docs/frontal-legacy/README.md#fulfillment-and-digital-entitlement",
+      "status": 200,
+      "request": {
+        "$ref": "#/$defs/RefundRequest"
+      }
+    },
+    {
+      "id": "recordPaymentCallback",
+      "method": "POST",
+      "path": "/api/v1/payment-provider/callbacks",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 200,
+      "request": {
+        "$ref": "#/$defs/PaymentCallbackRequest"
+      }
+    },
+    {
+      "id": "reconcilePaymentAttempt",
+      "method": "POST",
+      "path": "/api/v1/payment-attempts/:paymentAttemptId/reconcile",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 200,
+      "request": {
+        "$ref": "#/$defs/PaymentReconcileRequest"
+      }
+    },
+    {
+      "id": "completeFulfillmentPlan",
+      "method": "POST",
+      "path": "/api/v1/fulfillment-plans/:fulfillmentPlanId/complete",
+      "source": "docs/frontal-legacy/README.md#fulfillment-and-digital-entitlement",
+      "status": 200
+    },
+    {
+      "id": "revokeEntitlementGrant",
+      "method": "POST",
+      "path": "/api/v1/entitlement-grants/:entitlementGrantId/revoke",
+      "source": "docs/frontal-legacy/README.md#fulfillment-and-digital-entitlement",
+      "status": 200
+    },
+    {
+      "id": "listLedger",
+      "method": "GET",
+      "path": "/api/v1/ledger",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency"
+    },
+    {
+      "id": "listEvents",
+      "method": "GET",
+      "path": "/api/v1/events",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency"
+    },
+    {
+      "id": "listWork",
+      "method": "GET",
+      "path": "/api/v1/work",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency"
+    },
+    {
+      "id": "listNotifications",
+      "method": "GET",
+      "path": "/api/v1/notifications",
+      "source": "docs/frontal-legacy/README.md#http-errors-and-idempotency"
+    },
+    {
+      "id": "getVerificationSnapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "source": "docs/frontal-legacy/README.md#seed-and-verification-snapshot",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      }
+    },
+    {
+      "id": "setSellerAllocations",
+      "method": "POST",
+      "path": "/api/v1/orders/:orderId/seller-allocations",
+      "request": {
+        "$ref": "#/$defs/SellerAllocationsRequest"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md"
+    },
+    {
+      "id": "createSellerSettlement",
+      "method": "POST",
+      "path": "/api/v1/seller-settlements",
+      "request": {
+        "$ref": "#/$defs/SellerSettlementRequest"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md"
+    },
+    {
+      "id": "closeSellerSettlement",
+      "method": "POST",
+      "path": "/api/v1/seller-settlements/:sellerSettlementId/close",
+      "request": {
+        "$ref": "#/$defs/SellerSettlementCloseRequest"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md"
+    },
+    {
+      "id": "createCommerceDispute",
+      "method": "POST",
+      "path": "/api/v1/commerce-disputes",
+      "request": {
+        "$ref": "#/$defs/CommerceDisputeRequest"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md"
+    },
+    {
+      "id": "resolveCommerceDispute",
+      "method": "POST",
+      "path": "/api/v1/commerce-disputes/:commerceDisputeId/resolve",
+      "request": {
+        "$ref": "#/$defs/CommerceDisputeResolveRequest"
+      },
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)"
+    },
+    {
+      "id": "createSettlementAdjustment",
+      "method": "POST",
+      "path": "/api/v1/settlement-adjustments",
+      "request": {
+        "$ref": "#/$defs/SettlementAdjustmentRequest"
+      },
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md"
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "getHealth",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getOpenApi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getVerificationSnapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "resources": {
+          "tenants": [
+            {
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "name": "Contract tenant"
+            }
+          ],
+          "buyers": [
+            {
+              "buyerId": "20000000-0000-4000-8000-000000000002",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "displayName": "Contract buyer"
+            }
+          ],
+          "products": [
+            {
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "sku": "PUBLIC-QUOTE-ITEM",
+              "name": "Contract physical item",
+              "kind": "PHYSICAL"
+            }
+          ],
+          "offerVersions": [
+            {
+              "offerVersionId": "20000000-0000-4000-8000-000000000004",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "version": 1,
+              "currency": "USD",
+              "unitPriceMinor": 400,
+              "taxMinor": 40,
+              "fulfillmentKind": "PHYSICAL",
+              "effectiveFrom": "2020-01-01T00:00:00Z",
+              "effectiveUntil": "2099-12-31T23:59:59Z",
+              "state": "ACTIVE"
+            }
+          ],
+          "inventoryPools": [
+            {
+              "inventoryPoolId": "20000000-0000-4000-8000-000000000005",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "priority": 1,
+              "onHand": 5,
+              "reserved": 0
+            }
+          ],
+          "orders": [],
+          "orderLines": [],
+          "inventoryHolds": [],
+          "paymentAttempts": [],
+          "fulfillmentPlans": [],
+          "entitlementGrants": [],
+          "ledgerEntries": [],
+          "notificationDeliveries": []
+        },
+        "events": [],
+        "work": []
+      }
+    },
+    {
+      "operationId": "createQuote",
+      "body": {
+        "tenantId": "20000000-0000-4000-8000-000000000001",
+        "buyerId": "20000000-0000-4000-8000-000000000002",
+        "channel": "WEB",
+        "lines": [
+          {
+            "productId": "20000000-0000-4000-8000-000000000003",
+            "quantity": 2
+          }
+        ],
+        "holdTtlSeconds": 3600
+      },
+      "headers": {
+        "Idempotency-Key": "public-quote-create-v1"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "tenantId": "20000000-0000-4000-8000-000000000001",
+        "buyerId": "20000000-0000-4000-8000-000000000002",
+        "channel": "WEB",
+        "currency": "USD",
+        "state": "QUOTED",
+        "orderTotalMinor": 880,
+        "capturedMinor": 0,
+        "refundedMinor": 0,
+        "lines": [
+          {
+            "productId": "20000000-0000-4000-8000-000000000003",
+            "offerVersionId": "20000000-0000-4000-8000-000000000004",
+            "quantity": 2,
+            "unitPriceMinor": 400,
+            "taxMinor": 40,
+            "lineTotalMinor": 880,
+            "fulfillmentKind": "PHYSICAL",
+            "allocations": [
+              {
+                "inventoryPoolId": "20000000-0000-4000-8000-000000000005",
+                "quantity": 2
+              }
+            ]
+          }
+        ]
+      },
+      "capture": {
+        "orderId": "/orderId",
+        "orderLineId": "/lines/0/orderLineId",
+        "quoteExpiresAt": "/quoteExpiresAt"
+      }
+    },
+    {
+      "operationId": "getVerificationSnapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "resources": {
+          "orders": [
+            {
+              "orderId": "${orderId}",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "buyerId": "20000000-0000-4000-8000-000000000002",
+              "channel": "WEB",
+              "currency": "USD",
+              "state": "QUOTED",
+              "orderTotalMinor": 880,
+              "capturedMinor": 0,
+              "refundedMinor": 0,
+              "quoteExpiresAt": "${quoteExpiresAt}"
+            }
+          ],
+          "orderLines": [
+            {
+              "orderLineId": "${orderLineId}",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "orderId": "${orderId}",
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "offerVersionId": "20000000-0000-4000-8000-000000000004",
+              "quantity": 2,
+              "currency": "USD",
+              "unitPriceMinor": 400,
+              "taxMinor": 40,
+              "lineTotalMinor": 880,
+              "fulfillmentKind": "PHYSICAL"
+            }
+          ],
+          "inventoryHolds": [
+            {
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "orderLineId": "${orderLineId}",
+              "inventoryPoolId": "20000000-0000-4000-8000-000000000005",
+              "quantity": 2,
+              "state": "HELD"
+            }
+          ],
+          "inventoryPools": [
+            {
+              "inventoryPoolId": "20000000-0000-4000-8000-000000000005",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "priority": 1,
+              "onHand": 5,
+              "reserved": 2
+            }
+          ],
+          "paymentAttempts": [],
+          "fulfillmentPlans": [],
+          "entitlementGrants": [],
+          "ledgerEntries": []
+        }
+      },
+      "capture": {
+        "inventoryHoldId": "/resources/inventoryHolds/0/inventoryHoldId"
+      }
+    },
+    {
+      "operationId": "cancelOrder",
+      "path": "/api/v1/orders/${orderId}/cancel",
+      "body": {},
+      "headers": {
+        "Idempotency-Key": "public-quote-cancel-v1"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "orderId": "${orderId}",
+        "tenantId": "20000000-0000-4000-8000-000000000001",
+        "buyerId": "20000000-0000-4000-8000-000000000002",
+        "channel": "WEB",
+        "currency": "USD",
+        "state": "CANCELLED",
+        "orderTotalMinor": 880,
+        "capturedMinor": 0,
+        "refundedMinor": 0,
+        "quoteExpiresAt": "${quoteExpiresAt}"
+      }
+    },
+    {
+      "operationId": "getOrder",
+      "path": "/api/v1/orders/${orderId}",
+      "expectStatus": 200,
+      "expectBody": {
+        "orderId": "${orderId}",
+        "tenantId": "20000000-0000-4000-8000-000000000001",
+        "buyerId": "20000000-0000-4000-8000-000000000002",
+        "channel": "WEB",
+        "currency": "USD",
+        "state": "CANCELLED",
+        "orderTotalMinor": 880,
+        "capturedMinor": 0,
+        "refundedMinor": 0,
+        "quoteExpiresAt": "${quoteExpiresAt}"
+      }
+    },
+    {
+      "operationId": "getVerificationSnapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "resources": {
+          "orders": [
+            {
+              "orderId": "${orderId}",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "buyerId": "20000000-0000-4000-8000-000000000002",
+              "channel": "WEB",
+              "currency": "USD",
+              "state": "CANCELLED",
+              "orderTotalMinor": 880,
+              "capturedMinor": 0,
+              "refundedMinor": 0,
+              "quoteExpiresAt": "${quoteExpiresAt}"
+            }
+          ],
+          "orderLines": [
+            {
+              "orderLineId": "${orderLineId}",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "orderId": "${orderId}",
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "offerVersionId": "20000000-0000-4000-8000-000000000004",
+              "quantity": 2,
+              "currency": "USD",
+              "unitPriceMinor": 400,
+              "taxMinor": 40,
+              "lineTotalMinor": 880,
+              "fulfillmentKind": "PHYSICAL"
+            }
+          ],
+          "inventoryHolds": [
+            {
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "orderLineId": "${orderLineId}",
+              "inventoryPoolId": "20000000-0000-4000-8000-000000000005",
+              "quantity": 2,
+              "state": "RELEASED",
+              "inventoryHoldId": "${inventoryHoldId}"
+            }
+          ],
+          "inventoryPools": [
+            {
+              "inventoryPoolId": "20000000-0000-4000-8000-000000000005",
+              "tenantId": "20000000-0000-4000-8000-000000000001",
+              "productId": "20000000-0000-4000-8000-000000000003",
+              "priority": 1,
+              "onHand": 5,
+              "reserved": 0
+            }
+          ],
+          "paymentAttempts": [],
+          "fulfillmentPlans": [],
+          "entitlementGrants": [],
+          "ledgerEntries": []
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Legacy source paths are relative to task-packages/legacy/commercecommand/workspace. The complete public README and Manager requirements define behavior. Explicit v4 wire clarifications describe transport omissions verified against the existing request/setup/extraction interface, without publishing fixture values, cases, assertions, or scoring.",
+    "The README permits GET /healthz OR GET /api/health. getHealth selects /healthz as the canonical alternative; it does not establish a requirement to implement both. Neither health response fields nor a literal success status are published; the smoke uses ordinary HTTP 200 health success.",
+    "All nine business GET routes are included. v4 fixes the closed top-level Order detail projection. Collection envelopes, pagination, filtering, and Tenant authentication transport remain unspecified; no unprovided list wrapper is asserted.",
+    "Every mutation requires Idempotency-Key, scoped by Tenant, method, and canonical route. First success or business rejection persists exact status/body; exact replay survives restart; changed canonical body returns 409 IDEMPOTENCY_CONFLICT. MALFORMED_JSON returns 400 and creates no replay record.",
+    "Mutation success status defaults to 200; quote creation is 201. Success bodies are the closed top-level primary resource shape unless an explicit literal shape or multiple named resources says otherwise. v4 fixes Order, OrderLine, InventoryHold and quote projections for the public chain; other incomplete success shapes remain explicit gaps.",
+    "The v4 quote response is the closed Order fields plus lines containing frozen OrderLine fields and allocations:[{inventoryPoolId,quantity}]. GET Order and successful cancellation return the closed Order projection. Cancel accepts exactly {}. These external JSON projections do not constrain internal storage, language, framework, module names, or function signatures. Offer creation, inventory adjustment, fulfillment completion and entitlement revoke request layouts remain unspecified.",
+    "Internal identifiers follow the global UUID rule. providerRequestId is the published merchant-unique-string exception. The v4 wire clarification makes providerEventId and providerQueryId opaque strings as used by the transport callers; this explicitly narrows the legacy blanket UUID statement for external provider references. ISO currency membership, cross-row references, unique quote Product IDs, monetary equations, immutable terms, tenant isolation, fencing, and transactional convergence remain domain checks beyond these structural schemas.",
+    "Seed and snapshot preserve the V1 resource keys. The v4 wire clarification publishes Tenant, Buyer, Product, InventoryPool, Order, OrderLine and InventoryHold row layouts, PHYSICAL/DIGITAL serialization and string seedVersion; OfferVersion, Work and NotificationDelivery fields come from the README. Remaining empty row schemas and unknown scalar types express missing public information, not permissive runtime validation rules.",
+    "The Manager requires marketplace entities in seed/snapshot but never specifies Seller rows, additional array names, schemaVersion changes, or complete marketplace resource fields. Seed and snapshot resources require the published V1 keys and permit additional arrays solely to accommodate those unnamed Manager extensions. Runtime must still reject unknown members against its documented complete contract; author clarification is required to close these two structural schemas.",
+    "Work leaseOwner, leaseExpiresAt, terminal, payloadVersion and NotificationDelivery deliveredAt have no exact wire types or nullability published. Their value schemas remain unspecified. OfferVersion state and NotificationDelivery state have no literal enum lists.",
+    "The public chain imports one Tenant, Buyer, physical Product, active OfferVersion and InventoryPool into a clean database. It creates a two-unit quote, captures returned Order/OrderLine IDs and expiry, observes HELD inventory and captures its ID, cancels via that Order ID, reads CANCELLED Order detail and verifies the same durable rows with a RELEASED hold and unchanged onHand. The one-hour hold TTL keeps this bounded chain independent of background expiry timing. Array expectations have exact length; object expectations are partial. No volatile Work, notification, or event scheduling state is asserted.",
+    "Required public errors include VALIDATION_ERROR, RESOURCE_NOT_FOUND, IDEMPOTENCY_CONFLICT, MALFORMED_JSON, INSUFFICIENT_INVENTORY, QUOTE_EXPIRED, INVALID_ORDER_STATE, PROVIDER_EVENT_CONFLICT, REFUND_EXCEEDS_CAPTURE, STALE_FENCE and TENANT_MISMATCH. Manager adds 409 ALLOCATION_NOT_CONSERVED, 409 RESERVE_EXCEEDS_CAPTURE and 409 SETTLEMENT_CLOSED. The error details members are not enumerated.",
+    "Marketplace invariants remain binding: one immutable conserved allocation set per Order, same Tenant, no reassignment after fulfillment; CLOSED settlements immutable; refund plus dispute reserve bounded by capture; LOST charges back once, WON only releases reserve; adjustments persist targetPeriodStart at or after the source periodEnd in the next open period.",
+    "Defaults: PORT=3000; WORK_LEASE_SECONDS is integer 1..300, default 30; WEBHOOK_URL may be absent but dispatcher stays alive and retries; BENCH_PERF_SCALE is test-only (0,1], scored runs use 1. Tokens must not be logged; TEST_BARRIER_TOKEN must not be persisted.",
+    "db:migrate is repeatable; all start commands are long-running production roles. test:all includes every non-performance gate. Preserve seven V1 performance scenarios and add seller-settlement-close, refund-dispute-race, full-catastrophe-recovery with the exact published thresholds; this structural contract does not replace those gates.",
+    "The v4 wire clarification fixes GET / as the production browser entry, returning HTML. Other browser deep-link paths remain implementation-defined. Existing collection callers do not establish a list envelope, and existing setup supplies no marketplace seed extension keys; those gaps remain explicit."
+  ],
+  "contractRevision": 2
+}

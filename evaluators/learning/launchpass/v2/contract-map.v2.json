@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "launchpass",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "LP-EVENT-CONTRACT",
+        "source": "workspace/README.md#41-events",
+        "summary": "Events use authenticated creation, exact responses, case-insensitive search, stable ordering, and opaque cursor pagination."
+      },
+      "privateFailureCodePrefix": "LP_A01_",
+      "publicFeedbackCategory": "event-contract-pagination"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "LP-HOLD-RESERVATION",
+        "source": "workspace/README.md#42-holds",
+        "summary": "A valid hold reserves all requested capacity once and every failed request is atomic."
+      },
+      "privateFailureCodePrefix": "LP_A02_",
+      "publicFeedbackCategory": "hold-capacity-reservation"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "LP-HOLD-TERMINAL-HISTORY",
+        "source": "workspace/README.md#64-hold-and-order-endpoints",
+        "summary": "Confirm and release are stable terminal operations, orders are unique, and histories are durable and sorted."
+      },
+      "privateFailureCodePrefix": "LP_A03_",
+      "publicFeedbackCategory": "hold-terminal-history"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "LP-PASSIVE-EXPIRY",
+        "source": "workspace/README.md#42-holds",
+        "summary": "Pending holds expire without traffic and restore capacity once within two seconds of their deadline."
+      },
+      "privateFailureCodePrefix": "LP_A04_",
+      "publicFeedbackCategory": "hold-passive-expiry"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "LP-WAITLIST-PUBLIC-FLOW",
+        "source": "docs/requirements.md",
+        "summary": "Waitlist runtime status, FIFO and promotion"
+      },
+      "privateFailureCodePrefix": "LP_A05_",
+      "publicFeedbackCategory": "waitlist-public-flow"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "LP-MULTI-INSTANCE-CAPACITY",
+        "source": "workspace/README.md#44-multiple-application-instances",
+        "summary": "Two independent processes sharing PostgreSQL cannot oversell a contended event."
+      },
+      "privateFailureCodePrefix": "LP_B01_",
+      "publicFeedbackCategory": "capacity-multi-instance"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "LP-DURABLE-IDEMPOTENCY",
+        "source": "workspace/README.md#62-idempotency",
+        "summary": "Mutation results and effects replay durably in operation/resource scope across disconnect and restart."
+      },
+      "privateFailureCodePrefix": "LP_B02_",
+      "publicFeedbackCategory": "idempotency-durable-replay"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "LP-TERMINAL-RACE",
+        "source": "workspace/README.md#5-business-invariants",
+        "summary": "Confirm, release, and expiration have exactly one terminal winner and one capacity effect."
+      },
+      "privateFailureCodePrefix": "LP_B03_",
+      "publicFeedbackCategory": "hold-terminal-race"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "LP-WAITLIST-FIFO",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#7-fixed-t16-manager-message",
+        "summary": "Waitlist promotion uses joinedAt then ID order, never bypasses an unsatisfied head, and promotes a fitting prefix."
+      },
+      "privateFailureCodePrefix": "LP_B04_",
+      "publicFeedbackCategory": "waitlist-strict-fifo"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "LP-PROMOTION-CONCURRENCY",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#7-fixed-t16-manager-message",
+        "summary": "Concurrent promotion and withdrawal across two processes never duplicate a promoted hold or oversell."
+      },
+      "privateFailureCodePrefix": "LP_B05_",
+      "publicFeedbackCategory": "waitlist-promotion-race"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "LP-HOLD-COMMIT-RESTART",
+        "source": "workspace/README.md#44-multiple-application-instances",
+        "summary": "A completed hold response implies a durable reservation and replayable result visible from another process."
+      },
+      "privateFailureCodePrefix": "LP_C01_",
+      "publicFeedbackCategory": "hold-commit-restart"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "LP-EXPIRY-RESTART",
+        "source": "workspace/README.md#42-holds",
+        "summary": "A replacement process expires a persisted hold at its original deadline without read-triggered business work."
+      },
+      "privateFailureCodePrefix": "LP_C02_",
+      "publicFeedbackCategory": "expiry-restart-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "LP-TERMINAL-UNKNOWN-OUTCOME",
+        "source": "workspace/README.md#62-idempotency",
+        "summary": "Unknown confirm and release outcomes replay atomically without duplicate order or restoration."
+      },
+      "privateFailureCodePrefix": "LP_C03_",
+      "publicFeedbackCategory": "terminal-unknown-outcome"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "LP-PROMOTION-RESTART",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#7-fixed-t16-manager-message",
+        "summary": "Promotion converges to the same FIFO prefix after a process exits during the public release flow."
+      },
+      "privateFailureCodePrefix": "LP_C04_",
+      "publicFeedbackCategory": "promotion-restart-recovery"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "LP-UI-CONFIRM",
+        "source": "workspace/README.md#8-browser-application",
+        "summary": "The production browser UI completes event browse, hold, confirm, history, and order flows accessibly."
+      },
+      "privateFailureCodePrefix": "LP_D01_",
+      "publicFeedbackCategory": "ui-hold-confirm"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "LP-UI-TERMINAL-REFRESH",
+        "source": "workspace/README.md#8-browser-application",
+        "summary": "The production UI reflects server-authoritative release and expiry state and recovers a known hold after refresh."
+      },
+      "privateFailureCodePrefix": "LP_D02_",
+      "publicFeedbackCategory": "ui-release-expire-refresh"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "LP-UI-WAITLIST",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#7-fixed-t16-manager-message",
+        "summary": "The production UI exposes join, position, withdraw, promotion countdown, and confirmation for a known customer and event."
+      },
+      "privateFailureCodePrefix": "LP_D03_",
+      "publicFeedbackCategory": "ui-waitlist-promotion"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "LP-OPENAPI-RUNTIME",
+        "source": "docs/requirements.md",
+        "summary": "OpenAPI and published runtime wire"
+      },
+      "privateFailureCodePrefix": "LP_D04_",
+      "publicFeedbackCategory": "contract-openapi-runtime"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "LP-SEED-V1",
+        "source": "workspace/README.md#7-seed-file-contract",
+        "summary": "FINAL imports the literal V1 seed schema at scale and rejects invalid input atomically."
+      },
+      "privateFailureCodePrefix": "LP_E01_",
+      "publicFeedbackCategory": "seed-v1-compatibility"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "LP-PERF-EVENT",
+        "source": "workspace/README.md#10-performance-target",
+        "summary": "Event reads over the published large dataset meet the 250 ms p95 target with exact results."
+      },
+      "privateFailureCodePrefix": "LP_E02_",
+      "publicFeedbackCategory": "performance-event-search"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "LP-PERF-HOT-HOLD",
+        "source": "workspace/README.md#10-performance-target",
+        "summary": "One hundred concurrent clients meet the 500 ms hold/confirm p95 target without correctness anomalies."
+      },
+      "privateFailureCodePrefix": "LP_E03_",
+      "publicFeedbackCategory": "performance-hot-capacity"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "LP-PERF-MIXED",
+        "source": "workspace/README.md#10-performance-target",
+        "summary": "The mixed public workload sustains 150 completed requests per second and preserves capacity and waitlist invariants."
+      },
+      "privateFailureCodePrefix": "LP_E04_",
+      "publicFeedbackCategory": "performance-mixed-post-audit"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

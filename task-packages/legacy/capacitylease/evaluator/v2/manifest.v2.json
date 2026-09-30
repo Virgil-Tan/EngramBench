@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "taskId": "capacitylease",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "name": "requirements-and-public-contract",
+      "weight": 30
+    },
+    "B": {
+      "name": "data-correctness-idempotency-and-concurrency",
+      "weight": 25
+    },
+    "C": {
+      "name": "worker-recovery-and-persistence",
+      "weight": 20
+    },
+    "D": {
+      "name": "openapi-ui-and-cross-layer-verification",
+      "weight": 15
+    },
+    "E": {
+      "name": "compatibility-performance-and-operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "BUILD_MIGRATION_OR_BOOT",
+      "cap": 25,
+      "publicInvariant": "The published clean build, migration, and production processes must boot."
+    },
+    {
+      "id": "CORE_CAPACITY_OR_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "Capacity conservation, non-negativity, unique terminal state, and atomic rejection must hold."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Replay, unknown response, and restart must not produce a second business effect."
+    },
+    {
+      "id": "EVENT_ATOMICITY_OR_IDENTITY",
+      "cap": 40,
+      "publicInvariant": "Business state and events are atomic and retries preserve event identity and body."
+    },
+    {
+      "id": "RECOVERY_OR_FENCING",
+      "cap": 40,
+      "publicInvariant": "Pending Work survives SIGKILL and a stale owner cannot commit."
+    },
+    {
+      "id": "GANG_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "Gang Members and capacity transition all-or-nothing without mixed aggregate state."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "Populated V1 data, saved replay, pending Work, and old clients remain valid after migration."
+    }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "Published commands and production boot", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "Repeatable populated migration", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Atomic deterministic seed", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "OpenAPI 3.1 complete contract", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-05", "title": "Common HTTP failures", "dimension": "A", "weight": 1.5, "prerequisites": ["FINAL"] },
+    { "id": "A-06", "title": "Scalar and temporal boundaries", "dimension": "A", "weight": 1.5, "prerequisites": ["FINAL"] },
+    { "id": "A-07", "title": "Reads, pagination and cursors", "dimension": "A", "weight": 1.5, "prerequisites": ["FINAL"] },
+    { "id": "A-08", "title": "Create HELD Lease", "dimension": "A", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "A-09", "title": "Confirm", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-10", "title": "Renew", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-11", "title": "Activation, release and expiry", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-12", "title": "WAITING and cancellation", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-13", "title": "Deterministic Promotion and overlap bypass", "dimension": "A", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "A-14", "title": "Timeline and verification snapshot", "dimension": "A", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "A-15", "title": "Domain-event query", "dimension": "A", "weight": 1.5, "prerequisites": ["FINAL"] },
+    { "id": "A-16", "title": "FINAL Gang wire contract", "dimension": "A", "weight": 1, "prerequisites": ["FINAL"] },
+
+    { "id": "B-01", "title": "Interval peak, not overlap total", "dimension": "B", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "Half-open boundaries", "dimension": "B", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Exactly one consuming or waiting result", "dimension": "B", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "Unknown-response durable replay", "dimension": "B", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "Idempotency scope and semantic fingerprint", "dimension": "B", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "B-06", "title": "Same-key contention across two APIs", "dimension": "B", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "B-07", "title": "Distinct-key hot-capacity contention", "dimension": "B", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "B-08", "title": "Revision and terminal races", "dimension": "B", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "B-09", "title": "Gang atomicity and deadlock freedom", "dimension": "B", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "B-10", "title": "Gang waiting, Promotion and no bypass", "dimension": "B", "weight": 2.5, "prerequisites": ["FINAL"] },
+
+    { "id": "C-01", "title": "Work schema, lifecycle and retention", "dimension": "C", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "C-02", "title": "SIGKILL after worker.claimed", "dimension": "C", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "C-03", "title": "SIGKILL after worker.effect-complete", "dimension": "C", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "C-04", "title": "SIGKILL at worker.before-commit", "dimension": "C", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "C-05", "title": "Expired-lease fencing", "dimension": "C", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "C-06", "title": "Manual transition closes obsolete Work", "dimension": "C", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "C-07", "title": "Unknown webhook ACK", "dimension": "C", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "C-08", "title": "Event transaction, ordering and dispatcher recovery", "dimension": "C", "weight": 2.5, "prerequisites": ["FINAL"] },
+
+    { "id": "D-01", "title": "OpenAPI validates live traffic", "dimension": "D", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "D-02", "title": "Production-browser V1 lifecycle", "dimension": "D", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "D-03", "title": "Production-browser Admission and async progress", "dimension": "D", "weight": 2, "prerequisites": ["FINAL"] },
+    { "id": "D-04", "title": "Dynamic Gang UI", "dimension": "D", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "D-05", "title": "Loading, empty, conflict, stale, offline and permission states", "dimension": "D", "weight": 1.5, "prerequisites": ["FINAL"] },
+    { "id": "D-06", "title": "Keyboard, labels, focus and mobile", "dimension": "D", "weight": 1.5, "prerequisites": ["FINAL"] },
+    { "id": "D-07", "title": "Project-owned gates are not fake green", "dimension": "D", "weight": 1.5, "prerequisites": ["FINAL"] },
+    { "id": "D-08", "title": "README-to-evidence cross-layer closure", "dimension": "D", "weight": 2, "prerequisites": ["FINAL"] },
+
+    { "id": "E-01", "title": "Populated V1 to FINAL migration", "dimension": "E", "weight": 2.5, "prerequisites": ["V1_CHECKPOINT", "FINAL"] },
+    { "id": "E-02", "title": "Saved idempotency and event identity across migration", "dimension": "E", "weight": 1.5, "prerequisites": ["V1_CHECKPOINT", "FINAL"] },
+    { "id": "E-03", "title": "Pending Work and delivery state across migration", "dimension": "E", "weight": 1.5, "prerequisites": ["V1_CHECKPOINT", "FINAL"] },
+    { "id": "E-04", "title": "pool-timeline-read performance", "dimension": "E", "weight": 1, "prerequisites": ["FINAL", "PERF_V1"] },
+    { "id": "E-05", "title": "independent-hold-create performance", "dimension": "E", "weight": 1, "prerequisites": ["FINAL", "PERF_V1"] },
+    { "id": "E-06", "title": "expiry-promotion-recovery performance", "dimension": "E", "weight": 1.5, "prerequisites": ["FINAL", "PERF_V1"] },
+    { "id": "E-07", "title": "Cleanup, reproducibility and log hygiene", "dimension": "E", "weight": 1, "prerequisites": ["FINAL"] }
+  ]
+}

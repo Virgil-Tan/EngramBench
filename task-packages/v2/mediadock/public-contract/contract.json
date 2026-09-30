@@ -1,0 +1,3851 @@
+{
+  "taskId": "mediadock",
+  "title": "MediaDock",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "MANAGED_DATA_ROOT",
+    "GRANT_SIGNING_KEY"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "uploadSessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UploadSession"
+          }
+        },
+        "uploadParts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UploadPart"
+          }
+        },
+        "blobObjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BlobObject"
+          }
+        },
+        "mediaAssets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MediaAsset"
+          }
+        },
+        "scanJobs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScanJob"
+          }
+        },
+        "scanResults": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScanResult"
+          }
+        },
+        "transcodeProfiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TranscodeProfile"
+          }
+        },
+        "transcodeJobs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TranscodeJob"
+          }
+        },
+        "renditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Rendition"
+          }
+        },
+        "accessGrants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccessGrant"
+          }
+        },
+        "cleanupPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CleanupPolicy"
+          }
+        },
+        "cleanupRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CleanupRun"
+          }
+        },
+        "cleanupEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CleanupEntry"
+          }
+        },
+        "mediaAliases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MediaAlias"
+          }
+        },
+        "publicationRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PublicationRevision"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "uploadSessions",
+        "uploadParts",
+        "blobObjects",
+        "mediaAssets",
+        "scanJobs",
+        "scanResults",
+        "transcodeProfiles",
+        "transcodeJobs",
+        "renditions",
+        "accessGrants",
+        "cleanupPolicies",
+        "cleanupRuns",
+        "cleanupEntries",
+        "mediaAliases",
+        "publicationRevisions"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "mediadock-public-v2-1",
+      "importedAt": "2031-04-05T06:07:08.000Z",
+      "tenants": [
+        {
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "name": "Public Studio"
+        }
+      ],
+      "uploadSessions": [
+        {
+          "uploadId": "c42a0004-1030-4030-8030-000000000004",
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "fileName": "public.txt",
+          "contentType": "text/plain",
+          "expectedSize": 13,
+          "expectedSha256": "a95925ca0003faeae66ebb99e4e7664f80c4a85e5286ee8577b39d8e37575277",
+          "partSize": 8192,
+          "expiresAt": "2031-04-06T06:07:08.000Z",
+          "state": "OPEN",
+          "assetId": null,
+          "createdAt": "2031-04-05T06:07:08.000Z",
+          "completedAt": null,
+          "sequence": 0
+        }
+      ],
+      "uploadParts": [],
+      "blobObjects": [],
+      "mediaAssets": [],
+      "scanJobs": [],
+      "scanResults": [],
+      "transcodeProfiles": [
+        {
+          "profileId": "c42a0004-1030-4030-8030-000000000002",
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "name": "Public Original",
+          "revision": 1,
+          "operation": "COPY",
+          "prefixBase64": null,
+          "maxAttempts": 3,
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "transcodeJobs": [],
+      "renditions": [],
+      "accessGrants": [],
+      "cleanupPolicies": [
+        {
+          "policyId": "c42a0004-1030-4030-8030-000000000003",
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "revision": 1,
+          "retention": {
+            "expiredUploadSeconds": 3600,
+            "stagingSeconds": 3600,
+            "infectedSourceSeconds": 86400,
+            "failedRenditionSeconds": 86400,
+            "expiredGrantSeconds": 3600,
+            "unreferencedBlobSeconds": 86400
+          },
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "cleanupRuns": [],
+      "cleanupEntries": [],
+      "mediaAliases": [
+        {
+          "aliasId": "c42a0004-1030-4030-8030-000000000006",
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "name": "Public Front Page",
+          "requiredProfileIds": [
+            "c42a0004-1030-4030-8030-000000000002"
+          ],
+          "retentionSeconds": 86400,
+          "currentRevision": 0,
+          "currentPublicationRevisionId": null,
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "publicationRevisions": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenApi": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "const": "3.1.0"
+        },
+        "info": {
+          "type": "object"
+        },
+        "paths": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "UploadSession": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "contentType": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "expectedSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "partSize": {
+          "type": "integer",
+          "minimum": 8192,
+          "maximum": 8388608
+        },
+        "state": {
+          "enum": [
+            "OPEN",
+            "COMPLETING",
+            "COMPLETED",
+            "ABORTED",
+            "EXPIRED",
+            "FAILED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "assetId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "uploadId",
+        "tenantId",
+        "fileName",
+        "contentType",
+        "expectedSize",
+        "expectedSha256",
+        "partSize",
+        "state",
+        "expiresAt",
+        "assetId",
+        "createdAt",
+        "completedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "UploadPart": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "partNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "uploadId",
+        "partNumber",
+        "start",
+        "end",
+        "size",
+        "sha256",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "BlobObject": {
+      "type": "object",
+      "properties": {
+        "blobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "STAGING",
+            "COMMITTED",
+            "QUARANTINED",
+            "DELETING",
+            "DELETED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "deletedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "blobId",
+        "sha256",
+        "size",
+        "state",
+        "createdAt",
+        "deletedAt"
+      ],
+      "additionalProperties": false
+    },
+    "MediaAsset": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceBlobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "contentType": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "QUARANTINED",
+            "SCANNING",
+            "CLEAN",
+            "PROCESSING",
+            "READY",
+            "INFECTED",
+            "FAILED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "readyAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "assetId",
+        "tenantId",
+        "sourceBlobId",
+        "fileName",
+        "contentType",
+        "size",
+        "sha256",
+        "state",
+        "createdAt",
+        "readyAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ScanJob": {
+      "type": "object",
+      "properties": {
+        "scanJobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "CLEAN",
+            "INFECTED",
+            "UNKNOWN",
+            "FAILED"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "scannerRequestId": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "null"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "scanJobId",
+        "assetId",
+        "state",
+        "attempt",
+        "scannerRequestId",
+        "signature",
+        "createdAt",
+        "finishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ScanResult": {
+      "type": "object",
+      "properties": {
+        "scanResultId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "scanJobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "scannerRequestId": {
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "CLEAN",
+            "INFECTED",
+            "UNKNOWN"
+          ]
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "scanResultId",
+        "scanJobId",
+        "scannerRequestId",
+        "state",
+        "receivedAt"
+      ],
+      "additionalProperties": false
+    },
+    "TranscodeProfile": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "operation": {
+          "enum": [
+            "COPY",
+            "PREFIX"
+          ]
+        },
+        "prefixBase64": {
+          "anyOf": [
+            {
+              "type": "string",
+              "contentEncoding": "base64"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "profileId",
+        "tenantId",
+        "name",
+        "revision",
+        "operation",
+        "prefixBase64",
+        "maxAttempts",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "TranscodeJob": {
+      "type": "object",
+      "properties": {
+        "transcodeJobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profileRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "renditionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "transcodeJobId",
+        "assetId",
+        "profileId",
+        "profileRevision",
+        "state",
+        "attempt",
+        "renditionId",
+        "createdAt",
+        "finishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Rendition": {
+      "type": "object",
+      "properties": {
+        "renditionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profileRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "blobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "READY",
+            "FAILED",
+            "DELETED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "deletedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "renditionId",
+        "assetId",
+        "profileId",
+        "profileRevision",
+        "blobId",
+        "size",
+        "sha256",
+        "state",
+        "createdAt",
+        "deletedAt"
+      ],
+      "additionalProperties": false
+    },
+    "AccessGrant": {
+      "type": "object",
+      "properties": {
+        "grantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "renditionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "enum": [
+            "ACTIVE",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publicationRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "grantId",
+        "tenantId",
+        "assetId",
+        "renditionId",
+        "expiresAt",
+        "state",
+        "createdAt",
+        "revokedAt",
+        "publicationRevisionId"
+      ],
+      "additionalProperties": false
+    },
+    "Retention": {
+      "type": "object",
+      "properties": {
+        "expiredUploadSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "stagingSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "infectedSourceSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "failedRenditionSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expiredGrantSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "unreferencedBlobSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "expiredUploadSeconds",
+        "stagingSeconds",
+        "infectedSourceSeconds",
+        "failedRenditionSeconds",
+        "expiredGrantSeconds",
+        "unreferencedBlobSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "CleanupPolicy": {
+      "type": "object",
+      "properties": {
+        "policyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "retention": {
+          "$ref": "#/$defs/Retention"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "policyId",
+        "tenantId",
+        "revision",
+        "retention",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "CleanupRun": {
+      "type": "object",
+      "properties": {
+        "cleanupRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "policyRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "cutoffAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "enum": [
+            "PLANNED",
+            "RUNNING",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "plannedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "deletedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "cleanupRunId",
+        "tenantId",
+        "policyRevision",
+        "cutoffAt",
+        "state",
+        "plannedCount",
+        "deletedCount",
+        "createdAt",
+        "finishedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "CleanupEntry": {
+      "type": "object",
+      "properties": {
+        "cleanupEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "cleanupRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "targetType": {
+          "enum": [
+            "UPLOAD_PARTS",
+            "STAGING_BLOB",
+            "INFECTED_SOURCE",
+            "FAILED_RENDITION",
+            "ACCESS_GRANT",
+            "UNREFERENCED_BLOB"
+          ]
+        },
+        "targetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PLANNED",
+            "DELETING",
+            "DELETED",
+            "SKIPPED",
+            "FAILED"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "cleanupEntryId",
+        "cleanupRunId",
+        "targetType",
+        "targetId",
+        "state",
+        "reason",
+        "createdAt",
+        "finishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "MediaAlias": {
+      "type": "object",
+      "properties": {
+        "aliasId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "requiredProfileIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "retentionSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currentRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currentPublicationRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "aliasId",
+        "tenantId",
+        "name",
+        "requiredProfileIds",
+        "retentionSeconds",
+        "currentRevision",
+        "currentPublicationRevisionId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "PublicationRevision": {
+      "type": "object",
+      "properties": {
+        "publicationRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aliasId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "assetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceBlobId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "renditionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "retainUntil": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "publicationRevisionId",
+        "aliasId",
+        "tenantId",
+        "revision",
+        "assetId",
+        "sourceBlobId",
+        "renditionIds",
+        "createdAt",
+        "retainUntil"
+      ],
+      "additionalProperties": false
+    },
+    "ResolvedSource": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "contentType": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "assetId",
+        "contentType",
+        "size",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "ResolvedRendition": {
+      "type": "object",
+      "properties": {
+        "renditionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profileId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profileRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "renditionId",
+        "profileId",
+        "profileRevision",
+        "size",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "UPLOAD_EXPIRY",
+            "VIRUS_SCAN",
+            "TRANSCODE",
+            "CLEANUP_DELETE",
+            "PUBLICATION_SWITCH"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateType": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "upload.created",
+            "upload.completed",
+            "asset.clean",
+            "asset.infected",
+            "transcode.succeeded",
+            "transcode.failed",
+            "grant.revoked",
+            "cleanup.started",
+            "cleanup.completed",
+            "PUBLICATION_SWITCH"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "uploadId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "assetId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "profileId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "renditionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "grantId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "cleanupRunId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "aliasId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "publicationRevisionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "aggregateId",
+        "aggregateType",
+        "type",
+        "sequence",
+        "occurredAt",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "CreateProfile": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "operation": {
+          "enum": [
+            "COPY",
+            "PREFIX"
+          ]
+        },
+        "prefixBase64": {
+          "anyOf": [
+            {
+              "type": "string",
+              "contentEncoding": "base64"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "tenantId",
+        "name",
+        "operation",
+        "prefixBase64",
+        "maxAttempts"
+      ],
+      "additionalProperties": false
+    },
+    "CreateUpload": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "contentType": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "expectedSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "partSize": {
+          "type": "integer",
+          "minimum": 8192,
+          "maximum": 8388608
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "fileName",
+        "contentType",
+        "expectedSize",
+        "expectedSha256",
+        "partSize",
+        "expiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "UploadRead": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "contentType": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "expectedSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "partSize": {
+          "type": "integer",
+          "minimum": 8192,
+          "maximum": 8388608
+        },
+        "state": {
+          "enum": [
+            "OPEN",
+            "COMPLETING",
+            "COMPLETED",
+            "ABORTED",
+            "EXPIRED",
+            "FAILED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "assetId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UploadPart"
+          }
+        }
+      },
+      "required": [
+        "uploadId",
+        "tenantId",
+        "fileName",
+        "contentType",
+        "expectedSize",
+        "expectedSha256",
+        "partSize",
+        "state",
+        "expiresAt",
+        "assetId",
+        "createdAt",
+        "completedAt",
+        "sequence",
+        "parts"
+      ],
+      "additionalProperties": false
+    },
+    "CreateGrant": {
+      "type": "object",
+      "properties": {
+        "renditionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "publicationRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "renditionId",
+        "expiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "GrantResponse": {
+      "type": "object",
+      "properties": {
+        "grant": {
+          "$ref": "#/$defs/AccessGrant"
+        },
+        "url": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "grant",
+        "url",
+        "token"
+      ],
+      "additionalProperties": false
+    },
+    "CleanupRead": {
+      "type": "object",
+      "properties": {
+        "cleanupRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "policyRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "cutoffAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "enum": [
+            "PLANNED",
+            "RUNNING",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "plannedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "deletedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CleanupEntry"
+          }
+        }
+      },
+      "required": [
+        "cleanupRunId",
+        "tenantId",
+        "policyRevision",
+        "cutoffAt",
+        "state",
+        "plannedCount",
+        "deletedCount",
+        "createdAt",
+        "finishedAt",
+        "sequence",
+        "entries"
+      ],
+      "additionalProperties": false
+    },
+    "AliasResolution": {
+      "type": "object",
+      "properties": {
+        "aliasId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "publicationRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "source": {
+          "$ref": "#/$defs/ResolvedSource"
+        },
+        "renditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResolvedRendition"
+          }
+        }
+      },
+      "required": [
+        "aliasId",
+        "publicationRevisionId",
+        "revision",
+        "source",
+        "renditions"
+      ],
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "tenants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Tenant"
+              }
+            },
+            "uploadSessions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/UploadSession"
+              }
+            },
+            "uploadParts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/UploadPart"
+              }
+            },
+            "blobObjects": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/BlobObject"
+              }
+            },
+            "mediaAssets": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MediaAsset"
+              }
+            },
+            "scanJobs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ScanJob"
+              }
+            },
+            "scanResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ScanResult"
+              }
+            },
+            "transcodeProfiles": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TranscodeProfile"
+              }
+            },
+            "transcodeJobs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TranscodeJob"
+              }
+            },
+            "renditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Rendition"
+              }
+            },
+            "accessGrants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AccessGrant"
+              }
+            },
+            "cleanupPolicies": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CleanupPolicy"
+              }
+            },
+            "cleanupRuns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CleanupRun"
+              }
+            },
+            "cleanupEntries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CleanupEntry"
+              }
+            },
+            "mediaAliases": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MediaAlias"
+              }
+            },
+            "publicationRevisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PublicationRevision"
+              }
+            }
+          },
+          "required": [
+            "tenants",
+            "uploadSessions",
+            "uploadParts",
+            "blobObjects",
+            "mediaAssets",
+            "scanJobs",
+            "scanResults",
+            "transcodeProfiles",
+            "transcodeJobs",
+            "renditions",
+            "accessGrants",
+            "cleanupPolicies",
+            "cleanupRuns",
+            "cleanupEntries",
+            "mediaAliases",
+            "publicationRevisions"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "createTenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "name": "Another Public Studio"
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-tenant"
+        }
+      }
+    },
+    {
+      "id": "createProfile",
+      "method": "POST",
+      "path": "/api/v1/transcode-profiles",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "$ref": "#/$defs/CreateProfile"
+      },
+      "response": {
+        "$ref": "#/$defs/TranscodeProfile"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "name": "Public Prefix",
+          "operation": "PREFIX",
+          "prefixBase64": "UHVibGljOiA=",
+          "maxAttempts": 3
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-profile"
+        }
+      }
+    },
+    {
+      "id": "createProfileRevision",
+      "method": "POST",
+      "path": "/api/v1/transcode-profiles/:profileId/revisions",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "enum": [
+              "COPY",
+              "PREFIX"
+            ]
+          },
+          "prefixBase64": {
+            "anyOf": [
+              {
+                "type": "string",
+                "contentEncoding": "base64"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "operation",
+          "prefixBase64",
+          "maxAttempts"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/TranscodeProfile"
+      },
+      "parameters": [
+        {
+          "name": "profileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "profileId": "c42a0004-1030-4030-8030-000000000002"
+        },
+        "body": {
+          "operation": "COPY",
+          "prefixBase64": null,
+          "maxAttempts": 4
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-profile-revision"
+        }
+      }
+    },
+    {
+      "id": "createCleanupPolicy",
+      "method": "POST",
+      "path": "/api/v1/cleanup-policies",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "retention": {
+            "$ref": "#/$defs/Retention"
+          }
+        },
+        "required": [
+          "tenantId",
+          "retention"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CleanupPolicy"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "retention": {
+            "expiredUploadSeconds": 3600,
+            "stagingSeconds": 3600,
+            "infectedSourceSeconds": 86400,
+            "failedRenditionSeconds": 86400,
+            "expiredGrantSeconds": 3600,
+            "unreferencedBlobSeconds": 86400
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-policy"
+        }
+      }
+    },
+    {
+      "id": "createUpload",
+      "method": "POST",
+      "path": "/api/v1/uploads",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Multipart upload contract",
+      "request": {
+        "$ref": "#/$defs/CreateUpload"
+      },
+      "response": {
+        "$ref": "#/$defs/UploadSession"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "fileName": "public.txt",
+          "contentType": "text/plain",
+          "expectedSize": 13,
+          "expectedSha256": "a95925ca0003faeae66ebb99e4e7664f80c4a85e5286ee8577b39d8e37575277",
+          "partSize": 8192,
+          "expiresAt": "2031-04-06T06:07:08.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-upload"
+        }
+      }
+    },
+    {
+      "id": "getUpload",
+      "method": "GET",
+      "path": "/api/v1/uploads/:uploadId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Multipart upload contract",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/UploadRead"
+      },
+      "parameters": [
+        {
+          "name": "uploadId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "uploadId": "c42a0004-1030-4030-8030-000000000004"
+        }
+      }
+    },
+    {
+      "id": "putPart",
+      "method": "PUT",
+      "path": "/api/v1/uploads/:uploadId/parts/:partNumber",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Multipart upload contract",
+      "request": {
+        "type": "string",
+        "contentMediaType": "application/octet-stream",
+        "minLength": 1
+      },
+      "response": {
+        "$ref": "#/$defs/UploadPart"
+      },
+      "parameters": [
+        {
+          "name": "uploadId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "partNumber",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        {
+          "name": "Content-Range",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^bytes [0-9]+-[0-9]+/[0-9]+$"
+          }
+        },
+        {
+          "name": "X-Part-SHA256",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "uploadId": "c42a0004-1030-4030-8030-000000000004",
+          "partNumber": 1
+        },
+        "body": "Public media\n",
+        "headers": {
+          "Idempotency-Key": "media-example-part",
+          "Content-Type": "application/octet-stream",
+          "Content-Range": "bytes 0-12/13",
+          "X-Part-SHA256": "a95925ca0003faeae66ebb99e4e7664f80c4a85e5286ee8577b39d8e37575277"
+        }
+      }
+    },
+    {
+      "id": "completeUpload",
+      "method": "POST",
+      "path": "/api/v1/uploads/:uploadId/complete",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "partNumber",
+                "sha256",
+                "size"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 10000
+          }
+        },
+        "required": [
+          "parts"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/UploadSession"
+      },
+      "parameters": [
+        {
+          "name": "uploadId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "uploadId": "c42a0004-1030-4030-8030-000000000004"
+        },
+        "body": {
+          "parts": [
+            {
+              "partNumber": 1,
+              "sha256": "a95925ca0003faeae66ebb99e4e7664f80c4a85e5286ee8577b39d8e37575277",
+              "size": 13
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-complete"
+        }
+      }
+    },
+    {
+      "id": "abortUpload",
+      "method": "POST",
+      "path": "/api/v1/uploads/:uploadId/abort",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Multipart upload contract",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/UploadSession"
+      },
+      "parameters": [
+        {
+          "name": "uploadId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "uploadId": "c42a0004-1030-4030-8030-000000000004"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "media-example-abort"
+        }
+      }
+    },
+    {
+      "id": "getAsset",
+      "method": "GET",
+      "path": "/api/v1/assets/:assetId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Public HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/MediaAsset"
+      },
+      "parameters": [
+        {
+          "name": "assetId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "assetId": "c42a0004-1030-4030-8030-000000000005"
+        }
+      }
+    },
+    {
+      "id": "listRenditions",
+      "method": "GET",
+      "path": "/api/v1/assets/:assetId/renditions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Public HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Rendition"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "assetId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "assetId": "c42a0004-1030-4030-8030-000000000005"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "createGrant",
+      "method": "POST",
+      "path": "/api/v1/assets/:assetId/access-grants",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Temporary access contract",
+      "request": {
+        "$ref": "#/$defs/CreateGrant"
+      },
+      "response": {
+        "$ref": "#/$defs/GrantResponse"
+      },
+      "parameters": [
+        {
+          "name": "assetId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "assetId": "c42a0004-1030-4030-8030-000000000005"
+        },
+        "body": {
+          "renditionId": null,
+          "expiresAt": "2031-04-05T06:17:08.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-grant"
+        }
+      }
+    },
+    {
+      "id": "revokeGrant",
+      "method": "POST",
+      "path": "/api/v1/access-grants/:grantId/revoke",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Temporary access contract",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/AccessGrant"
+      },
+      "parameters": [
+        {
+          "name": "grantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "grantId": "c42a0004-1030-4030-8030-000000000007"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "media-example-revoke"
+        }
+      }
+    },
+    {
+      "id": "getMedia",
+      "method": "GET",
+      "path": "/media/:grantId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Temporary access contract",
+      "requestBody": "none",
+      "response": {
+        "type": "string",
+        "contentMediaType": "application/octet-stream"
+      },
+      "parameters": [
+        {
+          "name": "grantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "token",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "Range",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "pattern": "^bytes=(?:[0-9]+-[0-9]*|-[0-9]+)$"
+          }
+        },
+        {
+          "name": "If-None-Match",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "grantId": "c42a0004-1030-4030-8030-000000000007"
+        },
+        "query": {
+          "token": "public-example-token"
+        },
+        "headers": {
+          "Range": "bytes=0-3"
+        }
+      },
+      "successStatuses": [
+        200,
+        206,
+        304
+      ],
+      "successResponses": {
+        "206": {
+          "response": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream"
+          }
+        },
+        "304": {
+          "description": "No body; matching ETag"
+        }
+      },
+      "responseHeaders": {
+        "Content-Type": {
+          "type": "string"
+        },
+        "Content-Length": {
+          "type": "string"
+        },
+        "ETag": {
+          "type": "string"
+        },
+        "Accept-Ranges": {
+          "const": "bytes"
+        },
+        "Content-Range": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "id": "headMedia",
+      "method": "HEAD",
+      "path": "/media/:grantId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Temporary access contract",
+      "requestBody": "none",
+      "response": {
+        "type": "null"
+      },
+      "parameters": [
+        {
+          "name": "grantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "token",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "Range",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "pattern": "^bytes=(?:[0-9]+-[0-9]*|-[0-9]+)$"
+          }
+        },
+        {
+          "name": "If-None-Match",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "grantId": "c42a0004-1030-4030-8030-000000000007"
+        },
+        "query": {
+          "token": "public-example-token"
+        }
+      },
+      "successStatuses": [
+        200,
+        206,
+        304
+      ],
+      "successResponses": {
+        "200": {
+          "description": "No body; full representation headers"
+        },
+        "206": {
+          "description": "No body; range representation headers"
+        },
+        "304": {
+          "description": "No body; matching ETag"
+        }
+      },
+      "responseHeaders": {
+        "Content-Type": {
+          "type": "string"
+        },
+        "Content-Length": {
+          "type": "string"
+        },
+        "ETag": {
+          "type": "string"
+        },
+        "Accept-Ranges": {
+          "const": "bytes"
+        },
+        "Content-Range": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "id": "recordScanResult",
+      "method": "POST",
+      "path": "/api/v1/scanner/results",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "scanJobId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "scannerRequestId": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "CLEAN",
+              "INFECTED",
+              "UNKNOWN"
+            ]
+          },
+          "signature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "scanJobId",
+          "scannerRequestId",
+          "state",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ScanResult"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "scanJobId": "c42a0004-1030-4030-8030-000000000008",
+          "scannerRequestId": "public-scan-request",
+          "state": "CLEAN",
+          "signature": null
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-scan"
+        }
+      }
+    },
+    {
+      "id": "reconcileScan",
+      "method": "POST",
+      "path": "/api/v1/scan-jobs/:scanJobId/reconcile",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Virus scan gate",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ScanJob"
+      },
+      "parameters": [
+        {
+          "name": "scanJobId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "scanJobId": "c42a0004-1030-4030-8030-000000000008"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "media-example-reconcile"
+        }
+      }
+    },
+    {
+      "id": "createCleanupRun",
+      "method": "POST",
+      "path": "/api/v1/cleanup-runs",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "policyRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "cutoffAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "policyRevision",
+          "cutoffAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CleanupRun"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "policyRevision": 1,
+          "cutoffAt": "2031-04-05T06:07:08.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-cleanup"
+        }
+      }
+    },
+    {
+      "id": "getCleanupRun",
+      "method": "GET",
+      "path": "/api/v1/cleanup-runs/:cleanupRunId",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/CleanupRead"
+      },
+      "parameters": [
+        {
+          "name": "cleanupRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "cleanupRunId": "c42a0004-1030-4030-8030-000000000009"
+        }
+      }
+    },
+    {
+      "id": "createAlias",
+      "method": "POST",
+      "path": "/api/v1/media-aliases",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "requiredProfileIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          "retentionSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "tenantId",
+          "name",
+          "requiredProfileIds",
+          "retentionSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "$ref": "#/$defs/MediaAlias"
+          }
+        },
+        "required": [
+          "alias"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0004-1030-4030-8030-000000000001",
+          "name": "Public Feature",
+          "requiredProfileIds": [
+            "c42a0004-1030-4030-8030-000000000002"
+          ],
+          "retentionSeconds": 86400
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-alias"
+        }
+      }
+    },
+    {
+      "id": "publishAlias",
+      "method": "POST",
+      "path": "/api/v1/media-aliases/:aliasId/publish",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "assetId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "$ref": "#/$defs/MediaAlias"
+          },
+          "revision": {
+            "$ref": "#/$defs/PublicationRevision"
+          }
+        },
+        "required": [
+          "alias",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "aliasId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "aliasId": "c42a0004-1030-4030-8030-000000000006"
+        },
+        "body": {
+          "expectedRevision": 0,
+          "assetId": "c42a0004-1030-4030-8030-000000000005"
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-publish"
+        }
+      }
+    },
+    {
+      "id": "getAlias",
+      "method": "GET",
+      "path": "/api/v1/media-aliases/:aliasId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "$ref": "#/$defs/MediaAlias"
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/PublicationRevision"
+            }
+          }
+        },
+        "required": [
+          "alias",
+          "revisions"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "aliasId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "aliasId": "c42a0004-1030-4030-8030-000000000006"
+        }
+      }
+    },
+    {
+      "id": "resolveAlias",
+      "method": "GET",
+      "path": "/api/v1/media-aliases/:aliasId/resolve",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/AliasResolution"
+      },
+      "parameters": [
+        {
+          "name": "aliasId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "aliasId": "c42a0004-1030-4030-8030-000000000006"
+        }
+      }
+    },
+    {
+      "id": "createAliasGrant",
+      "method": "POST",
+      "path": "/api/v1/media-aliases/:aliasId/access-grants",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "renditionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "renditionId",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/GrantResponse"
+      },
+      "parameters": [
+        {
+          "name": "aliasId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "aliasId": "c42a0004-1030-4030-8030-000000000006"
+        },
+        "body": {
+          "renditionId": null,
+          "expiresAt": "2031-04-05T06:17:08.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "media-example-alias-grant"
+        }
+      }
+    },
+    {
+      "id": "snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Seed and snapshot",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Snapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — HTTP contract",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/OpenApi"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "productionUi",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "type": "string",
+        "minLength": 1,
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "uploadSessions"
+          ],
+          "match": {
+            "uploadId": "c42a0004-1030-4030-8030-000000000004",
+            "state": "OPEN",
+            "expectedSha256": "a95925ca0003faeae66ebb99e4e7664f80c4a85e5286ee8577b39d8e37575277"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "transcodeProfiles"
+          ],
+          "match": {
+            "profileId": "c42a0004-1030-4030-8030-000000000002",
+            "operation": "COPY"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "cleanupPolicies"
+          ],
+          "match": {
+            "policyId": "c42a0004-1030-4030-8030-000000000003",
+            "revision": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "mediaAliases"
+          ],
+          "match": {
+            "aliasId": "c42a0004-1030-4030-8030-000000000006",
+            "requiredProfileIds": [
+              "c42a0004-1030-4030-8030-000000000002"
+            ]
+          }
+        }
+      ],
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getUpload",
+      "params": {
+        "uploadId": "c42a0004-1030-4030-8030-000000000004"
+      },
+      "expectBody": {
+        "uploadId": "c42a0004-1030-4030-8030-000000000004",
+        "tenantId": "c42a0004-1030-4030-8030-000000000001",
+        "state": "OPEN",
+        "parts": []
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createProfile",
+      "body": {
+        "tenantId": "c42a0004-1030-4030-8030-000000000001",
+        "name": "Smoke Public Copy",
+        "operation": "COPY",
+        "prefixBase64": null,
+        "maxAttempts": 2
+      },
+      "headers": {
+        "Idempotency-Key": "media-smoke-profile"
+      },
+      "capture": {
+        "newProfileId": [
+          "profileId"
+        ]
+      },
+      "expectBody": {
+        "tenantId": "c42a0004-1030-4030-8030-000000000001",
+        "name": "Smoke Public Copy",
+        "revision": 1,
+        "operation": "COPY",
+        "prefixBase64": null
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "transcodeProfiles"
+          ],
+          "match": {
+            "profileId": "${newProfileId}",
+            "tenantId": "c42a0004-1030-4030-8030-000000000001",
+            "maxAttempts": 2
+          }
+        }
+      ],
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createAlias",
+      "body": {
+        "tenantId": "c42a0004-1030-4030-8030-000000000001",
+        "name": "Smoke Alias",
+        "requiredProfileIds": [
+          "${newProfileId}"
+        ],
+        "retentionSeconds": 120
+      },
+      "headers": {
+        "Idempotency-Key": "media-smoke-alias"
+      },
+      "capture": {
+        "newAliasId": [
+          "alias",
+          "aliasId"
+        ]
+      },
+      "expectBody": {
+        "alias": {
+          "currentRevision": 0,
+          "currentPublicationRevisionId": null
+        }
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getAlias",
+      "params": {
+        "aliasId": "${newAliasId}"
+      },
+      "expectBody": {
+        "alias": {
+          "aliasId": "${newAliasId}",
+          "name": "Smoke Alias",
+          "requiredProfileIds": [
+            "${newProfileId}"
+          ]
+        },
+        "revisions": []
+      },
+      "expectStatus": 200
+    }
+  ],
+  "notes": [
+    "V2 public wire clarification (new protocol, not a claim about the original specification): object schemas are closed; server-generated identities, counters and timestamps are omitted from creation inputs. Empty command bodies are {}. Tenant is exactly {tenantId,name}; no createdAt is added to it.",
+    "V2 public wire clarification: snapshot is exactly {schemaVersion:1,resources,work,events}; every listed collection is complete and sorted lexicographically by its public identity (composite identities by listed component order). Manager resource collections extend resources. Snapshot requires Authorization: Bearer ADMIN_TOKEN. Health is {status:\"ok\"}; production UI is HTML at /. Error.details is exactly {}. DomainEvent uses the fixed redacted envelope declared in schemas; payload contains only the published resource references/state/digests, never credentials or raw sensitive content.",
+    "V2 public wire clarification: seed is metadata, validated atomically including references and invariants; missing required fields are errors, not adapter defaults. Seed replay follows the original version+canonical digest no-op rule. JSON schema validates wire shape; business checks such as uniqueness, reference ownership, ordering, digest correctness and CAS remain implementation responsibilities.",
+    "Every listed operation has an independent public request example. Examples containing resource IDs from later lifecycle stages illustrate wire shape, not a promise that they can all be called in isolation. Only smoke is an executable ordered scenario; it verifies real seed/read and write/read behavior, not full business acceptance.",
+    "V2 public wire clarification: upload parts are numbered from 1 and complete accepts {parts:[{partNumber,sha256,size}]}. Upload GET is the UploadSession fields plus complete sorted parts. Completion returns UploadSession with its assetId; asset and scan state are read through their own public resources. The seed imports metadata only: it cannot create physical bytes, READY assets/renditions or aliases pointing at READY publication content.",
+    "V2 public wire clarification: TranscodeProfile creation assigns revision 1 and a fresh profileId; a new revision of an existing profile uses the added POST /api/v1/transcode-profiles/:profileId/revisions route. COPY requires prefixBase64:null; PREFIX requires valid canonical Base64 (empty prefix allowed). Profile revisions are immutable; jobs freeze the revision applicable when the asset passes CLEAN.",
+    "V2 public wire clarification: CleanupPolicy is versioned per tenant; POST creates the next revision with the fixed six retention-second fields. CleanupEntry has a stable cleanupEntryId and refers to one public target identity, never a path. Cleanup GET is CleanupRun plus its sorted entries. Tenant ownership and all live references are rechecked transactionally before deletion.",
+    "V2 privacy conflict resolution: the original Exact public shapes includes ScanJob.signature, but Virus scan gate forbids public persisted signatures. V2 keeps that field for shape compatibility and requires null in all public outputs and seeds. The scanner result input may carry a signature privately; ScanResult exposes only IDs, state and receivedAt. No scanner payload/signature reaches snapshot/events.",
+    "V2 Manager wire clarification: the Manager supplied behavior but no routes or object fields. The declared media-aliases create/publish/get/resolve/access-grants routes and MediaAlias/PublicationRevision schemas are new public wire contracts. requiredProfileIds are frozen, deduplicated and UUID-sorted at creation. Publish CAS checks expectedRevision, increments from 0, captures one READY clean asset and its required READY renditions atomically, and records retainUntil=publication time+alias.retentionSeconds. The current revision is retained regardless of that deadline; old revisions remain retained through the deadline and while any grant or stream references their bytes.",
+    "V2 Manager wire clarification: publish returns {alias,revision}; alias GET returns {alias,revisions}; resolve returns one immutable source/rendition digest set and never bytes from mixed revisions. Direct asset grant input may pin publicationRevisionId; alias grant always pins the resolved current publication. AccessGrant adds nullable publicationRevisionId, null only for direct non-publication grants. Publish conflicts use 409 PUBLICATION_REVISION_CONFLICT; missing/ineligible content uses 409 ASSET_QUARANTINED; absent resources/unpublished resolution use 404 NOT_FOUND. PUBLICATION_SWITCH is the exact new Work kind and Event type.",
+    "V2 transport clarification: media GET emits raw bytes (not a JSON string or base64); HEAD emits no body with the equivalent headers. Full/range/not-modified success statuses are 200/206/304; Range failure uses 416 with Content-Range bytes */size. ETag is the quoted lowercase SHA-256; media response schemas describe the byte-string seam. Capability HMAC input is UTF-8 grantId + LF + expiresAt and HMAC-SHA256 with GRANT_SIGNING_KEY, encoded unpadded base64url; verification is constant-time. This previously unspecified byte encoding is a public V2 convention.",
+    "The public seed includes a tenant, OPEN metadata-only upload, profile, cleanup policy and unpublished alias. The smoke checks these reads and independent profile/alias creation; it does not claim virus scanning, streaming, cleanup, publication CAS, recovery or performance acceptance. All 21 README routes plus the explicit Manager wire routes are declared.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {}
+}

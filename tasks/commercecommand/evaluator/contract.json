@@ -1,0 +1,63 @@
+{
+  "seedKeys": [
+    "tenants", "buyers", "products", "offerVersions", "inventoryPools",
+    "orders", "orderLines", "inventoryHolds", "paymentAttempts",
+    "fulfillmentPlans", "entitlementGrants", "ledgerEntries",
+    "notificationDeliveries", "sellerAllocations", "sellerSettlements",
+    "commerceDisputes", "settlementAdjustments"
+  ],
+  "publicPaths": [
+    "/api/v1/tenants", "/api/v1/products", "/api/v1/offer-versions",
+    "/api/v1/inventory-pools/:inventoryPoolId/adjustments",
+    "/api/v1/orders/quotes", "/api/v1/orders", "/api/v1/orders/:orderId",
+    "/api/v1/orders/:orderId/checkout", "/api/v1/orders/:orderId/cancel",
+    "/api/v1/orders/:orderId/refunds", "/api/v1/payment-provider/callbacks",
+    "/api/v1/payment-attempts/:paymentAttemptId/reconcile",
+    "/api/v1/fulfillment-plans/:fulfillmentPlanId/complete",
+    "/api/v1/entitlement-grants/:entitlementGrantId/revoke",
+    "/api/v1/ledger", "/api/v1/events", "/api/v1/work", "/api/v1/notifications",
+    "/api/v1/orders/:orderId/seller-allocations", "/api/v1/seller-settlements",
+    "/api/v1/seller-settlements/:sellerSettlementId/close",
+    "/api/v1/commerce-disputes", "/api/v1/commerce-disputes/:commerceDisputeId/resolve",
+    "/api/v1/settlement-adjustments", "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"buyers","shape":"Buyer","sort":["buyerId"]},
+      {"key":"products","shape":"Product","sort":["productId"]},
+      {"key":"offerVersions","shape":"OfferVersion","sort":["productId","version"]},
+      {"key":"inventoryPools","shape":"InventoryPool","sort":["inventoryPoolId"]},
+      {"key":"orders","shape":"Order","sort":["orderId"]},
+      {"key":"orderLines","shape":"OrderLine","sort":["orderId","orderLineId"]},
+      {"key":"inventoryHolds","shape":"InventoryHold","sort":["orderLineId","inventoryPoolId"]},
+      {"key":"paymentAttempts","shape":"PaymentAttempt","sort":["paymentAttemptId"]},
+      {"key":"fulfillmentPlans","shape":"FulfillmentPlan","sort":["fulfillmentPlanId"]},
+      {"key":"entitlementGrants","shape":"EntitlementGrant","sort":["entitlementGrantId"]},
+      {"key":"ledgerEntries","shape":"LedgerEntry","sort":["journalId","entryId"]},
+      {"key":"notificationDeliveries","shape":"NotificationDelivery","sort":["orderId","aggregateSequence"]}
+    ],
+    "managerResources": [
+      {"key":"sellerAllocations","shape":"SellerAllocation","sort":["orderLineId","sellerId"]},
+      {"key":"sellerSettlements","shape":"SellerSettlement","sort":["sellerId","periodStart","sellerSettlementId"]},
+      {"key":"commerceDisputes","shape":"CommerceDispute","sort":["commerceDisputeId"]},
+      {"key":"settlementAdjustments","shape":"SettlementAdjustment","sort":["settlementAdjustmentId"]}
+    ]
+  },
+  "workKinds": {
+    "v1": ["QUOTE_EXPIRY", "PAYMENT_RECONCILIATION", "FULFILLMENT", "ENTITLEMENT_GRANT", "ENTITLEMENT_REVOCATION"],
+    "manager": ["SELLER_SETTLEMENT_CLOSE", "DISPUTE_RECONCILIATION", "SETTLEMENT_ADJUSTMENT"]
+  },
+  "perfScenarios": [
+    {"id":"quote-read-mix"},
+    {"id":"checkout-contention"},
+    {"id":"inventory-hotspot"},
+    {"id":"payment-unknown-reconcile"},
+    {"id":"fulfillment-drain"},
+    {"id":"notification-unknown-ack"},
+    {"id":"entitlement-revocation-storm"},
+    {"id":"seller-settlement-close"},
+    {"id":"refund-dispute-race"},
+    {"id":"full-catastrophe-recovery"}
+  ]
+}

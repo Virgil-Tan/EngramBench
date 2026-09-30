@@ -1,0 +1,2588 @@
+{
+  "taskId": "geopulse",
+  "title": "GeoPulse",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Device"
+          }
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Region"
+          }
+        },
+        "regionVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegionVersion"
+          }
+        },
+        "locationEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LocationEvent"
+          }
+        },
+        "memberships": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Membership"
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Transition"
+          }
+        },
+        "regionBundles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegionBundle"
+          }
+        },
+        "regionBundleRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegionBundleRevision"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "devices",
+        "regions",
+        "regionVersions",
+        "locationEvents",
+        "memberships",
+        "transitions",
+        "regionBundles",
+        "regionBundleRevisions"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "geopulse-public-v2-1",
+      "importedAt": "2031-04-05T06:07:08.000Z",
+      "tenants": [
+        {
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "name": "Public Cartography"
+        }
+      ],
+      "devices": [
+        {
+          "deviceId": "c42a0003-1030-4030-8030-000000000002",
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "externalRef": "public-device",
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "regions": [
+        {
+          "regionId": "c42a0003-1030-4030-8030-000000000003",
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "name": "Public Square",
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "regionVersions": [
+        {
+          "regionVersionId": "c42a0003-1030-4030-8030-000000000004",
+          "regionId": "c42a0003-1030-4030-8030-000000000003",
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "revision": 1,
+          "effectiveFrom": "2031-04-05T06:07:08.000Z",
+          "effectiveTo": null,
+          "polygon": [
+            [
+              10,
+              20
+            ],
+            [
+              11,
+              20
+            ],
+            [
+              11,
+              21
+            ],
+            [
+              10,
+              21
+            ],
+            [
+              10,
+              20
+            ]
+          ],
+          "boundaryToleranceMeters": 0,
+          "dwellSeconds": 30,
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "locationEvents": [],
+      "memberships": [],
+      "transitions": [],
+      "regionBundles": [
+        {
+          "bundleId": "c42a0003-1030-4030-8030-000000000005",
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "name": "Public Atlas",
+          "currentRevision": 1,
+          "currentBundleRevisionId": "c42a0003-1030-4030-8030-000000000006",
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "regionBundleRevisions": [
+        {
+          "bundleRevisionId": "c42a0003-1030-4030-8030-000000000006",
+          "bundleId": "c42a0003-1030-4030-8030-000000000005",
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "revision": 1,
+          "regionVersionIds": [
+            "c42a0003-1030-4030-8030-000000000004"
+          ],
+          "effectiveFrom": "2031-04-05T06:07:08.000Z",
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ]
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenApi": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "const": "3.1.0"
+        },
+        "info": {
+          "type": "object"
+        },
+        "paths": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Device": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "deviceId",
+        "tenantId",
+        "externalRef",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Region": {
+      "type": "object",
+      "properties": {
+        "regionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "regionId",
+        "tenantId",
+        "name",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RegionVersion": {
+      "type": "object",
+      "properties": {
+        "regionVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveTo": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "polygon": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180,
+                "multipleOf": 0.000001
+              },
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90,
+                "multipleOf": 0.000001
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "minItems": 4,
+          "maxItems": 10001
+        },
+        "boundaryToleranceMeters": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "dwellSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "regionVersionId",
+        "regionId",
+        "tenantId",
+        "revision",
+        "effectiveFrom",
+        "effectiveTo",
+        "polygon",
+        "boundaryToleranceMeters",
+        "dwellSeconds",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "LocationEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "multipleOf": 0.000001
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "multipleOf": 0.000001
+        },
+        "accuracyMeters": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "bundleRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "deviceId",
+        "deviceSequence",
+        "observedAt",
+        "receivedAt",
+        "longitude",
+        "latitude",
+        "accuracyMeters",
+        "bundleRevisionId"
+      ],
+      "additionalProperties": false
+    },
+    "Membership": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "regionVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "OUTSIDE",
+            "INSIDE",
+            "BOUNDARY"
+          ]
+        },
+        "enteredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "lastDeviceSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "watermark": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "bundleRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "deviceId",
+        "regionId",
+        "regionVersionId",
+        "state",
+        "enteredAt",
+        "lastObservedAt",
+        "lastDeviceSequence",
+        "watermark",
+        "revision",
+        "bundleRevisionId"
+      ],
+      "additionalProperties": false
+    },
+    "Transition": {
+      "type": "object",
+      "properties": {
+        "transitionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "regionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "regionVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "type": {
+          "enum": [
+            "ENTER",
+            "EXIT",
+            "DWELL"
+          ]
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "sourceEventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "bundleRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "transitionId",
+        "tenantId",
+        "deviceId",
+        "regionId",
+        "regionVersionId",
+        "type",
+        "observedAt",
+        "sourceEventId",
+        "sequence",
+        "bundleRevisionId"
+      ],
+      "additionalProperties": false
+    },
+    "RegionBundle": {
+      "type": "object",
+      "properties": {
+        "bundleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "currentRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currentBundleRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "bundleId",
+        "tenantId",
+        "name",
+        "currentRevision",
+        "currentBundleRevisionId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RegionBundleRevision": {
+      "type": "object",
+      "properties": {
+        "bundleRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "bundleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "regionVersionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "minItems": 1,
+          "maxItems": 10000,
+          "uniqueItems": true
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "bundleRevisionId",
+        "bundleId",
+        "tenantId",
+        "revision",
+        "regionVersionIds",
+        "effectiveFrom",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "PointQuery": {
+      "type": "object",
+      "properties": {
+        "queryId": {
+          "type": "string"
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "multipleOf": 0.000001
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "multipleOf": 0.000001
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "queryId",
+        "longitude",
+        "latitude",
+        "at"
+      ],
+      "additionalProperties": false
+    },
+    "QueryResult": {
+      "type": "object",
+      "properties": {
+        "bundleRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "queryId": {
+                "type": "string"
+              },
+              "matches": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "regionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "regionVersionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    }
+                  },
+                  "required": [
+                    "regionId",
+                    "regionVersionId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "queryId",
+              "matches"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "bundleRevisionId",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "LOCATION_EVALUATION",
+            "LATE_REPLAY",
+            "BUNDLE_REEVALUATION"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateType": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "location.accepted",
+            "membership.entered",
+            "membership.exited",
+            "membership.dwelled",
+            "location.late_ignored",
+            "region_bundle.published",
+            "region_bundle.rolled_back"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "deviceId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "regionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "regionVersionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "bundleId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "bundleRevisionId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "transitionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "aggregateId",
+        "aggregateType",
+        "type",
+        "sequence",
+        "occurredAt",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "CreateRegionVersion": {
+      "type": "object",
+      "properties": {
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveTo": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "polygon": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180,
+                "multipleOf": 0.000001
+              },
+              {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90,
+                "multipleOf": 0.000001
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "minItems": 4,
+          "maxItems": 10001
+        },
+        "boundaryToleranceMeters": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "dwellSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "effectiveFrom",
+        "effectiveTo",
+        "polygon",
+        "boundaryToleranceMeters",
+        "dwellSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "IngestEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "multipleOf": 0.000001
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "multipleOf": 0.000001
+        },
+        "accuracyMeters": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "bundleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "deviceId",
+        "deviceSequence",
+        "observedAt",
+        "longitude",
+        "latitude",
+        "accuracyMeters"
+      ],
+      "additionalProperties": false
+    },
+    "RegionRead": {
+      "type": "object",
+      "properties": {
+        "regionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegionVersion"
+          }
+        }
+      },
+      "required": [
+        "regionId",
+        "tenantId",
+        "name",
+        "createdAt",
+        "versions"
+      ],
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "tenants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Tenant"
+              }
+            },
+            "devices": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Device"
+              }
+            },
+            "regions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Region"
+              }
+            },
+            "regionVersions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RegionVersion"
+              }
+            },
+            "locationEvents": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/LocationEvent"
+              }
+            },
+            "memberships": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Membership"
+              }
+            },
+            "transitions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Transition"
+              }
+            },
+            "regionBundles": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RegionBundle"
+              }
+            },
+            "regionBundleRevisions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RegionBundleRevision"
+              }
+            }
+          },
+          "required": [
+            "tenants",
+            "devices",
+            "regions",
+            "regionVersions",
+            "locationEvents",
+            "memberships",
+            "transitions",
+            "regionBundles",
+            "regionBundleRevisions"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "createTenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "name": "Public Tenant"
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-tenant"
+        }
+      }
+    },
+    {
+      "id": "createDevice",
+      "method": "POST",
+      "path": "/api/v1/devices",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "externalRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "tenantId",
+          "externalRef"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Device"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "externalRef": "new-device"
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-device"
+        }
+      }
+    },
+    {
+      "id": "createRegion",
+      "method": "POST",
+      "path": "/api/v1/regions",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Region"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "name": "Second Public Region"
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-region"
+        }
+      }
+    },
+    {
+      "id": "createRegionVersion",
+      "method": "POST",
+      "path": "/api/v1/regions/:regionId/versions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Domain and invariants",
+      "request": {
+        "$ref": "#/$defs/CreateRegionVersion"
+      },
+      "response": {
+        "$ref": "#/$defs/RegionVersion"
+      },
+      "parameters": [
+        {
+          "name": "regionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "regionId": "c42a0003-1030-4030-8030-000000000003"
+        },
+        "body": {
+          "effectiveFrom": "2032-01-01T00:00:00.000Z",
+          "effectiveTo": null,
+          "polygon": [
+            [
+              10,
+              20
+            ],
+            [
+              11,
+              20
+            ],
+            [
+              11,
+              21
+            ],
+            [
+              10,
+              21
+            ],
+            [
+              10,
+              20
+            ]
+          ],
+          "boundaryToleranceMeters": 1,
+          "dwellSeconds": 60
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-version"
+        }
+      }
+    },
+    {
+      "id": "getRegion",
+      "method": "GET",
+      "path": "/api/v1/regions/:regionId",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/RegionRead"
+      },
+      "parameters": [
+        {
+          "name": "regionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "regionId": "c42a0003-1030-4030-8030-000000000003"
+        }
+      }
+    },
+    {
+      "id": "ingestEvent",
+      "method": "POST",
+      "path": "/api/v1/location-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Required behavior and HTTP surface",
+      "request": {
+        "$ref": "#/$defs/IngestEvent"
+      },
+      "response": {
+        "$ref": "#/$defs/LocationEvent"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "eventId": "c42a0003-1030-4030-8030-000000000010",
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "deviceId": "c42a0003-1030-4030-8030-000000000002",
+          "deviceSequence": 1,
+          "observedAt": "2031-04-05T06:07:08.000Z",
+          "longitude": 10.5,
+          "latitude": 20.5,
+          "accuracyMeters": 0,
+          "bundleId": "c42a0003-1030-4030-8030-000000000005"
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-event"
+        }
+      }
+    },
+    {
+      "id": "ingestBatch",
+      "method": "POST",
+      "path": "/api/v1/location-events/batch",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/IngestEvent"
+            },
+            "minItems": 1,
+            "maxItems": 10000
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LocationEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "events": [
+            {
+              "eventId": "c42a0003-1030-4030-8030-000000000010",
+              "tenantId": "c42a0003-1030-4030-8030-000000000001",
+              "deviceId": "c42a0003-1030-4030-8030-000000000002",
+              "deviceSequence": 1,
+              "observedAt": "2031-04-05T06:07:08.000Z",
+              "longitude": 10.5,
+              "latitude": 20.5,
+              "accuracyMeters": 0,
+              "bundleId": "c42a0003-1030-4030-8030-000000000005"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-batch"
+        }
+      }
+    },
+    {
+      "id": "getMemberships",
+      "method": "GET",
+      "path": "/api/v1/devices/:deviceId/memberships",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Required behavior and HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Membership"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "c42a0003-1030-4030-8030-000000000002"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "getTransitions",
+      "method": "GET",
+      "path": "/api/v1/devices/:deviceId/transitions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Required behavior and HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Transition"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "c42a0003-1030-4030-8030-000000000002"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "queryRegions",
+      "method": "POST",
+      "path": "/api/v1/regions/query",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/PointQuery"
+            },
+            "minItems": 1,
+            "maxItems": 10000
+          },
+          "bundleId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "points"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/QueryResult"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "bundleId": "c42a0003-1030-4030-8030-000000000005",
+          "points": [
+            {
+              "queryId": "public-interior",
+              "longitude": 10.5,
+              "latitude": 20.5,
+              "at": "2031-04-05T06:07:08.000Z"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-query"
+        }
+      }
+    },
+    {
+      "id": "createBundle",
+      "method": "POST",
+      "path": "/api/v1/region-bundles",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "bundle": {
+            "$ref": "#/$defs/RegionBundle"
+          }
+        },
+        "required": [
+          "bundle"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0003-1030-4030-8030-000000000001",
+          "name": "Public Composition"
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-bundle"
+        }
+      }
+    },
+    {
+      "id": "publishBundle",
+      "method": "POST",
+      "path": "/api/v1/region-bundles/:bundleId/publish",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "regionVersionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "minItems": 1,
+            "maxItems": 10000
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "effectiveFrom",
+          "regionVersionIds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "bundle": {
+            "$ref": "#/$defs/RegionBundle"
+          },
+          "revision": {
+            "$ref": "#/$defs/RegionBundleRevision"
+          }
+        },
+        "required": [
+          "bundle",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "bundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "bundleId": "c42a0003-1030-4030-8030-000000000005"
+        },
+        "body": {
+          "expectedRevision": 1,
+          "effectiveFrom": "2032-01-01T00:00:00.000Z",
+          "regionVersionIds": [
+            "c42a0003-1030-4030-8030-000000000004"
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-publish"
+        }
+      }
+    },
+    {
+      "id": "rollbackBundle",
+      "method": "POST",
+      "path": "/api/v1/region-bundles/:bundleId/rollback",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "targetRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "targetRevision",
+          "effectiveFrom"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "bundle": {
+            "$ref": "#/$defs/RegionBundle"
+          },
+          "revision": {
+            "$ref": "#/$defs/RegionBundleRevision"
+          }
+        },
+        "required": [
+          "bundle",
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "bundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "bundleId": "c42a0003-1030-4030-8030-000000000005"
+        },
+        "body": {
+          "expectedRevision": 1,
+          "targetRevision": 1,
+          "effectiveFrom": "2032-02-01T00:00:00.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "geo-example-rollback"
+        }
+      }
+    },
+    {
+      "id": "getBundle",
+      "method": "GET",
+      "path": "/api/v1/region-bundles/:bundleId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "bundle": {
+            "$ref": "#/$defs/RegionBundle"
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RegionBundleRevision"
+            }
+          }
+        },
+        "required": [
+          "bundle",
+          "revisions"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "bundleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "bundleId": "c42a0003-1030-4030-8030-000000000005"
+        }
+      }
+    },
+    {
+      "id": "snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Seed and snapshot",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Snapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — HTTP contract",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/OpenApi"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "productionUi",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "type": "string",
+        "minLength": 1,
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "devices"
+          ],
+          "match": {
+            "deviceId": "c42a0003-1030-4030-8030-000000000002",
+            "tenantId": "c42a0003-1030-4030-8030-000000000001"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "regionVersions"
+          ],
+          "match": {
+            "regionVersionId": "c42a0003-1030-4030-8030-000000000004",
+            "polygon": [
+              [
+                10,
+                20
+              ],
+              [
+                11,
+                20
+              ],
+              [
+                11,
+                21
+              ],
+              [
+                10,
+                21
+              ],
+              [
+                10,
+                20
+              ]
+            ]
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "regionBundleRevisions"
+          ],
+          "match": {
+            "bundleRevisionId": "c42a0003-1030-4030-8030-000000000006",
+            "regionVersionIds": [
+              "c42a0003-1030-4030-8030-000000000004"
+            ]
+          }
+        }
+      ],
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getRegion",
+      "params": {
+        "regionId": "c42a0003-1030-4030-8030-000000000003"
+      },
+      "expectBody": {
+        "regionId": "c42a0003-1030-4030-8030-000000000003",
+        "tenantId": "c42a0003-1030-4030-8030-000000000001",
+        "name": "Public Square"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "versions"
+          ],
+          "match": {
+            "regionVersionId": "c42a0003-1030-4030-8030-000000000004",
+            "revision": 1
+          }
+        }
+      ],
+      "expectStatus": 200
+    },
+    {
+      "operationId": "queryRegions",
+      "body": {
+        "tenantId": "c42a0003-1030-4030-8030-000000000001",
+        "bundleId": "c42a0003-1030-4030-8030-000000000005",
+        "points": [
+          {
+            "queryId": "public-interior",
+            "longitude": 10.5,
+            "latitude": 20.5,
+            "at": "2031-04-05T06:07:08.000Z"
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "geo-smoke-query"
+      },
+      "expectBody": {
+        "bundleRevisionId": "c42a0003-1030-4030-8030-000000000006",
+        "items": [
+          {
+            "queryId": "public-interior",
+            "matches": [
+              {
+                "regionId": "c42a0003-1030-4030-8030-000000000003",
+                "regionVersionId": "c42a0003-1030-4030-8030-000000000004"
+              }
+            ]
+          }
+        ]
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createRegion",
+      "body": {
+        "tenantId": "c42a0003-1030-4030-8030-000000000001",
+        "name": "Smoke Created Region"
+      },
+      "headers": {
+        "Idempotency-Key": "geo-smoke-create"
+      },
+      "capture": {
+        "newRegionId": [
+          "regionId"
+        ]
+      },
+      "expectBody": {
+        "tenantId": "c42a0003-1030-4030-8030-000000000001",
+        "name": "Smoke Created Region"
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getRegion",
+      "params": {
+        "regionId": "${newRegionId}"
+      },
+      "expectBody": {
+        "regionId": "${newRegionId}",
+        "tenantId": "c42a0003-1030-4030-8030-000000000001",
+        "name": "Smoke Created Region",
+        "versions": []
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createTenant",
+      "body": {
+        "name": "Smoke Legacy Spatial Tenant"
+      },
+      "headers": {
+        "Idempotency-Key": "geo-smoke-legacy-tenant"
+      },
+      "capture": {
+        "legacyTenantId": [
+          "tenantId"
+        ]
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createRegion",
+      "body": {
+        "tenantId": "${legacyTenantId}",
+        "name": "Smoke Legacy Square"
+      },
+      "headers": {
+        "Idempotency-Key": "geo-smoke-legacy-region"
+      },
+      "capture": {
+        "legacyRegionId": [
+          "regionId"
+        ]
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createRegionVersion",
+      "params": {
+        "regionId": "${legacyRegionId}"
+      },
+      "body": {
+        "effectiveFrom": "2031-04-05T06:07:08.000Z",
+        "effectiveTo": null,
+        "polygon": [
+          [
+            10,
+            20
+          ],
+          [
+            11,
+            20
+          ],
+          [
+            11,
+            21
+          ],
+          [
+            10,
+            21
+          ],
+          [
+            10,
+            20
+          ]
+        ],
+        "boundaryToleranceMeters": 0,
+        "dwellSeconds": 30
+      },
+      "headers": {
+        "Idempotency-Key": "geo-smoke-legacy-version"
+      },
+      "capture": {
+        "legacyVersionId": [
+          "regionVersionId"
+        ]
+      },
+      "expectBody": {
+        "revision": 1
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "queryRegions",
+      "body": {
+        "tenantId": "${legacyTenantId}",
+        "points": [
+          {
+            "queryId": "public-v1-interior",
+            "longitude": 10.5,
+            "latitude": 20.5,
+            "at": "2031-04-05T06:07:08.000Z"
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "geo-smoke-legacy-query"
+      },
+      "expectBody": {
+        "bundleRevisionId": null,
+        "items": [
+          {
+            "queryId": "public-v1-interior",
+            "matches": [
+              {
+                "regionId": "${legacyRegionId}",
+                "regionVersionId": "${legacyVersionId}"
+              }
+            ]
+          }
+        ]
+      },
+      "expectStatus": 200
+    }
+  ],
+  "notes": [
+    "V2 public wire clarification (new protocol, not a claim about the original specification): object schemas are closed; server-generated identities, counters and timestamps are omitted from creation inputs. Empty command bodies are {}. Tenant is exactly {tenantId,name}; no createdAt is added to it.",
+    "V2 public wire clarification: snapshot is exactly {schemaVersion:1,resources,work,events}; every listed collection is complete and sorted lexicographically by its public identity (composite identities by listed component order). Manager resource collections extend resources. Snapshot requires Authorization: Bearer ADMIN_TOKEN. Health is {status:\"ok\"}; production UI is HTML at /. Error.details is exactly {}. DomainEvent uses the fixed redacted envelope declared in schemas; payload contains only the published resource references/state/digests, never credentials or raw sensitive content.",
+    "V2 public wire clarification: seed is metadata, validated atomically including references and invariants; missing required fields are errors, not adapter defaults. Seed replay follows the original version+canonical digest no-op rule. JSON schema validates wire shape; business checks such as uniqueness, reference ownership, ordering, digest correctness and CAS remain implementation responsibilities.",
+    "Every listed operation has an independent public request example. Examples containing resource IDs from later lifecycle stages illustrate wire shape, not a promise that they can all be called in isolation. Only smoke is an executable ordered scenario; it verifies real seed/read and write/read behavior, not full business acceptance.",
+    "Final-system evaluation policy learning-final-system-2026-09-08.1: when TEST_BARRIER_URL and TEST_BARRIER_TOKEN are set for tests, a Worker POSTs to that URL after its Work claim is durably LEASED and before performing the claimed business effect. The request has Content-Type:application/json and X-Test-Barrier-Token equal to TEST_BARRIER_TOKEN. Its closed JSON is {point:\"worker.claimed\",workId:uuid,kind:LOCATION_EVALUATION|LATE_REPLAY|BUNDLE_REEVALUATION,aggregateId:uuid}; IDs and kind match the public Work row. The Worker waits for HTTP 204 before continuing; a held response permits SIGKILL/replacement observation. This optional test control is disabled when those variables are absent and does not prescribe tables, locks or implementation architecture. It adds observability only and is not retroactive authority to penalize submissions frozen before this revision.",
+    "V2 wire clarification: Device adds externalRef and createdAt; Region adds createdAt. Region GET is the Region fields plus versions sorted by revision. Version creation assigns revision monotonically; effectiveTo is explicit null for an open interval. Batch input is {events:[...]}; response is {items,nextCursor:null} in input order.",
+    "V2 wire clarification: seed adds regionBundles and regionBundleRevisions, and event/membership/transition expose nullable bundleRevisionId. The example includes an independent tenant/device/region/version/bundle graph, not a private test fixture.",
+    "V2 selection clarification: query and event input may specify bundleId. Without it, no published bundle uses the original V1 active RegionVersions at observedAt/point.at and returns bundleRevisionId:null; exactly one published tenant bundle selects it; multiple published bundles require explicit bundleId and otherwise return INVALID_REQUEST. Explicit bundle selection must belong to tenant and have an active published revision. Frozen bundle membership does not waive RegionVersion effective-time validity. A point-query request may not span bundle publication boundaries: return INVALID_REQUEST rather than mix bundle revisions.",
+    "Coordinates retain the original six-decimal constraint; schema multipleOf is a wire constraint, not permission to use floating-point boundary heuristics. Exact-edge BOUNDARY emits no transition. Point query matches inside and exact-boundary points; match arrays are sorted by (regionId,regionVersionId). This inclusion/sort convention is an explicit V2 wire clarification.",
+    "No business or concurrency test is replaced: observedAt selection, late replay, hysteresis, DWELL, CAS, atomic batches and lease fencing remain original requirements. All 13 README routes and 4 Manager routes are declared.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {}
+}

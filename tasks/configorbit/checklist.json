@@ -1,0 +1,16 @@
+{
+  "schemaVersion":1,"personaId":"configorbit-release-owner","taskId":"configorbit",
+  "items":[
+    {"id":"clean-operation","category":"correctness","requirement":"Clean install, repeatable migration, atomic seed, build, API, worker, dispatcher, and production UI work through published commands.","weight":6,"testGates":["H-01"]},
+    {"id":"contract-security","category":"correctness","requirement":"OpenAPI, strict validation, tenant/environment isolation, secret-like value rejection, cursor, seed, and snapshot match the contract.","weight":8,"testGates":["H-02","H-04"]},
+    {"id":"immutable-release","category":"correctness","requirement":"Revision parent fencing, canonical digest, publish, rollout, and rollback preserve immutable history and monotonic generation.","weight":14,"testGates":["H-03","H-04","H-06"]},
+    {"id":"durable-idempotency","category":"correctness","requirement":"Unknown outcome, concurrent replay, two APIs, and restart create one saved response and one release effect.","weight":10,"testGates":["H-05","H-06"]},
+    {"id":"cache-convergence","category":"correctness","requirement":"ETag and generation fences prevent stale 304 or stale re-enable; duplicate/reordered invalidations converge within five seconds.","weight":12,"testGates":["H-06","H-07","H-08"]},
+    {"id":"compatible-migration","category":"correctness","requirement":"All V1 revisions, releases, observations, invalidations, events, work, and replay survive FINAL migration.","weight":8,"testGates":["H-09"]},
+    {"id":"promotion-trains","category":"correctness","requirement":"PromotionTrain freezes ordered stages and advances or compensates across environments without rewriting history under concurrency and recovery.","weight":14,"testGates":["H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three fixed sustained scenarios meet thresholds and preserve every post-load release and cache invariant.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"Project owns substantive unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance gates.","weight":8,"testGates":["H-13"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains ownership, generations, assignment, failure boundaries, and review findings clearly.","weight":4},
+    {"id":"evidence-quality","category":"persona","requirement":"Handoff reports actual commands, metrics, risks, and unrun checks without overclaiming.","weight":6}
+  ]
+}

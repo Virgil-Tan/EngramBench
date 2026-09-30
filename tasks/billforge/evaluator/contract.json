@@ -1,0 +1,41 @@
+{
+  "seedKeys": ["tenants", "customers", "plans", "priceVersions", "subscriptions", "invoices", "paymentIntents", "refunds", "exchangeRateSnapshots", "ledgerAccounts", "ledgerEntries", "settlementRuns"],
+  "publicPaths": [
+    "/api/v1/tenants", "/api/v1/customers", "/api/v1/plans", "/api/v1/price-versions",
+    "/api/v1/subscriptions", "/api/v1/subscriptions/:subscriptionId/change", "/api/v1/subscriptions/:subscriptionId/cancel",
+    "/api/v1/invoices", "/api/v1/invoices/:invoiceId/finalize", "/api/v1/invoices/:invoiceId", "/api/v1/invoices/:invoiceId/ledger",
+    "/api/v1/payment-intents", "/api/v1/payment-intents/:paymentIntentId/reconcile", "/api/v1/provider/webhooks",
+    "/api/v1/payment-intents/:paymentIntentId/refunds", "/api/v1/payment-intents/:paymentIntentId/disputes",
+    "/api/v1/disputes/:disputeId/resolve", "/api/v1/settlements", "/api/v1/settlements/:settlementId/adjustments",
+    "/api/v1/settlements/:settlementId", "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"customers","shape":"Customer","sort":["customerId"]},
+      {"key":"plans","shape":"Plan","sort":["planId"]},
+      {"key":"priceVersions","shape":"PriceVersion","sort":["planId","version"]},
+      {"key":"subscriptions","shape":"Subscription","sort":["subscriptionId"]},
+      {"key":"exchangeRateSnapshots","shape":"ExchangeRateSnapshot","sort":["exchangeRateSnapshotId"]},
+      {"key":"invoices","shape":"Invoice","sort":["invoiceId"]},
+      {"key":"paymentIntents","shape":"PaymentIntent","sort":["paymentIntentId"]},
+      {"key":"refunds","shape":"Refund","sort":["refundId"]},
+      {"key":"ledgerAccounts","shape":"LedgerAccount","sort":["ledgerAccountId"]},
+      {"key":"ledgerEntries","shape":"LedgerEntry","sort":["postingId","ledgerEntryId"]},
+      {"key":"settlementRuns","shape":"SettlementRun","sort":["settlementRunId"]}
+    ],
+    "managerResources": [
+      {"key":"disputes","shape":"Dispute","sort":["disputeId"]},
+      {"key":"adjustments","shape":"Adjustment","sort":["adjustmentId"]}
+    ]
+  },
+  "workKinds": {
+    "v1": ["INVOICE_FINALIZATION", "PAYMENT_CAPTURE", "REFUND_PROCESSING", "SETTLEMENT_CLOSE"],
+    "manager": ["DISPUTE_RESOLUTION"]
+  },
+  "perfScenarios": [
+    {"id":"invoice-generation"},
+    {"id":"payment-reconcile"},
+    {"id":"settlement-recovery"}
+  ]
+}

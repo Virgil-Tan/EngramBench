@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "matches-list" | "match-get" | "statement-batch-create" | "match-create" | "match-confirm" | "match-reject" | "match-reverse" | "statement-line-ignore" | "reconciliation-work" | "match-group-create" | "match-group-get" | "match-group-confirm" | "match-group-reverse" | "domain-events" | "verification-snapshot";

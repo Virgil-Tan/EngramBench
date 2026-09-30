@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "launchpass",
+  "phase": "learning",
+  "environmentProfile": {
+    "catalog": "../../environments/catalog.v1.json",
+    "id": "fullstack-node22-postgres16-chromium",
+    "version": 1,
+    "platform": "linux/arm64"
+  },
+  "runtimeEnv": {
+    "BENCH_POSTGRES_DATABASES": "launchpass launchpass_test",
+    "DATABASE_URL": "postgresql://postgres@127.0.0.1:5432/launchpass",
+    "TEST_DATABASE_URL": "postgresql://postgres@127.0.0.1:5432/launchpass_test",
+    "PORT": "3000",
+    "ADMIN_TOKEN": "launchpass-local-admin-token",
+    "HOLD_TTL_SECONDS": "5",
+    "WAITLIST_HOLD_TTL_SECONDS": "5"
+  },
+  "fixture": {
+    "path": "../../tasks/launchpass/workspace",
+    "commit": "3cfb552ec05b2bf64b9eb9d9afce4c21e9e3b704",
+    "format": "source"
+  },
+  "publicTask": "Build LaunchPass from this intentionally blank Git repository. Use Node.js 22, TypeScript, React, PostgreSQL 16, npm, and the preinstalled Chromium; README.md and AGENTS.md are the exact public contract. Deliver a production backend and real React UI, versioned migrations, deterministic versioned JSON seed import, root OpenAPI 3.1 contract, event administration and discovery, temporary capacity holds, confirmation, release, passive expiry, customer histories, stable validation and errors, and durable idempotency. Correctness must survive restarts and at least two application instances sharing one PostgreSQL database: no oversell, duplicate order, duplicate capacity restoration, or process-local correctness authority. Provide the exact non-interactive commands required by README for migration, seed, development, build, production start, unit tests, real PostgreSQL HTTP integration tests, real Chromium browser E2E, two-instance concurrency tests, performance tests, and the aggregate gate. Meet the published latency and correctness targets, keep the UI accessible and responsive, review and simplify only concrete issues, and finish with accurate architecture, operation, test, performance, and risk documentation. Do not invent product behavior beyond README.md or a later explicit Manager message.",
+  "setup": [],
+  "hiddenTests": [
+    {
+      "id": "project-owned-all",
+      "command": [
+        "npm",
+        "run",
+        "test:all"
+      ],
+      "timeoutMs": 1800000
+    }
+  ],
+  "snapshotExcludes": [
+    ".git",
+    "node_modules",
+    "dist",
+    "coverage",
+    ".cache",
+    "playwright-report",
+    "test-results"
+  ]
+}

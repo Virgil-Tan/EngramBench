@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "mergeboard",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "MB-DOCUMENT-OPS",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Revision zero and every ordered block operation produce one immutable canonical digest."
+      },
+      "privateFailureCodePrefix": "MB_A01_",
+      "publicFeedbackCategory": "document-operations-digest"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "MB-REBASE-CONFLICT",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Stale non-overlap rebases while every overlap conflict is persisted without partial application."
+      },
+      "privateFailureCodePrefix": "MB_A02_",
+      "publicFeedbackCategory": "change-rebase-conflict"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "MB-CLIENT-SEQUENCE",
+        "source": "workspace/README.md#domain-and-v1-behavior",
+        "summary": "Client sequence is branch-local, contiguous and permanently bound to one semantic Change."
+      },
+      "privateFailureCodePrefix": "MB_A03_",
+      "publicFeedbackCategory": "change-client-sequence"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "MB-REVISION-DIFF",
+        "source": "workspace/README.md#public-aggregate-routes",
+        "summary": "Revision, diff and Snapshot provenance agree with independent immutable replay."
+      },
+      "privateFailureCodePrefix": "MB_A04_",
+      "publicFeedbackCategory": "revision-diff-snapshot"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "MB-MERGE-GATE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Branches, preview, captured review gate, merge and stale outcomes preserve captured heads atomically."
+      },
+      "privateFailureCodePrefix": "MB_A05_",
+      "publicFeedbackCategory": "merge-review-gate"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "MB-REFERENCE-MODEL",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Runtime operations, conflicts and diffs equal an independent task-owned reference model."
+      },
+      "privateFailureCodePrefix": "MB_B01_",
+      "publicFeedbackCategory": "merge-reference-model"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "MB-REPLAY-PRECEDENCE",
+        "source": "workspace/README.md#durable-idempotency",
+        "summary": "HTTP replay restores saved output before branch-local Client Sequence semantic resolution."
+      },
+      "privateFailureCodePrefix": "MB_B02_",
+      "publicFeedbackCategory": "change-replay-precedence"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "MB-CONCURRENT-REVISION",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Concurrent same-anchor edits retain gapless committed revision order without duplicate blocks."
+      },
+      "privateFailureCodePrefix": "MB_B03_",
+      "publicFeedbackCategory": "revision-concurrent-order"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "MB-REVIEW-RACE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Captured review policy counts each eligible reviewer once and crosses its threshold once."
+      },
+      "privateFailureCodePrefix": "MB_B04_",
+      "publicFeedbackCategory": "review-threshold-race"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "MB-MERGE-CAS",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Concurrent merge and head movement create one reviewed target revision or one stale outcome."
+      },
+      "privateFailureCodePrefix": "MB_B05_",
+      "publicFeedbackCategory": "merge-head-cas"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "MB-SNAPSHOT-CLAIM",
+        "source": "workspace/README.md#controlled-recovery-barrier",
+        "summary": "A killed Snapshot claimant is reclaimed and its stale lease cannot commit."
+      },
+      "privateFailureCodePrefix": "MB_C01_",
+      "publicFeedbackCategory": "snapshot-claim-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "MB-SNAPSHOT-ASSET",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Crash windows cannot publish missing or partial Snapshot bytes or rewrite a correct digest."
+      },
+      "privateFailureCodePrefix": "MB_C02_",
+      "publicFeedbackCategory": "snapshot-asset-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "MB-EVENT-RETRY",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Unknown acknowledgements preserve Event identity, semantic body and aggregate order including merge events."
+      },
+      "privateFailureCodePrefix": "MB_C03_",
+      "publicFeedbackCategory": "event-merge-order-retry"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "MB-MERGE-SNAPSHOT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "A merged target schedules one recoverable Snapshot task over the merged revision prefix."
+      },
+      "privateFailureCodePrefix": "MB_C04_",
+      "publicFeedbackCategory": "merge-snapshot-recovery"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "MB-UI-V1",
+        "source": "workspace/README.md#real-ui",
+        "summary": "Production Chromium closes V1 edit, replay, conflict, diff, history and refresh flows through visible controls."
+      },
+      "privateFailureCodePrefix": "MB_D01_",
+      "publicFeedbackCategory": "ui-v1-editor"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "MB-UI-MERGE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Production Chromium closes Branch, Merge Request, approval, merge and stale flows against public state."
+      },
+      "privateFailureCodePrefix": "MB_D02_",
+      "publicFeedbackCategory": "ui-branch-review-merge"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "MB-FINAL-CONTRACT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "OpenAPI and one point-in-time FINAL snapshot expose the exact V1 plus Manager resource union."
+      },
+      "privateFailureCodePrefix": "MB_D03_",
+      "publicFeedbackCategory": "contract-branch-snapshot"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "MB-MERGE-LINEAGE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Source operations, preview, target revision, diff, Snapshot and Events form one exact lineage."
+      },
+      "privateFailureCodePrefix": "MB_D04_",
+      "publicFeedbackCategory": "cross-layer-merge-lineage"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "MB-MAIN-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current Document, Branch, revision and leased Snapshot Work survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "MB_E01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "MB-PERF-CHANGE",
+        "source": "workspace/README.md#scenario-non-overlapping-change-apply",
+        "summary": "The exact 64-client Change workload meets its sustained rate, latency and closure invariants."
+      },
+      "privateFailureCodePrefix": "MB_E02_",
+      "publicFeedbackCategory": "perf-change-apply"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "MB-PERF-REVISION",
+        "source": "workspace/README.md#scenario-document-revision-read",
+        "summary": "The exact 64-client revision workload returns immutable digest-valid provenance at target rate."
+      },
+      "privateFailureCodePrefix": "MB_E03_",
+      "publicFeedbackCategory": "perf-revision-read"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "MB-PERF-SNAPSHOT",
+        "source": "workspace/README.md#scenario-snapshot-compaction-recovery",
+        "summary": "Two replacement workers compact exactly one million operations into ten thousand verified Snapshots."
+      },
+      "privateFailureCodePrefix": "MB_E04_",
+      "publicFeedbackCategory": "perf-snapshot-recovery"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 2,
+  "taskId": "mediadock",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "name": "upload-scan-transcode-and-grant-contract",
+      "weight": 30
+    },
+    "B": {
+      "name": "byte-reference-idempotency-and-concurrency",
+      "weight": 25
+    },
+    "C": {
+      "name": "work-cross-store-recovery-and-events",
+      "weight": 20
+    },
+    "D": {
+      "name": "ui-openapi-snapshot-and-publication",
+      "weight": 15
+    },
+    "E": {
+      "name": "durability-and-public-boundaries",
+      "weight": 10
+    }
+  },
+  "specGaps": [],
+  "hardCaps": [
+    {
+      "id": "BUILD_MIGRATION_OR_BOOT",
+      "cap": 25,
+      "publicInvariant": "Published commands and production processes run."
+    },
+    {
+      "id": "BYTE_INTEGRITY_OR_ATOMICITY",
+      "cap": 30,
+      "publicInvariant": "Committed metadata never names missing, partial, or wrong bytes."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Retries and concurrency preserve one response identity and one semantic effect."
+    },
+    {
+      "id": "TENANT_OR_SECRET_ISOLATION",
+      "cap": 35,
+      "publicInvariant": "Tenant data, raw tokens, paths, and physical dedup facts are not disclosed."
+    },
+    {
+      "id": "RECOVERY_OR_REFERENCE_SAFETY",
+      "cap": 40,
+      "publicInvariant": "Lease recovery and cleanup cannot publish stale effects or delete reachable bytes."
+    },
+    {
+      "id": "DURABLE_RESTART",
+      "cap": 35,
+      "publicInvariant": "The final system preserves metadata, bytes, saved responses, Work and Events across process restart."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "冻结 UploadSession 与确定性 multipart ranges",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Complete assembly、whole digest 与 atomic Blob/Asset/Scan",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Scanner gate、UNKNOWN reconcile 与 INFECTED terminal",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Frozen profile fan-out 与 deterministic Rendition bytes",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Capability Grant、HMAC、HEAD/Range、expiry/revoke",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Part/key/bytes identity precedence 与 unknown response",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "64路 complete、content dedup 与tenant non-disclosure",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Scanner duplicate/reordered result 与 asset terminal race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Transcode workers 并发 promotion 与 READY aggregate",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Cleanup frozen candidates 与 live-reference recheck",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Upload complete unknown outcome 与重启可见性",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Durable scan/transcode Work across process replacement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "C-03",
+      "title": "Expired multipart Cleanup Work across process replacement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "C-04",
+      "title": "Pipeline/Cleanup Event unknown ACK",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Production upload, scan, rendition, grant and cleanup UI",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Published Alias read/resolve and production browser shell",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI、point-in-time snapshot 与 secret/path absence",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "D-04",
+      "title": "Publication-pinned Grant bytes survive republish and cleanup",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-01",
+      "title": "Final-system bytes and saved responses survive restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "最大公开 multipart cardinality 与 managed-root 边界",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "多live stream lease 与 Cleanup reachability",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Concurrent Publication CAS 与 PUBLICATION_SWITCH recovery",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

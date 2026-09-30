@@ -1,0 +1,41 @@
+{
+  "kind": "frontal-public-contract-lock",
+  "schemaVersion": 1,
+  "taskId": "configrelay",
+  "files": {
+    "README.md": "d3c3556cca793558253e4f7e3b7fe43c28e9f84c803818a34c5cd335774c4456",
+    "AGENTS.md": "9d6977961f9f04e7dde0c17d8cd5581fbf6dac2761e9f47bacfe87262958c72e",
+    "tsconfig.json": "d7ceb20289b7644cf6b0eb11ca0e1af72e676f0105afd170d7ec315d73e7c80d",
+    "contract/README.md": "1aa3e56b0d3ad7719c94af6025eb8fddcfc26cee213413bec5c1b5be1a6f075a",
+    "contract/check.mjs": "7ac8cf7204d8249fede9485781f961df35a8a919251bbc5be5624bdeaa7c0958",
+    "contract/contract.json": "d9ed732fe6eaa93fae14691c96dfca5a8e892944ea438d695802115d9e5fdaa0",
+    "contract/openapi.json": "ef1eb91ebb7dee4bc2176ac970d8c101c95b0a2eb5d98acf279e96fae4044d5d",
+    "contract/runtime.mjs": "b3fe1cdbb4aed080ee7aaf5a5a5a76b5de8e25e9eaac5e86547086c4c99806c1",
+    "contract/seed-reader.mjs": "4e95d64634d32720a28c4a83c90b7449ff3cf5d1e69dcfd2816e39def6671cf1",
+    "contract/seed.example.json": "b4da5387c061770f1bc51600a1c9366b887ff7b8b6ee48f85b592904b7e9a77d",
+    "contract/seed.mjs": "41d8d961587925299c543ab0e0dbe31339b08de6fd6a4854f5cac7eeca170d87",
+    "contract/server.mjs": "f1468545c8680cfbbcaefe871705b4a9e9615f69c992741a8ad33bbf746ee3f5",
+    "docs/frontal-legacy/README.md": "a0d653dcb93d1f52b7ee5c76475403419e8005bf7824a585e281cb043efb6c70",
+    "docs/frontal-legacy/manager-requirements.md": "b51d0b038b105efa2d0e31d8764ff7aff87d81fb4688b2399eabd4d9b2c47e39",
+    "docs/frontal-legacy/public-task.txt": "73ee4e89317bd4dcad8aa90219129f93dfff415d12a08d7db849f64678b7ec85",
+    "docs/requirements.md": "bbc8f794a8f8957e65c7c399edf0c779f07cc2c9e657e7276492868ecddfef6c"
+  },
+  "scripts": {
+    "build": "tsc && node dist/lifecycle.js build",
+    "db:migrate": "node dist/lifecycle.js db:migrate",
+    "db:seed": "node contract/seed.mjs",
+    "start:api": "node contract/server.mjs",
+    "start:worker": "node dist/lifecycle.js start:worker",
+    "start:dispatcher": "node dist/lifecycle.js start:dispatcher",
+    "test:public-contract": "node contract/check.mjs --live",
+    "check:contract-source": "node contract/check.mjs",
+    "test:unit": "node dist/lifecycle.js test:unit",
+    "test:integration": "node dist/lifecycle.js test:integration",
+    "test:e2e": "node dist/lifecycle.js test:e2e",
+    "test:concurrency": "node dist/lifecycle.js test:concurrency",
+    "test:recovery": "node dist/lifecycle.js test:recovery",
+    "test:perf": "node dist/lifecycle.js test:perf",
+    "test:all": "node dist/lifecycle.js test:all",
+    "dev": "node dist/lifecycle.js dev"
+  }
+}

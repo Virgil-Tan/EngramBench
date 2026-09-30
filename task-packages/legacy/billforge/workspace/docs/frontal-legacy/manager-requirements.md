@@ -1,0 +1,1 @@
+【Product Manager】新增争议、Chargeback 和 CLOSED 周期 Adjustment。Refund 成功额、Refund 预留额和 Dispute 预留额之和不得超过 captured amount；WON 释放预留，LOST 只创建一次平衡 Chargeback Posting；退款与争议并发必须可串行化；CLOSED Settlement 只能通过引用原 Posting 的下一周期 Adjustment 修正。新增 disputes、resolve 和 adjustments 接口，迁移必须保留全部 V1 身份、事件与 replay。本轮先只做影响分析和分阶段计划。

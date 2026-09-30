@@ -1,0 +1,2541 @@
+{
+  "taskId": "configorbit",
+  "title": "ConfigOrbit",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Application"
+          }
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Environment"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Release"
+          }
+        },
+        "clientObservations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ClientObservation"
+          }
+        },
+        "invalidations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Invalidation"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "tenants",
+        "applications",
+        "environments",
+        "configRevisions",
+        "releases",
+        "clientObservations",
+        "invalidations",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-configorbit-v2",
+      "tenants": [
+        {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Config Tenant"
+        }
+      ],
+      "applications": [
+        {
+          "applicationId": "00000000-0000-4000-8000-000000000002",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "key": "catalog",
+          "name": "Public Catalog"
+        }
+      ],
+      "environments": [
+        {
+          "environmentId": "00000000-0000-4000-8000-000000000003",
+          "applicationId": "00000000-0000-4000-8000-000000000002",
+          "key": "development",
+          "generation": 0,
+          "activeReleaseId": null,
+          "createdAt": "2026-01-01T00:00:00.000Z"
+        }
+      ],
+      "configRevisions": [],
+      "releases": [],
+      "clientObservations": [],
+      "invalidations": [],
+      "auditEntries": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "DRAFT_EXPIRY",
+            "RELEASE_ACTIVATE",
+            "CACHE_INVALIDATE",
+            "EVENT_DELIVERY",
+            "PROMOTION_ADVANCE",
+            "PROMOTION_ROLLBACK"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "revision.created",
+            "revision.published",
+            "release.activated",
+            "release.rollout_changed",
+            "release.rolled_back"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Application": {
+      "type": "object",
+      "properties": {
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "applicationId",
+        "tenantId",
+        "key",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Environment": {
+      "type": "object",
+      "properties": {
+        "environmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "key": {
+          "enum": [
+            "development",
+            "staging",
+            "production"
+          ]
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "activeReleaseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "environmentId",
+        "applicationId",
+        "key",
+        "generation",
+        "activeReleaseId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ConfigRevision": {
+      "type": "object",
+      "properties": {
+        "revisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "environmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "parentRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "DRAFT",
+            "PUBLISHED",
+            "ABANDONED"
+          ]
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        "documentDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "schemaRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "revisionId",
+        "environmentId",
+        "revision",
+        "parentRevisionId",
+        "state",
+        "document",
+        "documentDigest",
+        "schemaRevision",
+        "createdAt",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Release": {
+      "type": "object",
+      "properties": {
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "environmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "previousReleaseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "SCHEDULED",
+            "ACTIVE",
+            "SUPERSEDED",
+            "ROLLED_BACK",
+            "CANCELLED"
+          ]
+        },
+        "rolloutBasisPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "audienceSalt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "releaseId",
+        "environmentId",
+        "revisionId",
+        "previousReleaseId",
+        "state",
+        "rolloutBasisPoints",
+        "audienceSalt",
+        "generation",
+        "createdAt",
+        "activatedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "ClientObservation": {
+      "type": "object",
+      "properties": {
+        "clientId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lastGeneration": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lastReleaseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "clientId",
+        "environmentId",
+        "lastGeneration",
+        "lastReleaseId",
+        "lastSeenAt"
+      ],
+      "additionalProperties": false
+    },
+    "Invalidation": {
+      "type": "object",
+      "properties": {
+        "invalidationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "environmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "DELIVERING",
+            "DELIVERED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "deliveredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "invalidationId",
+        "environmentId",
+        "generation",
+        "releaseId",
+        "eventId",
+        "state",
+        "createdAt",
+        "deliveredAt"
+      ],
+      "additionalProperties": false
+    },
+    "ClientConfig": {
+      "type": "object",
+      "properties": {
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "document": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        "documentDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "etag": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "releaseId",
+        "revisionId",
+        "generation",
+        "document",
+        "documentDigest",
+        "etag"
+      ],
+      "additionalProperties": false
+    },
+    "PromotionTrain": {
+      "type": "object",
+      "properties": {
+        "trainId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "applicationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revisionDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "DRAFT",
+            "RUNNING",
+            "COMPLETED",
+            "ROLLED_BACK",
+            "CANCELLED"
+          ]
+        },
+        "audienceSalt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "trainId",
+        "tenantId",
+        "applicationId",
+        "name",
+        "revisionId",
+        "revisionDigest",
+        "state",
+        "audienceSalt",
+        "createdAt",
+        "startedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "PromotionStage": {
+      "type": "object",
+      "properties": {
+        "trainId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "environmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "rolloutBasisPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "ACTIVE",
+            "PROMOTED",
+            "ROLLED_BACK"
+          ]
+        }
+      },
+      "required": [
+        "trainId",
+        "position",
+        "environmentId",
+        "rolloutBasisPoints",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Application"
+          }
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Environment"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Release"
+          }
+        },
+        "clientObservations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ClientObservation"
+          }
+        },
+        "invalidations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Invalidation"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "tenants",
+        "applications",
+        "environments",
+        "configRevisions",
+        "releases",
+        "clientObservations",
+        "invalidations",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "applications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Application"
+          }
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Environment"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Release"
+          }
+        },
+        "clientObservations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ClientObservation"
+          }
+        },
+        "invalidations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Invalidation"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        },
+        "promotionTrains": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PromotionTrain"
+          }
+        },
+        "promotionStages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PromotionStage"
+          }
+        }
+      },
+      "required": [
+        "tenants",
+        "applications",
+        "environments",
+        "configRevisions",
+        "releases",
+        "clientObservations",
+        "invalidations",
+        "auditEntries",
+        "promotionTrains",
+        "promotionStages"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "create-tenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "example": {
+        "body": {
+          "name": "Another Config Tenant"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-tenant"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-application",
+      "method": "POST",
+      "path": "/api/v1/applications",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "key",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Application"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "key": "billing",
+          "name": "Billing"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-application"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-environment",
+      "method": "POST",
+      "path": "/api/v1/environments",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "key": {
+            "enum": [
+              "development",
+              "staging",
+              "production"
+            ]
+          }
+        },
+        "required": [
+          "applicationId",
+          "key"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Environment"
+      },
+      "example": {
+        "body": {
+          "applicationId": "00000000-0000-4000-8000-000000000002",
+          "key": "staging"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-environment"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-config-revision",
+      "method": "POST",
+      "path": "/api/v1/config-revisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "environmentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "parentRevisionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "document": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "schemaRevision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "environmentId",
+          "parentRevisionId",
+          "document",
+          "schemaRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      },
+      "example": {
+        "body": {
+          "environmentId": "00000000-0000-4000-8000-000000000003",
+          "parentRevisionId": null,
+          "document": {
+            "theme": "light"
+          },
+          "schemaRevision": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-config-revision"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-config-revision",
+      "method": "GET",
+      "path": "/api/v1/config-revisions/:revisionId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      },
+      "example": {
+        "params": {
+          "revisionId": "00000000-0000-4000-8000-000000000004"
+        }
+      },
+      "parameters": [
+        {
+          "name": "revisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "publish-config-revision",
+      "method": "POST",
+      "path": "/api/v1/config-revisions/:revisionId/publish",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedGeneration": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "rolloutBasisPoints": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "audienceSalt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "expectedGeneration",
+          "rolloutBasisPoints",
+          "audienceSalt",
+          "startAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Release"
+      },
+      "example": {
+        "params": {
+          "revisionId": "00000000-0000-4000-8000-000000000004"
+        },
+        "body": {
+          "expectedGeneration": 0,
+          "rolloutBasisPoints": 10000,
+          "audienceSalt": "public-rollout",
+          "startAt": "2026-01-01T00:00:00.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-publish-config-revision"
+        }
+      },
+      "parameters": [
+        {
+          "name": "revisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "change-rollout",
+      "method": "POST",
+      "path": "/api/v1/environments/:environmentId/rollout",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedGeneration": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "rolloutBasisPoints": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "audienceSalt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "expectedGeneration",
+          "rolloutBasisPoints",
+          "audienceSalt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Release"
+      },
+      "example": {
+        "params": {
+          "environmentId": "00000000-0000-4000-8000-000000000003"
+        },
+        "body": {
+          "expectedGeneration": 1,
+          "rolloutBasisPoints": 5000,
+          "audienceSalt": "public-rollout-next"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-change-rollout"
+        }
+      },
+      "parameters": [
+        {
+          "name": "environmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rollback-environment",
+      "method": "POST",
+      "path": "/api/v1/environments/:environmentId/rollback",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedGeneration": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "revisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "audienceSalt": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "expectedGeneration",
+          "revisionId",
+          "audienceSalt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Release"
+      },
+      "example": {
+        "params": {
+          "environmentId": "00000000-0000-4000-8000-000000000003"
+        },
+        "body": {
+          "expectedGeneration": 2,
+          "revisionId": "00000000-0000-4000-8000-000000000004",
+          "audienceSalt": "public-rollback"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-rollback-environment"
+        }
+      },
+      "parameters": [
+        {
+          "name": "environmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-releases",
+      "method": "GET",
+      "path": "/api/v1/environments/:environmentId/releases",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Release"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "environmentId": "00000000-0000-4000-8000-000000000003"
+        },
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "environmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "client-config",
+      "method": "GET",
+      "path": "/api/v1/client-config",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/ClientConfig"
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "applicationKey": "catalog",
+          "environmentKey": "development",
+          "clientId": "public-client",
+          "knownGeneration": 0
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "applicationKey",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "environmentKey",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "enum": [
+              "development",
+              "staging",
+              "production"
+            ]
+          }
+        },
+        {
+          "name": "clientId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "knownGeneration",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "If-None-Match",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "successStatuses": [
+        200,
+        304
+      ],
+      "successResponses": {
+        "304": {
+          "description": "No body; resolved release and known generation are both current."
+        }
+      }
+    },
+    {
+      "id": "observe-client",
+      "method": "POST",
+      "path": "/api/v1/client-observations",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "environmentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "lastGeneration": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "lastReleaseId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "clientId",
+          "environmentId",
+          "lastGeneration",
+          "lastReleaseId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ClientObservation"
+      },
+      "example": {
+        "body": {
+          "clientId": "public-client",
+          "environmentId": "00000000-0000-4000-8000-000000000003",
+          "lastGeneration": 0,
+          "lastReleaseId": null
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-observe-client"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-audit",
+      "method": "GET",
+      "path": "/api/v1/audit",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/AuditEntry"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-promotion-train",
+      "method": "POST",
+      "path": "/api/v1/promotion-trains",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "environmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "rolloutBasisPoints": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000
+                }
+              },
+              "required": [
+                "environmentId",
+                "rolloutBasisPoints"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "tenantId",
+          "applicationId",
+          "name",
+          "revisionId",
+          "stages"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PromotionTrain"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "applicationId": "00000000-0000-4000-8000-000000000002",
+          "name": "Public Promotion",
+          "revisionId": "00000000-0000-4000-8000-000000000004",
+          "stages": [
+            {
+              "environmentId": "00000000-0000-4000-8000-000000000003",
+              "rolloutBasisPoints": 10000
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-promotion-train"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "start-promotion-train",
+      "method": "POST",
+      "path": "/api/v1/promotion-trains/:trainId/start",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PromotionTrain"
+      },
+      "example": {
+        "params": {
+          "trainId": "00000000-0000-4000-8000-000000000005"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-start-promotion-train"
+        }
+      },
+      "parameters": [
+        {
+          "name": "trainId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "advance-promotion-train",
+      "method": "POST",
+      "path": "/api/v1/promotion-trains/:trainId/advance",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedStage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expectedEnvironmentGeneration": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedStage",
+          "expectedEnvironmentGeneration"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PromotionTrain"
+      },
+      "example": {
+        "params": {
+          "trainId": "00000000-0000-4000-8000-000000000005"
+        },
+        "body": {
+          "expectedStage": 0,
+          "expectedEnvironmentGeneration": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-advance-promotion-train"
+        }
+      },
+      "parameters": [
+        {
+          "name": "trainId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rollback-promotion-train",
+      "method": "POST",
+      "path": "/api/v1/promotion-trains/:trainId/rollback",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedStage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expectedEnvironmentGeneration": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedStage",
+          "expectedEnvironmentGeneration"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PromotionTrain"
+      },
+      "example": {
+        "params": {
+          "trainId": "00000000-0000-4000-8000-000000000005"
+        },
+        "body": {
+          "expectedStage": 0,
+          "expectedEnvironmentGeneration": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-rollback-promotion-train"
+        }
+      },
+      "parameters": [
+        {
+          "name": "trainId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "tenants"
+          ],
+          "match": {
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Config Tenant"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "applications"
+          ],
+          "match": {
+            "applicationId": "00000000-0000-4000-8000-000000000002",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "key": "catalog",
+            "name": "Public Catalog"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "environments"
+          ],
+          "match": {
+            "environmentId": "00000000-0000-4000-8000-000000000003",
+            "applicationId": "00000000-0000-4000-8000-000000000002",
+            "key": "development",
+            "generation": 0,
+            "activeReleaseId": null,
+            "createdAt": "2026-01-01T00:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-config-revision",
+      "body": {
+        "environmentId": "00000000-0000-4000-8000-000000000003",
+        "parentRevisionId": null,
+        "document": {
+          "theme": "light"
+        },
+        "schemaRevision": 1
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-config-revision"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "environmentId": "00000000-0000-4000-8000-000000000003",
+        "state": "DRAFT",
+        "document": {
+          "theme": "light"
+        },
+        "parentRevisionId": null
+      },
+      "capture": {
+        "newRevisionId": [
+          "revisionId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-config-revision",
+      "params": {
+        "revisionId": "${newRevisionId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "revisionId": "${newRevisionId}",
+        "environmentId": "00000000-0000-4000-8000-000000000003",
+        "state": "DRAFT",
+        "document": {
+          "theme": "light"
+        }
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "configRevisions"
+          ],
+          "match": {
+            "revisionId": "${newRevisionId}",
+            "environmentId": "00000000-0000-4000-8000-000000000003",
+            "document": {
+              "theme": "light"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 wire clarification: revision creation takes environmentId, parentRevisionId, document and schemaRevision. Document is an object; reject credential-like keys recursively. Publication takes expectedGeneration, rolloutBasisPoints, audienceSalt and startAt and returns the created Release. Rollout uses the same options with optional startAt (omission means database now); rollback takes expectedGeneration, revisionId and audienceSalt, creating a full-rollout Release.",
+    "V2 wire clarification: ClientObservation input excludes server lastSeenAt. Audit reads require tenantId. 304 has an empty response body and is permitted only by the published ETag/generation rule. Every other successful client fetch returns ClientConfig.",
+    "V2 wire clarification: PromotionTrain audienceSalt is generated and frozen by the server on creation, and all accepted mutations return the complete Train; its ordered stages remain observable in the exact FINAL snapshot. No extra cancel endpoint is invented.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {}
+}

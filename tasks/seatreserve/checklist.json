@@ -1,0 +1,17 @@
+{
+  "schemaVersion":1,"personaId":"seatreserve-ticketing-lead","taskId":"seatreserve",
+  "items":[
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, worker, dispatcher, and production UI using only published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"contract-and-browser","category":"correctness","requirement":"OpenAPI, strict validation, stable errors, production browser behavior, and tenant isolation match the complete public contract.","weight":9,"testGates":["H-02","H-04"]},
+    {"id":"seat-conservation","category":"correctness","requirement":"Multi-seat Holds are atomic, expire by database time, and preserve exactly one live owner per Seat across all races.","weight":15,"testGates":["H-03","H-04","H-06","H-07"]},
+    {"id":"price-freeze","category":"correctness","requirement":"Price publication serializes with Hold creation and every Hold and Order preserves its exact immutable PriceVersion and total.","weight":10,"testGates":["H-03","H-06","H-09"]},
+    {"id":"payment-uncertainty","category":"correctness","requirement":"UNKNOWN payment, receipts, reconcile, expiry, and cancellation converge without duplicate charge identity, early release, or seat theft.","weight":13,"testGates":["H-05","H-06","H-07"]},
+    {"id":"idempotency-recovery","category":"correctness","requirement":"Lost responses, replay, worker death, and unknown outbox ACK preserve one effect, stable identity/body, terminal Work, and ordered Events.","weight":10,"testGates":["H-05","H-07","H-08","H-09"]},
+    {"id":"manager-waitlist","category":"correctness","requirement":"Manager waitlist matching freezes conditions, allocates contiguous Offers fairly, fences expiry/cancel, and never oversells during recovery.","weight":13,"testGates":["H-09","H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three sustained scenarios meet throughput, latency, recovery, ownership, price, and payment invariants.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The project owns meaningful unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance commands.","weight":7,"testGates":["H-13"]},
+    {"id":"security-isolation","category":"correctness","requirement":"Tenant/customer data, provider credentials, payment payloads, hidden assets, and private paths never cross scope or leak.","weight":3,"testGates":["H-02","H-06","H-12"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains seat ownership, pricing, payment uncertainty, recovery, and findings clearly.","weight":2},
+    {"id":"evidence-quality","category":"persona","requirement":"Every stage and final handoff reports actual commands, results, risks, and checks not run accurately.","weight":3}
+  ]
+}

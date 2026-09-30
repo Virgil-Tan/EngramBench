@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "taskId": "evidencechain",
+  "profile": "learning-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Public evidence custody contract", "weight": 30 },
+    "B": { "title": "Ordered authority and lineage conservation", "weight": 25 },
+    "C": { "title": "Verification and outbox recovery", "weight": 20 },
+    "D": { "title": "OpenAPI, UI and point-in-time closure", "weight": 15 },
+    "E": { "title": "Fixed load and migration compatibility", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "PARTIAL_BATCH_OR_GROUP", "cap": 35, "publicInvariant": "A scanner batch or complete Custody Match Group commits wholly or leaves no effect." },
+    { "id": "DOUBLE_MATCH_OR_OWNER", "cap": 35, "publicInvariant": "Each active Item, Aliquot and Intake Scan has one match and one current custody authority." },
+    { "id": "OBSERVED_EVIDENCE_REWRITE", "cap": 35, "publicInvariant": "Verification never rewrites immutable observed scanner evidence." },
+    { "id": "QUANTITY_NON_CONSERVATION", "cap": 35, "publicInvariant": "Split quantities are positive safe integers whose exact sum equals the immutable parent quantity." },
+    { "id": "ILLEGAL_SPLIT_REVERSAL", "cap": 35, "publicInvariant": "A split with transferred child custody cannot reverse or delete history." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "Unknown outcomes and concurrent retries preserve one status, body, identity and durable effect." },
+    { "id": "STALE_VERIFICATION_COMMIT", "cap": 40, "publicInvariant": "A stale Verification lease cannot commit and recoverable Work is never stranded." },
+    { "id": "MIGRATION_IDENTITY_REWRITE", "cap": 35, "publicInvariant": "Migration preserves Match, custody, Work, Event and saved replay identities." }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-EC-01", "summary": "No public Aliquot transfer mutation or V1 transfer compatibility rule is published." },
+    { "id": "SPEC-GAP-EC-02", "summary": "The retained representation of reversed Aliquot and Group history is not closed." },
+    { "id": "SPEC-GAP-EC-03", "summary": "No new Manager Domain Event names or Aliquot timeline event rules are published." },
+    { "id": "SPEC-GAP-EC-04", "summary": "Child Verification Work target payload is not public; only effects and public Work metadata are testable." }
+  ],
+  "cases": [
+    { "id": "CONTRACT-01", "title": "Scanner batch sequence, wire and errors", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-02", "title": "Match proposal, confirmation and conflict flow", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-03", "title": "Verification, V1 transfer, timeline and reversal", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-04", "title": "Split quantity, wire and untransferred reversal", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-05", "title": "Match Group and child lineage observation", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "DATA-01", "title": "Batch digest and durable atomic replay", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-02", "title": "Deterministic matching and custody contention", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-03", "title": "Split authority and quantity conservation", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-04", "title": "Complete Group membership and Verification fanout", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    {
+      "id": "DATA-05", "title": "Child transfer reversal and timeline authority", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"],
+      "blockedAssertions": [{ "id": "aliquot-transfer-reversal-authority", "blockedBy": "SPEC-GAP-EC-01", "policy": "fail-closed-diagnostic" }]
+    },
+    { "id": "RECOVERY-01", "title": "Verification claimed crash recovery", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RECOVERY-02", "title": "Child Verification effect-complete recovery", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RECOVERY-03", "title": "Reversal and stale Verification commit fence", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RECOVERY-04", "title": "Outbox unknown acknowledgement and timeline sequence", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "LAYER-01", "title": "V1 and split Group OpenAPI runtime surface", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "LAYER-02", "title": "Browser V1 custody flow", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "LAYER-03", "title": "Browser split Group and reversal flow", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "LAYER-04", "title": "Point-in-time lineage snapshot", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "OPERATE-01", "title": "Scanner batch fixed sustained load", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-02", "title": "Custody timeline sustained read", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-03", "title": "10000 Verification crash recovery", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-04", "title": "V1 roots, Groups, in-flight and seed compatibility", "dimension": "E", "weight": 2.5, "prerequisites": ["V1", "FINAL"] }
+  ]
+}

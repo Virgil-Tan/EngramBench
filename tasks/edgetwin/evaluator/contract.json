@@ -1,0 +1,137 @@
+{
+  "seedKeys": [
+    "tenants",
+    "devices",
+    "deviceShadows",
+    "deviceCommands",
+    "commandReceipts",
+    "firmwareReleases",
+    "upgradeCampaigns",
+    "upgradeTargets"
+  ],
+  "publicPaths": [
+    "/api/v1/tenants",
+    "/api/v1/devices",
+    "/api/v1/devices/:deviceId/shadow",
+    "/api/v1/devices/:deviceId/shadow/desired",
+    "/api/v1/device-commands",
+    "/api/v1/device-commands/:commandId",
+    "/api/v1/device-commands/:commandId/cancel",
+    "/api/v1/devices/:deviceId/connect",
+    "/api/v1/devices/:deviceId/disconnect",
+    "/api/v1/devices/:deviceId/poll",
+    "/api/v1/command-receipts",
+    "/api/v1/firmware-releases",
+    "/api/v1/upgrade-campaigns",
+    "/api/v1/upgrade-campaigns/:upgradeCampaignId/pause",
+    "/api/v1/upgrade-campaigns/:upgradeCampaignId/resume",
+    "/api/v1/upgrade-campaigns/:upgradeCampaignId/cancel",
+    "/api/v1/deployment-waves",
+    "/api/v1/deployment-waves/:deploymentWaveId",
+    "/api/v1/deployment-waves/:deploymentWaveId/pause",
+    "/api/v1/deployment-waves/:deploymentWaveId/resume",
+    "/api/v1/deployment-waves/:deploymentWaveId/cancel",
+    "/api/v1/deployment-waves/:deploymentWaveId/rollback",
+    "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {
+        "key": "tenants",
+        "shape": "Tenant",
+        "sort": [
+          "tenantId"
+        ]
+      },
+      {
+        "key": "devices",
+        "shape": "Device",
+        "sort": [
+          "deviceId"
+        ]
+      },
+      {
+        "key": "deviceShadows",
+        "shape": "DeviceShadow",
+        "sort": [
+          "deviceId"
+        ]
+      },
+      {
+        "key": "deviceCommands",
+        "shape": "DeviceCommand",
+        "sort": [
+          "commandId"
+        ]
+      },
+      {
+        "key": "commandReceipts",
+        "shape": "CommandReceipt",
+        "sort": [
+          "receiptId"
+        ]
+      },
+      {
+        "key": "firmwareReleases",
+        "shape": "FirmwareRelease",
+        "sort": [
+          "firmwareReleaseId"
+        ]
+      },
+      {
+        "key": "upgradeCampaigns",
+        "shape": "UpgradeCampaign",
+        "sort": [
+          "upgradeCampaignId"
+        ]
+      },
+      {
+        "key": "upgradeTargets",
+        "shape": "UpgradeTarget",
+        "sort": [
+          "upgradeCampaignId",
+          "deviceId"
+        ]
+      }
+    ],
+    "managerResources": [
+      {
+        "key": "deploymentWaves",
+        "shape": "DeploymentWave",
+        "sort": [
+          "deploymentWaveId"
+        ]
+      },
+      {
+        "key": "waveDevices",
+        "shape": "WaveDevice",
+        "sort": [
+          "deploymentWaveId",
+          "deviceId"
+        ]
+      }
+    ]
+  },
+  "workKinds": {
+    "v1": [
+      "COMMAND_DISPATCH",
+      "COMMAND_EXPIRE",
+      "UPGRADE_FANOUT",
+      "RECEIPT_PROJECT"
+    ],
+    "manager": [
+      "DEPLOYMENT_WAVE_ADVANCE"
+    ]
+  },
+  "perfScenarios": [
+    {
+      "id": "shadow-patch-ingest"
+    },
+    {
+      "id": "offline-command-expiry"
+    },
+    {
+      "id": "fleet-upgrade-recovery"
+    }
+  ]
+}

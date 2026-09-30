@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "personaId": "rulebench-decision-owner",
+  "taskId": "rulebench",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, workers, dispatcher, and production UI with published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"public-contract","category":"correctness","requirement":"OpenAPI, strict validation, stable errors, pagination, snapshot, and real browser flows match the public contract.","weight":7,"testGates":["H-02","H-04"]},
+    {"id":"rule-language","category":"correctness","requirement":"The bounded declarative expression language has exact typing, depth, size, path, and canonical JSON semantics without executable input.","weight":10,"testGates":["H-02","H-03","H-04"]},
+    {"id":"priority-short-circuit","category":"correctness","requirement":"Priority, terminal short-circuit, decision, tags, visited order, and SKIPPED explanation semantics are deterministic.","weight":10,"testGates":["H-03","H-06","H-12"]},
+    {"id":"conflict-detection","category":"correctness","requirement":"Publication rejects every published static conflict with deterministic sorted reports and no partial version change.","weight":8,"testGates":["H-03","H-04"]},
+    {"id":"durable-idempotency","category":"correctness","requirement":"Unknown response, restart, and concurrent replay preserve one Evaluation identity and canonical body.","weight":8,"testGates":["H-05","H-06"]},
+    {"id":"replay-determinism","category":"correctness","requirement":"Replay uses original version and facts, preserves original evaluation, and produces a matching decision and explanation digest.","weight":8,"testGates":["H-03","H-07","H-09"]},
+    {"id":"worker-recovery","category":"correctness","requirement":"Evaluation, replay, and comparison leases recover from controlled process death without stale commits or duplicate facts.","weight":9,"testGates":["H-07","H-09","H-11","H-12"]},
+    {"id":"events-and-dispatch","category":"correctness","requirement":"Transactional Events are contiguous and remain byte-stable across unknown ACK without leaking facts.","weight":5,"testGates":["H-08","H-09"]},
+    {"id":"manager-comparison","category":"correctness","requirement":"ComparisonRun freezes corpus and versions, emits exact results, fences cancellation, migrates V1, and promotes through one CAS.","weight":12,"testGates":["H-09","H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three published sustained scenarios meet throughput, latency, recovery, resource, and post-load invariant requirements.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"Project tests use real PostgreSQL, production Chromium, multiple processes, controlled SIGKILL, and actual load measurements.","weight":5,"testGates":["H-13"]},
+    {"id":"security-isolation","category":"correctness","requirement":"Tenants, facts, credentials, Events, logs, snapshots, and private paths remain isolated and redacted.","weight":1,"testGates":["H-02","H-08"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex clearly explains rule semantics, ownership, failure boundaries, and review findings.","weight":1},
+    {"id":"evidence-quality","category":"persona","requirement":"Handoff accurately reports commands, results, risks, and checks not run.","weight":1}
+  ]
+}

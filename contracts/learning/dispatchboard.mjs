@@ -1,0 +1,34 @@
+import { T,FUTURE,id,ref,record as r,obj,pick,omit,list,union,nullable,name,text,uuid,time,int,nat,pos,empty,page,operation as op,finish,pagination,domainEventsOperation,snapshotSmoke,idem,manager,wire,detailedTransportErrors } from './helpers-b.mjs';
+const I=n=>id(4,n);
+const s={
+ Zone:r('zoneId:name name:name'),ZoneDistance:r('fromZone:name toZone:name distanceBucket:nat'),Customer:r('customerId:uuid name:name'),
+ Courier:r('courierId:uuid homeZone:name capacityUnits:pos activeLoadUnits:nat eligibleZones:[name] deliveryUrl:url state:AVAILABLE|PAUSED'),
+ Delivery:r('deliveryId:uuid customerId:uuid pickupZone:name dropoffZone:name readyAt:timestamp deliverBy:timestamp state:REQUESTED|OFFERING|ASSIGNED|PICKED_UP|DELIVERED|CANCELLED|EXPIRED assignmentId:uuid|null currentRound:nat createdAt:timestamp terminalAt:timestamp|null sequence:pos',{loadUnits:{...pos,maximum:100}}),
+ Offer:r('offerId:uuid deliveryId:uuid round:pos courierId:uuid rank:pos state:OPEN|ACCEPTED|LOST|EXPIRED createdAt:timestamp expiresAt:timestamp notificationId:uuid'),
+ OfferNotification:r('notificationId:uuid offerId:uuid courierId:uuid deliveryUrl:url state:PENDING|DELIVERED|SUPERSEDED attemptCount:nat nextAttemptAt:timestamp|null successfulDeliveryAt:timestamp|null',{body:r('notificationId:uuid offerId:uuid deliveryId:uuid round:pos roleIndex:nat|null role:string|null courierId:uuid expiresAt:timestamp')}),
+ Assignment:r('assignmentId:uuid deliveryId:uuid courierId:uuid offerId:uuid loadUnits:pos assignedAt:timestamp pickedUpAt:timestamp|null completedAt:timestamp|null'),
+ RoleAssignment:r('assignmentId:uuid deliveryId:uuid role:name courierId:uuid offerId:uuid state:RESERVED|READY|RELEASED|PICKED_UP|COMPLETED claimedAt:timestamp claimExpiresAt:timestamp readyAt:timestamp|null releasedAt:timestamp|null'),
+ TeamAssignment:r('teamAssignmentId:uuid deliveryId:uuid state:FORMING|ACTIVE|READY|PICKED_UP|COMPLETED|CANCELLED requiredRoles:[name] assignments:[RoleAssignment] activatedAt:timestamp|null pickedUpAt:timestamp|null completedAt:timestamp|null revision:pos'),
+};
+s.TeamOffer=obj({...s.Offer.properties,roleIndex:nat,role:name});
+s.TeamDelivery=obj({...s.Delivery.properties,assignmentId:{type:'null'},requiredRoles:list(name,{minItems:2,maxItems:4,uniqueItems:true}),teamAssignmentId:nullable(uuid),assignments:list(ref('RoleAssignment'))});
+s.AnyDelivery=union(ref('Delivery'),ref('TeamDelivery'));
+const base={zones:'Zone',zoneDistances:'ZoneDistance',couriers:'Courier',customers:'Customer',deliveries:'Delivery',offers:'Offer',offerNotifications:'OfferNotification',assignments:'Assignment'};
+const createDelivery=pick(s.Delivery,['customerId','pickupZone','dropoffZone','readyAt','deliverBy','loadUnits']);
+const teamCreate=obj({...createDelivery.properties,roles:list(name,{minItems:2,maxItems:4,uniqueItems:true})});
+const body={customerId:I(1),pickupZone:'public-zone',dropoffZone:'public-zone',readyAt:FUTURE,deliverBy:'2035-04-03T13:00:00.000Z',loadUnits:1};
+export default finish({taskId:'dispatchboard',title:'DispatchBoard',schemas:s,seedTypes:base,resources:{...base,deliveries:'AnyDelivery',teamOffers:'TeamOffer',teamAssignments:'TeamAssignment'},emptyEventPayload:true,environmentVariables:['CHROMIUM_PATH','MANAGED_DATA_ROOT'],transportErrors:detailedTransportErrors,
+ seedData:{zones:[{zoneId:'public-zone',name:'Public zone'}],zoneDistances:[{fromZone:'public-zone',toZone:'public-zone',distanceBucket:0}],customers:[{customerId:I(1),name:'Public customer'}],couriers:[{courierId:I(2),homeZone:'public-zone',capacityUnits:10,activeLoadUnits:0,eligibleZones:['public-zone'],deliveryUrl:'http://127.0.0.1:4010/public-courier',state:'AVAILABLE'}]},
+ workKinds:['OFFER_ISSUANCE','OFFER_EXPIRY'],eventTypes:['delivery.requested','offer.round-opened','delivery.assigned','delivery.picked-up','delivery.completed','delivery.cancelled','delivery.expired'],
+ operations:[op('deliveries-list','GET','/api/v1/deliveries',null,page(ref('AnyDelivery')),{parameters:pagination}),op('delivery-get','GET','/api/v1/deliveries/:deliveryId',null,ref('AnyDelivery')),
+ op('delivery-create','POST','/api/v1/deliveries',union(createDelivery,teamCreate),ref('AnyDelivery'),{status:202,example:{body},source:`${manager}; ${wire}`}),
+ op('offer-accept','POST','/api/v1/offers/:offerId/accept',r('courierId:uuid'),union(ref('Assignment'),ref('TeamAssignment')),{source:`docs/frontal-legacy/README.md; ${manager}; ${wire}`}),
+ op('delivery-cancel','POST','/api/v1/deliveries/:deliveryId/cancel',r('reason:name'),ref('AnyDelivery')),
+ op('delivery-pickup','POST','/api/v1/deliveries/:deliveryId/pickup',r('courierId:uuid'),ref('AnyDelivery')),
+ op('delivery-complete','POST','/api/v1/deliveries/:deliveryId/complete',obj({courierId:uuid,proofCode:{...text,minLength:6,maxLength:64,pattern:'^[\\x21-\\x7e]+$'}}),ref('AnyDelivery')),
+ op('delivery-offers','GET','/api/v1/deliveries/:deliveryId/offers',null,obj({items:list(union(ref('Offer'),ref('TeamOffer')))})),
+ op('courier-get','GET','/api/v1/couriers/:courierId',null,ref('Courier')),
+ op('assignment-ready','POST','/api/v1/deliveries/:deliveryId/assignments/:assignmentId/ready',r('courierId:uuid'),ref('TeamAssignment'),{source:`${manager}; ${wire}`}),domainEventsOperation()],
+ smoke:[snapshotSmoke([['zones',{zoneId:'public-zone'}],['zoneDistances',{fromZone:'public-zone',toZone:'public-zone',distanceBucket:0}],['customers',{customerId:I(1)}],['couriers',{courierId:I(2),activeLoadUnits:0}]]),{operationId:'courier-get',params:{courierId:I(2)},expectStatus:200,expectBody:{courierId:I(2),homeZone:'public-zone'}},{operationId:'delivery-create',headers:idem('public-delivery'),body,expectStatus:202,capture:{deliveryId:['deliveryId']},expectBody:{customerId:I(1)}},{operationId:'delivery-get',params:{deliveryId:'${deliveryId}'},expectStatus:200,expectBody:{deliveryId:'${deliveryId}',customerId:I(1)}}],
+ notes:['V2 wire clarification: legacy offer acceptance returns Assignment, consistent with the published hot-offer-claims successful Assignment result; team acceptance and ready return the complete TeamAssignment, including current role reservations. This resolves the original prose tension between an ASSIGNED delivery and an Assignment response without changing the acceptance transaction. Delivery lifecycle mutations return Delivery or TeamDelivery. Offer history is {items:[Offer|TeamOffer]}.','The public smoke asserts created/read identity, not a timing-sensitive delivery state. Its single-zone distance matrix is complete and symmetric. The courier notification URL is an independently authored local test-double address; no real courier service is contacted.','V2 clarification of a source inconsistency: seed prose calls load positive but the published performance seed has zero assignments. An idle Courier has activeLoadUnits:0; capacityUnits and an actual Assignment load remain positive. This is not a new minimum-workload rule.'],
+});

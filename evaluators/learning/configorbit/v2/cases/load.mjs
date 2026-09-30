@@ -1,0 +1,158 @@
+import { contentionSeed, documentDigest, observationBody, performanceSeed, rolloutBody } from "../lib/fixtures.mjs";
+import { assertGenerationClosure, percentile } from "../lib/oracle.mjs";
+import { caseResult, defineCase, environmentFrom, fetchClient, snapshot, stagesFor, trainFrom, waitSnapshot } from "./helpers.mjs";
+async function resetFinal(ctx) { await ctx.resetDatabase(); await ctx.migrate(); }
+function activePair(state, environmentId) { const environment = environmentFrom(state, environmentId), current = state.resources.releases.find(({ releaseId }) => releaseId === environment.activeReleaseId), previous = state.resources.releases.find(({ releaseId }) => releaseId === current.previousReleaseId); return { environment, current, previous }; }
+function expectedRelease(ctx, { tenantId, applicationId, environment, current, previous, clientId }) { return ctx.assignmentBucket({ tenantId, applicationId, environmentId: environment.environmentId, releaseId: current.releaseId, audienceSalt: current.audienceSalt, clientId }) < current.rolloutBasisPoints ? current : previous; }
+async function runFetchLoad(ctx) {
+    const contract = ctx.performanceContract.fetch, { catalog: performanceCatalog, seed } = performanceSeed(ctx.fixtures, { environmentCount: 1, clientCount: contract.clientCount, label: "load-fetch" }), catalog = { ...performanceCatalog, application: performanceCatalog.applications[0] };
+    await ctx.seed(seed, { timeoutMs: 3600000 });
+    const api = await ctx.startApi({ healthTimeoutMs: 60000 }), environment = catalog.environments[0], probe = await fetchClient(ctx, api.baseUrl, catalog, "client-000000", { environment, knownGeneration: 1 }), etag = probe.json.etag, deadline = performance.now() + contract.durationSeconds * 1000, latencies = [];
+    let next = 0, successes = 0, currentRequests = 0, staleRequests = 0, wrong304 = 0, unexpected5xx = 0, wrongBodies = 0;
+    const startedAt = performance.now();
+    await Promise.all(Array.from({ length: contract.concurrency }, async () => { while (performance.now() < deadline) {
+        const ordinal = next++, clientId = `client-${String(ordinal % contract.clientCount).padStart(6, "0")}`, current = ordinal % 5 !== 4, response = await ctx.clientConfig(api.baseUrl, { tenantId: catalog.tenant.tenantId, applicationKey: catalog.application.key, environmentKey: environment.key, clientId, knownGeneration: String(current ? 1 : 0) }, { headers: { "if-none-match": etag }, timeoutMs: 5000, record: false });
+        latencies.push(response.durationMs);
+        if (response.status >= 500)
+            unexpected5xx += 1;
+        if (current) {
+            currentRequests += 1;
+            if (response.status !== 304)
+                wrong304 += 1;
+            else
+                successes += 1;
+        }
+        else {
+            staleRequests += 1;
+            if (response.status === 304)
+                wrong304 += 1;
+            else if (response.status === 200) {
+                const expected = expectedRelease(ctx, { tenantId: catalog.tenant.tenantId, applicationId: catalog.application.applicationId, environment, current: catalog.releases[0], previous: undefined, clientId });
+                if (response.json?.releaseId !== expected?.releaseId || response.json?.generation !== 1 || response.json?.documentDigest !== documentDigest(catalog.configRevisions[0].document))
+                    wrongBodies += 1;
+                else
+                    successes += 1;
+            }
+            else
+                wrongBodies += 1;
+        }
+    } }));
+    const durationSeconds = (performance.now() - startedAt) / 1000, rate = successes / durationSeconds, p95 = percentile(latencies, 0.95), total = currentRequests + staleRequests;
+    ctx.equal("formal fetch uses 50000 registered clients", seed.clientObservations.length, 50000);
+    ctx.equal("formal fetch concurrency exact", contract.concurrency, 128);
+    ctx.ok("80/20 request mix is exact within one request", Math.abs(currentRequests / total - 0.8) <= 1 / total, `${currentRequests}/${total}`);
+    ctx.equal("client fetch wrong 304 count", wrong304, 0, { hardCapIds: ["CLIENT_GENERATION_FENCE"] });
+    ctx.equal("client fetch unexpected 5xx count", unexpected5xx, 0);
+    ctx.equal("client fetch body mismatch count", wrongBodies, 0, { hardCapIds: ["GENERATION_AUTHORITY"] });
+    ctx.ok("client fetch throughput >= 800/s", rate >= contract.targetPerSecond, `${rate.toFixed(2)}/s`);
+    ctx.ok("client fetch p95 <= 150ms", p95 <= contract.p95Ms, `${p95.toFixed(2)}ms`);
+    ctx.metric("fetch.durationSeconds", durationSeconds);
+    ctx.metric("fetch.requests", total);
+    ctx.metric("fetch.ratePerSecond", rate);
+    ctx.metric("fetch.p95Ms", p95);
+    return { api, catalog, state: await snapshot(ctx, api.baseUrl), rate, p95, total };
+}
+async function runContentionLoad(ctx) {
+    const contract = ctx.performanceContract.contention, { catalogs, seed } = contentionSeed(ctx.fixtures, { environmentCount: contract.environmentCount, label: "load-contention" });
+    await ctx.seed(seed, { timeoutMs: 3600000 });
+    const apis = await Promise.all(Array.from({ length: contract.apiCount }, () => ctx.startApi({ healthTimeoutMs: 60000 }))), created = await ctx.concurrent(catalogs, 16, async (catalog, index) => { const response = await ctx.createTrain(apis[index % 2].baseUrl, ctx.trainBody(catalog, { name: `contention-${index}` }), { key: ctx.key(`contention-train-${index}`), timeoutMs: 30000 }); ctx.equal("contention Train create status", response.status, 200); return response.json; }), workers = await Promise.all(Array.from({ length: 4 }, () => ctx.startWorker()));
+    await ctx.concurrent(created, 16, (train, index) => ctx.startTrain(apis[index % 2].baseUrl, train.trainId, { key: ctx.key(`contention-start-${index}`), timeoutMs: 30000 }));
+    const ready = await waitSnapshot(ctx, apis[0].baseUrl, (state) => created.every((train) => trainFrom(state, train.trainId)?.state === "RUNNING" && stagesFor(state, train.trainId)[0]?.state === "ACTIVE"), { label: "100 contention Trains active", timeoutMs: 120000, intervalMs: 250, processes: workers });
+    for (const worker of workers)
+        await ctx.stop(worker);
+    const targets = catalogs.map((catalog, index) => ({ catalog, train: created[index], environment: catalog.environments[0], generation: environmentFrom(ready, catalog.environments[0].environmentId).generation })), startedAt = performance.now(), responses = await ctx.concurrent(Array.from({ length: contract.attempts }, (_, index) => index), contract.concurrency, async (index) => { const target = targets[Math.floor(index / 2) % targets.length], rollout = index % 2 === 0, api = apis[index % apis.length]; return rollout ? ctx.rollout(api.baseUrl, target.environment.environmentId, rolloutBody(target.generation, 5000), { key: ctx.key(`load-rollout-${index}`), timeoutMs: 10000 }) : ctx.rollbackTrain(api.baseUrl, target.train.trainId, { expectedStage: 0, expectedEnvironmentGeneration: target.generation }, { key: ctx.key(`load-rollback-${index}`), timeoutMs: 10000 }); }), durationSeconds = (performance.now() - startedAt) / 1000, latencies = responses.map(({ durationMs }) => durationMs), accepted = responses.filter(({ status }) => status === 200), conflicts = responses.filter(({ status }) => status === 409), unexpected = responses.filter(({ status }) => ![200, 409].includes(status)), rate = responses.length / durationSeconds, p95 = percentile(latencies, 0.95);
+    ctx.equal("formal contention attempts exact", responses.length, 10000);
+    ctx.equal("formal contention target environments exact", targets.length, 100);
+    ctx.equal("formal contention API count exact", apis.length, 2);
+    ctx.equal("one accepted generation per environment", accepted.length, 100, { hardCapIds: ["GENERATION_AUTHORITY"] });
+    ctx.equal("remaining attempts are expected conflicts", conflicts.length, 9900);
+    ctx.equal("contention has no unexpected status", unexpected.length, 0);
+    for (const response of conflicts)
+        ctx.ok("contention conflict code is published", ["ENVIRONMENT_GENERATION_CHANGED", "PROMOTION_STAGE_CHANGED"].includes(response.json?.error?.code));
+    ctx.ok("generation contention throughput >= 100/s", rate >= contract.targetPerSecond, `${rate.toFixed(2)}/s`);
+    ctx.ok("generation contention p95 <= 500ms", p95 <= contract.p95Ms, `${p95.toFixed(2)}ms`);
+    const state = await snapshot(ctx, apis[0].baseUrl);
+    for (const target of targets) {
+        ctx.equal("target generation advances exactly once", environmentFrom(state, target.environment.environmentId).generation, target.generation + 1, { hardCapIds: ["GENERATION_AUTHORITY"] });
+        ctx.equal("target has one accepted successor Release", state.resources.releases.filter(({ environmentId, generation }) => environmentId === target.environment.environmentId && generation === target.generation + 1).length, 1, { hardCapIds: ["GENERATION_AUTHORITY"] });
+    }
+    for (let index = 0; index < targets.length; index += 10) {
+        const target = targets[index], pair = activePair(state, target.environment.environmentId), clientId = `contention-client-${index}`, response = await fetchClient(ctx, apis[index % 2].baseUrl, target.catalog, clientId, { environment: target.environment, knownGeneration: 0 }), expected = expectedRelease(ctx, { tenantId: target.catalog.tenant.tenantId, applicationId: target.catalog.application.applicationId, environment: target.environment, current: pair.current, previous: pair.previous, clientId });
+        ctx.equal("post-contention assignment deterministic", response.json.releaseId, expected.releaseId, { hardCapIds: ["GENERATION_AUTHORITY"] });
+    }
+    ctx.assert("contention generation closure", () => assertGenerationClosure(state));
+    ctx.metric("contention.durationSeconds", durationSeconds);
+    ctx.metric("contention.ratePerSecond", rate);
+    ctx.metric("contention.p95Ms", p95);
+    return { api: apis[0], apis, catalog: catalogs[0], catalogs, state, rate, p95, attempts: responses.length };
+}
+async function runInvalidationLoad(ctx) {
+    const contract = ctx.performanceContract.invalidation, { catalog, seed } = performanceSeed(ctx.fixtures, { environmentCount: 100, invalidationCount: contract.count, label: "load-invalidation" });
+    seed.clientObservations = catalog.environments.map((environment, index) => ({ clientId: `recovery-client-${String(index).padStart(3, "0")}`, environmentId: environment.environmentId, lastGeneration: 1, lastReleaseId: environment.activeReleaseId, lastSeenAt: ctx.fixtures.at({ seconds: index }) }));
+    await ctx.seed(seed, { timeoutMs: 3600000 });
+    const api = await ctx.startApi({ healthTimeoutMs: 60000 }), initial = await ctx.snapshot(api.baseUrl, { timeoutMs: 30000 });
+    ctx.equal("formal pending invalidation count", initial.resources.invalidations.length, 100000);
+    const heldIds = new Set(), barrier = ctx.workerBarrier(({ workId }) => { if (heldIds.size < contract.killedWorkers || heldIds.has(workId)) {
+        heldIds.add(workId);
+        return true;
+    } return false; }), stale = await Promise.all(Array.from({ length: contract.killedWorkers }, () => ctx.startWorkerAtBarrier(barrier))), claims = await ctx.waitFor(() => { const entries = barrier.ledger.filter(({ json }) => json?.workId), ids = new Set(entries.map(({ json }) => json.workId)); return ids.size === contract.killedWorkers ? entries : undefined; }, { label: "two distinct invalidation Work claims", timeoutMs: 30000, processes: stale });
+    for (const worker of stale)
+        await ctx.kill(worker);
+    ctx.equal("exactly two claimed workers killed", stale.length, 2);
+    await ctx.sleep(3200);
+    const replacements = await Promise.all(Array.from({ length: contract.replacementWorkers }, () => ctx.startWorker())), startedAt = performance.now();
+    let state;
+    while ((performance.now() - startedAt) / 1000 <= contract.maximumSeconds) {
+        state = await ctx.snapshot(api.baseUrl, { timeoutMs: 30000 });
+        if (state.resources.invalidations.length === contract.count && state.resources.invalidations.every(({ state: invalidationState }) => invalidationState === "DELIVERED") && state.work.every(({ terminal }) => terminal))
+            break;
+        await ctx.sleep(250);
+    }
+    const recoverySeconds = (performance.now() - startedAt) / 1000;
+    for (const worker of replacements)
+        await ctx.stop(worker);
+    ctx.ok("100000 invalidations and Work drain within 90 seconds", state?.resources.invalidations.every(({ state: invalidationState }) => invalidationState === "DELIVERED") && state.work.every(({ terminal }) => terminal) && recoverySeconds <= contract.maximumSeconds, `${recoverySeconds.toFixed(2)}s`, { hardCapIds: ["WORK_RECOVERY_CORRECTNESS"] });
+    const convergenceStarted = performance.now(), resolved = await ctx.concurrent(catalog.environments, 32, async (environment, index) => fetchClient(ctx, api.baseUrl, { tenant: catalog.tenant, application: catalog.applications[index], environments: [environment], configRevisions: [catalog.configRevisions[index]], releases: [catalog.releases[index]] }, `recovery-client-${String(index).padStart(3, "0")}`, { environment, knownGeneration: 0 }));
+    const convergenceSeconds = (performance.now() - convergenceStarted) / 1000;
+    ctx.ok("all environments converge within five seconds", convergenceSeconds <= contract.convergenceSeconds, `${convergenceSeconds.toFixed(2)}s`, { hardCapIds: ["CLIENT_GENERATION_FENCE"] });
+    ctx.ok("all converged clients resolve generation one", resolved.every(({ status, json }) => status === 200 && json.generation === 1));
+    await ctx.concurrent(catalog.environments, 32, (environment, index) => ctx.observeClient(api.baseUrl, observationBody({ clientId: `recovery-client-${String(index).padStart(3, "0")}`, environmentId: environment.environmentId, lastGeneration: 0, lastReleaseId: null })));
+    const monotonic = await snapshot(ctx, api.baseUrl);
+    ctx.ok("stale observations never re-enable generation zero", monotonic.resources.clientObservations.every(({ lastGeneration }) => lastGeneration >= 1), undefined, { hardCapIds: ["CLIENT_GENERATION_FENCE"] });
+    ctx.assert("invalidation recovery generation closure", () => assertGenerationClosure(monotonic));
+    ctx.metric("invalidation.recoverySeconds", recoverySeconds);
+    ctx.metric("invalidation.convergenceSeconds", convergenceSeconds);
+    return { api, catalog, state: monotonic, recoverySeconds, convergenceSeconds, killedWorkIds: [...new Set(claims.map(({ json }) => json.workId))] };
+}
+async function closeCrossLayer(ctx, label, result) {
+    const receiver = await ctx.receiver(), dispatcher = await ctx.startDispatcher({ webhookUrl: receiver.url }), workers = await Promise.all(Array.from({ length: 4 }, () => ctx.startWorker())), state = await waitSnapshot(ctx, result.api.baseUrl, (value) => value.work.every(({ terminal }) => terminal) && value.resources.invalidations.every(({ state: status }) => status === "DELIVERED"), { label: `${label} Work and invalidation drain`, timeoutMs: 120000, intervalMs: 250, processes: [dispatcher, ...workers] });
+    for (const worker of workers)
+        await ctx.stop(worker);
+    await ctx.stop(dispatcher);
+    ctx.assert(`${label} generation closure`, () => assertGenerationClosure(state));
+    for (const revision of state.resources.configRevisions)
+        ctx.equal(`${label} immutable revision digest`, revision.documentDigest, documentDigest(revision.document), { hardCapIds: ["REVISION_IMMUTABILITY"] });
+    for (const tenantId of new Set(state.resources.auditEntries.map(({ tenantId }) => tenantId))) {
+        const entries = state.resources.auditEntries.filter((item) => item.tenantId === tenantId);
+        ctx.equal(`${label} continuous audit sequence`, entries.map(({ sequence }) => sequence), entries.map((_, index) => index + 1));
+    }
+    for (const aggregateId of new Set(state.events.map(({ aggregateId }) => aggregateId))) {
+        const events = state.events.filter((item) => item.aggregateId === aggregateId);
+        ctx.equal(`${label} continuous Event sequence`, events.map(({ sequence }) => sequence), events.map((_, index) => index + 1));
+    }
+    const sampleEnvironment = state.resources.environments[0], sampleApplication = state.resources.applications.find(({ applicationId }) => applicationId === sampleEnvironment.applicationId), sampleTenant = state.resources.tenants.find(({ tenantId }) => tenantId === sampleApplication.tenantId), sampleCatalog = { tenant: sampleTenant, application: sampleApplication, environments: [sampleEnvironment], configRevisions: state.resources.configRevisions.filter(({ environmentId }) => environmentId === sampleEnvironment.environmentId), releases: state.resources.releases.filter(({ environmentId }) => environmentId === sampleEnvironment.environmentId) }, clientId = `closure-${label}`, client = await fetchClient(ctx, result.api.baseUrl, sampleCatalog, clientId, { environment: sampleEnvironment, knownGeneration: 0 }), pair = activePair(state, sampleEnvironment.environmentId), expected = expectedRelease(ctx, { tenantId: sampleTenant.tenantId, applicationId: sampleApplication.applicationId, environment: sampleEnvironment, current: pair.current, previous: pair.previous, clientId });
+    ctx.equal(`${label} public client assignment`, client.json.releaseId, expected.releaseId, { hardCapIds: ["GENERATION_AUTHORITY"] });
+    const isolated = await ctx.clientConfig(result.api.baseUrl, { tenantId: ctx.fixtures.uuid(`${label}-other-tenant`), applicationKey: sampleApplication.key, environmentKey: sampleEnvironment.key, clientId: "isolated", knownGeneration: "0" });
+    ctx.ok(`${label} tenant isolation denies cross-tenant resolution`, isolated.status !== 200);
+    const openapi = await ctx.readOpenApi(result.api.baseUrl);
+    ctx.equal(`${label} OpenAPI 3.1`, openapi.openapi, "3.1.0");
+    ctx.ok(`${label} OpenAPI client-config path`, Object.hasOwn(openapi.paths, "/api/v1/client-config"));
+    await ctx.withPage(result.api, { width: 1280, height: 800 }, async (page) => { const requests = []; page.on("request", (request) => { if (new URL(request.url()).pathname.startsWith("/api/"))
+        requests.push(new URL(request.url()).pathname); }); await page.goto("/", { waitUntil: "networkidle" }); ctx.ok(`${label} UI renders public controls`, await page.locator("a,button,input,textarea,select").count() > 0); ctx.ok(`${label} UI uses no private API`, requests.every((path) => !/(?:internal|private)/iu.test(path))); });
+    return state;
+}
+const LOAD01 = defineCase("LOAD-01", "fixed 50000-client conditional fetch", "Run 128 clients for exactly 60 seconds with deterministic 80 percent current ETag and 20 percent stale knownGeneration traffic", "At least 800 requests per second and p95 at most 150ms with zero wrong 304, wrong body or 5xx", ["production client-config", "fixed timer", "independent assignment oracle"], async (ctx) => { const result = await runFetchLoad(ctx); return caseResult(ctx, { requests: result.total, ratePerSecond: result.rate, p95Ms: result.p95, durationSeconds: 60 }); });
+const LOAD02 = defineCase("LOAD-02", "fixed 100-environment generation hotspot", "Run exactly 10000 alternating rollout and current-stage rollback attempts across two APIs with concurrency 64", "Exactly one successor generation per environment, deterministic assignment, at least 100 mutations/s and p95 at most 500ms", ["two production APIs", "100 PromotionTrain current stages", "fixed attempt count"], async (ctx) => { const result = await runContentionLoad(ctx); return caseResult(ctx, { attempts: result.attempts, ratePerSecond: result.rate, p95Ms: result.p95 }); });
+const LOAD03 = defineCase("LOAD-03", "fixed 100000-invalidation recovery", "Kill exactly two distinct claimed workers, wait lease expiry and drain with exactly four replacements", "Every invalidation and Work drains within 90 seconds and all 100 environments converge within five seconds without stale re-enable", ["worker.claimed", "SIGKILL", "four replacements"], async (ctx) => { const result = await runInvalidationLoad(ctx); return caseResult(ctx, { recoverySeconds: result.recoverySeconds, convergenceSeconds: result.convergenceSeconds, killedWorkIds: result.killedWorkIds }); });
+const LOAD04 = defineCase("LOAD-04", "three independent formal load closures", "Rerun fetch, contention and invalidation loads on three fresh databases, then audit public API OpenAPI Chromium persistence and recovery", "Every formal metric closes across immutable revision, generation, assignment, audit, Event and drained Work evidence", ["three database resets", "OpenAPI", "Chromium", "snapshot"], async (ctx) => { const evidence = []; let result = await runFetchLoad(ctx); evidence.push({ scenario: "client-fetch-mix", generationCount: (await closeCrossLayer(ctx, "fetch", result)).resources.releases.length }); await resetFinal(ctx); result = await runContentionLoad(ctx); evidence.push({ scenario: "rollout-rollback-contention", generationCount: (await closeCrossLayer(ctx, "contention", result)).resources.releases.length }); await resetFinal(ctx); result = await runInvalidationLoad(ctx); evidence.push({ scenario: "invalidation-recovery", generationCount: (await closeCrossLayer(ctx, "invalidation", result)).resources.releases.length }); return caseResult(ctx, { scenarios: evidence }); });
+export const LOAD_CASES = Object.freeze([LOAD01, LOAD02, LOAD03, LOAD04]);

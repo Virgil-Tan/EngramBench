@@ -1,0 +1,38 @@
+{
+  "seedKeys": ["tenants", "users", "devices", "sessions", "signingKeys", "revocations", "auditEntries", "auditCheckpoints"],
+  "publicPaths": [
+    "/api/v1/tenants", "/api/v1/users", "/api/v1/login-attempts", "/api/v1/provider/callbacks",
+    "/api/v1/login-attempts/:attemptId/reconcile", "/api/v1/sessions/:sessionId/refresh",
+    "/api/v1/sessions/:sessionId/revoke", "/api/v1/sessions", "/api/v1/devices/register",
+    "/api/v1/devices/:deviceId/challenges", "/api/v1/device-challenges/:challengeId/approve",
+    "/api/v1/devices/:deviceId/revoke", "/api/v1/signing-keys/rotate", "/api/v1/signing-keys/jwks",
+    "/api/v1/revocations", "/api/v1/audit/verify", "/api/v1/audit", "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"users","shape":"User","sort":["userId"]},
+      {"key":"loginAttempts","shape":"LoginAttempt","sort":["loginAttemptId"]},
+      {"key":"sessions","shape":"Session","sort":["sessionId"]},
+      {"key":"devices","shape":"Device","sort":["deviceId"]},
+      {"key":"deviceChallenges","shape":"DeviceChallenge","sort":["challengeId"]},
+      {"key":"signingKeys","shape":"SigningKey","sort":["tenantId","keyId"]},
+      {"key":"revocations","shape":"Revocation","sort":["tenantId","version"]},
+      {"key":"auditEntries","shape":"AuditEntry","sort":["tenantId","sequence"]},
+      {"key":"auditCheckpoints","shape":"AuditCheckpoint","sort":["tenantId","sequence"]}
+    ],
+    "managerResources": [
+      {"key":"compromiseIncidents","shape":"CompromiseIncident","sort":["incidentId"]},
+      {"key":"recoveryApprovals","shape":"RecoveryApproval","sort":["incidentId","approverId"]}
+    ]
+  },
+  "workKinds": {
+    "v1": ["LOGIN_RECONCILIATION", "REVOCATION_PROPAGATION", "KEY_RETIREMENT", "AUDIT_DELIVERY"],
+    "manager": ["TENANT_QUARANTINE", "TENANT_RECOVERY"]
+  },
+  "perfScenarios": [
+    {"id":"session-refresh-contention"},
+    {"id":"revocation-fanout"},
+    {"id":"audit-chain-append"}
+  ]
+}

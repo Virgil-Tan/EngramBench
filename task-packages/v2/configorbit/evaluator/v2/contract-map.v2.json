@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 2,
+  "taskId": "configorbit",
+  "cases": [
+    {
+      "caseId": "REV-01",
+      "requirement": {
+        "id": "CO-REV-CANONICAL",
+        "source": "workspace/README.md#revision-publish-rollout-and-rollback-rules",
+        "summary": "Parent CAS and canonical document digest preserve revision lineage."
+      },
+      "privateFailureCodePrefix": "CO_REV01_",
+      "publicFeedbackCategory": "revision-contract"
+    },
+    {
+      "caseId": "REV-02",
+      "requirement": {
+        "id": "CO-STRICT-DOCUMENT",
+        "source": "workspace/README.md#product-boundary-and-state",
+        "summary": "Secret-like keys reject recursively and published content is immutable."
+      },
+      "privateFailureCodePrefix": "CO_REV02_",
+      "publicFeedbackCategory": "strict-config-document"
+    },
+    {
+      "caseId": "REV-03",
+      "requirement": {
+        "id": "CO-ATOMIC-PUBLISH",
+        "source": "workspace/README.md#revision-publish-rollout-and-rollback-rules",
+        "summary": "Publish commits revision Release generation invalidation audit Work and Event together."
+      },
+      "privateFailureCodePrefix": "CO_REV03_",
+      "publicFeedbackCategory": "atomic-publish"
+    },
+    {
+      "caseId": "REV-04",
+      "requirement": {
+        "id": "CO-ASSIGNMENT",
+        "source": "workspace/README.md#revision-publish-rollout-and-rollback-rules",
+        "summary": "Assignment uses the exact unsigned SHA-256 first-64-bit algorithm."
+      },
+      "privateFailureCodePrefix": "CO_REV04_",
+      "publicFeedbackCategory": "deterministic-assignment"
+    },
+    {
+      "caseId": "REV-05",
+      "requirement": {
+        "id": "CO-GENERATION-FENCE",
+        "source": "workspace/README.md#client-fetch-and-cache-invalidation",
+        "summary": "ETag and knownGeneration cannot hide a newer database generation."
+      },
+      "privateFailureCodePrefix": "CO_REV05_",
+      "publicFeedbackCategory": "generation-fence"
+    },
+    {
+      "caseId": "TRAIN-01",
+      "requirement": {
+        "id": "CO-FROZEN-TRAIN",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Verify legal/invalid Stage lists, zero partial invalid creation, and frozen digest, salt and Stage bindings across publicly reachable start and rollback. No unprovided update route is called."
+      },
+      "privateFailureCodePrefix": "CO_TRAIN01_",
+      "publicFeedbackCategory": "frozen-promotion-train",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "TRAIN-02",
+      "requirement": {
+        "id": "CO-SINGLE-STAGE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Start creates one current ACTIVE stage and one normal generation effect."
+      },
+      "privateFailureCodePrefix": "CO_TRAIN02_",
+      "publicFeedbackCategory": "single-active-stage"
+    },
+    {
+      "caseId": "TRAIN-03",
+      "requirement": {
+        "id": "CO-ORDERED-PROMOTION",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Public advance rejects stale stage and universally invalid generation with zero effects; current Train and Stages remain observable through snapshot after API restart. Positive cross-environment activation is not asserted because revision binding and generation authority are unspecified."
+      },
+      "privateFailureCodePrefix": "CO_TRAIN03_",
+      "publicFeedbackCategory": "ordered-promotion",
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "caseId": "TRAIN-04",
+      "requirement": {
+        "id": "CO-COMPENSATION",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Start and roll back the source-environment Stage; verify exactly one compensating generation and unchanged other environments, public OpenAPI and visible UI controls. No unprovided Train GET/list or refresh discovery is required."
+      },
+      "privateFailureCodePrefix": "CO_TRAIN04_",
+      "publicFeedbackCategory": "compensating-release",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "TRAIN-05",
+      "requirement": {
+        "id": "CO-TRAIN-WIRE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Create a real ROLLED_BACK Train and verify terminal/missing/stale mutation errors and no terminal resurrection. No unreachable CANCELLED or frozen-update trigger is asserted."
+      },
+      "privateFailureCodePrefix": "CO_TRAIN05_",
+      "publicFeedbackCategory": "train-wire-terminal",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "RACE-01",
+      "requirement": {
+        "id": "CO-DURABLE-REPLAY",
+        "source": "workspace/README.md#revision-publish-rollout-and-rollback-rules",
+        "summary": "Unknown and concurrent mutation replay has one durable effect."
+      },
+      "privateFailureCodePrefix": "CO_RACE01_",
+      "publicFeedbackCategory": "durable-idempotency"
+    },
+    {
+      "caseId": "RACE-02",
+      "requirement": {
+        "id": "CO-GENERATION-CONTENTION",
+        "source": "workspace/README.md#revision-publish-rollout-and-rollback-rules",
+        "summary": "Generation CAS admits one successor under hotspot contention."
+      },
+      "privateFailureCodePrefix": "CO_RACE02_",
+      "publicFeedbackCategory": "generation-contention"
+    },
+    {
+      "caseId": "RACE-03",
+      "requirement": {
+        "id": "CO-CLAIMED-RECOVERY",
+        "source": "workspace/README.md#ui-and-project-owned-tests",
+        "summary": "Actually SIGKILL and reclaim three publicly observable claimed Work kinds; verify terminal identity/attempt and generation closure. No hidden later commit checkpoint or cross-environment advance is asserted."
+      },
+      "privateFailureCodePrefix": "CO_RACE03_",
+      "publicFeedbackCategory": "promotion-recovery",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "RACE-04",
+      "requirement": {
+        "id": "CO-OUTBOX-INVALIDATION",
+        "source": "workspace/README.md#client-fetch-and-cache-invalidation",
+        "summary": "Unknown webhook ACK preserves Event identity and observations remain monotonic."
+      },
+      "privateFailureCodePrefix": "CO_RACE04_",
+      "publicFeedbackCategory": "invalidation-outbox-recovery"
+    },
+    {
+      "caseId": "MIGRATE-01",
+      "requirement": {
+        "id": "CO-V1-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current release generations and client assignment survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "CO_MIGRATE01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-02",
+      "requirement": {
+        "id": "CO-INFLIGHT-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current leased invalidation, Events, audit and replay survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "CO_MIGRATE02_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "MIGRATE-03",
+      "requirement": {
+        "id": "CO-SEED-SNAPSHOT",
+        "source": "workspace/README.md#seed-work-events-and-snapshot",
+        "summary": "V1 seed remains atomic and FINAL snapshot exposes the exact union."
+      },
+      "privateFailureCodePrefix": "CO_MIGRATE03_",
+      "publicFeedbackCategory": "seed-snapshot-compatibility"
+    },
+    {
+      "caseId": "MIGRATE-04",
+      "requirement": {
+        "id": "CO-CROSS-LAYER-V1",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current release API, OpenAPI and production UI closure. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "CO_MIGRATE04_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "LOAD-01",
+      "requirement": {
+        "id": "CO-PERF-FETCH",
+        "source": "workspace/README.md#published-performance-gates",
+        "summary": "The fixed client fetch mix meets throughput latency and correctness thresholds."
+      },
+      "privateFailureCodePrefix": "CO_LOAD01_",
+      "publicFeedbackCategory": "performance-client-fetch"
+    },
+    {
+      "caseId": "LOAD-02",
+      "requirement": {
+        "id": "CO-PERF-GENERATION",
+        "source": "workspace/README.md#published-performance-gates",
+        "summary": "Fixed generation contention preserves one Release per accepted generation."
+      },
+      "privateFailureCodePrefix": "CO_LOAD02_",
+      "publicFeedbackCategory": "performance-generation"
+    },
+    {
+      "caseId": "LOAD-03",
+      "requirement": {
+        "id": "CO-PERF-INVALIDATION",
+        "source": "workspace/README.md#published-performance-gates",
+        "summary": "One hundred thousand invalidations recover from two claimed worker deaths."
+      },
+      "privateFailureCodePrefix": "CO_LOAD03_",
+      "publicFeedbackCategory": "performance-invalidation"
+    },
+    {
+      "caseId": "LOAD-04",
+      "requirement": {
+        "id": "CO-POST-LOAD",
+        "source": "workspace/README.md#published-performance-gates",
+        "summary": "Run the three published load workloads and audit their current revisions, generation, assignments, audit, Events, Work, OpenAPI and UI. This case does not claim cross-environment Train completion."
+      },
+      "privateFailureCodePrefix": "CO_LOAD04_",
+      "publicFeedbackCategory": "post-load-invariants",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

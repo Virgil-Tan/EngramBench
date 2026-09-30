@@ -1,0 +1,206 @@
+import assert from "node:assert/strict";
+import { createHash, createHmac } from "node:crypto";
+import { spawn, fork } from "node:child_process";
+import { lstat, readFile } from "node:fs/promises";
+import { resolve, join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { contains, validator, expand, requestPath } from "./runtime.mjs";
+
+export async function checkSource(workspace, author) {
+  const authorLock = await readFile(join(author, "protected.json"), "utf8");
+  assert.equal(await readFile(join(workspace, "contract/protected.json"), "utf8"), authorLock, "Restore author-owned protected.json");
+  const lock = JSON.parse(authorLock);
+  for (const [path, expected] of Object.entries(lock.files)) {
+    assert(!path.startsWith("/") && !path.split("/").includes(".."), "Unsafe protected file path");
+    const file = join(workspace, path);
+    assert((await lstat(file)).isFile(), `Protected file must be a regular file: ${path}`);
+    assert.equal(createHash("sha256").update(await readFile(file)).digest("hex"), expected, `Restore author-owned file: ${path}`);
+  }
+  const pkg = JSON.parse(await readFile(join(workspace, "package.json")));
+  for (const [name, command] of Object.entries(lock.scripts)) assert.equal(pkg.scripts?.[name], command, `Restore published npm script: ${name}`);
+  assert.equal(pkg.type, "module", "package.json type must remain module");
+  const contract = JSON.parse(await readFile(join(author, "contract.json")));
+  const compile = validator(contract);
+  const validSeed = compile(contract.seed.schema);
+  assert(validSeed(contract.seed.example), `Invalid AUTHOR seed fixture: ${JSON.stringify(validSeed.errors)}`);
+  for (const op of contract.operations) {
+    if (op.request) compile(op.request);
+    if (op.response) compile(op.response);
+  }
+  return contract;
+}
+
+// Public request construction only; never implements the submission's verifier.
+export function prepareProbe(item, variables) {
+  const example = expand(item, variables);
+  assert(example.signatures === undefined || Array.isArray(example.signatures), 'signatures must be an array');
+  for (const signature of example.signatures ?? []) {
+    const target = signature?.target;
+    assert(Array.isArray(target) && target.length === 2 && ['headers', 'body'].includes(target[0])
+      && typeof target[1] === 'string' && target[1].length > 0
+      && !['__proto__', 'prototype', 'constructor'].includes(target[1]), 'Invalid public signature target');
+    assert(example[target[0]] && typeof example[target[0]] === 'object' && !Array.isArray(example[target[0]])
+      && Object.hasOwn(example[target[0]], target[1]), 'Public signature target must name an existing field');
+    assert(typeof signature.key === 'string' && signature.key.length > 0 && typeof signature.message === 'string', 'Public signature requires a UTF-8 key and message');
+    assert(signature.algorithm === undefined || signature.algorithm === 'hmac-sha256', 'Unsupported public signature algorithm');
+    assert(target[0] !== 'body' || example.rawBody === undefined, 'Cannot sign a JSON body field in rawBody');
+    example[target[0]][target[1]] = createHmac('sha256', signature.key).update(signature.message, 'utf8').digest('hex');
+  }
+  return example;
+}
+
+export async function probe(contract, baseUrl, environment = process.env) {
+  const compile = validator(contract), findings = [], variables = { ...environment };
+  const failedCaptures = new Map();
+  for (const item of contract.smoke) {
+    const operation = contract.operations.find(op => op.id === item.operationId);
+    assert(operation, `Unknown public probe operation: ${item.operationId}`);
+    const blockedBy = [...new Set([...JSON.stringify(item).matchAll(/\$\{([A-Za-z0-9_]+)/g)].flatMap(([, name]) => failedCaptures.has(name) ? [failedCaptures.get(name)] : []))];
+    if (blockedBy.length) {
+      findings.push({ operationId: operation.id, passed: false, status: 'blocked', blockedBy });
+      for (const name of Object.keys(item.capture ?? {})) failedCaptures.set(name, operation.id);
+      continue;
+    }
+    const evidence = { method: operation.method, expectedStatus: item.expectStatus ?? operation.status ?? 200 };
+    try {
+      const example = prepareProbe(item, variables), headers = example.headers ?? {};
+      if (Object.hasOwn(example, 'rawBody')) {
+        assert.equal(typeof example.rawBody, 'string', `${operation.id}: rawBody must be a string`);
+        assert(!Object.hasOwn(example, 'body'), `${operation.id}: rawBody and body are mutually exclusive`);
+      }
+      const rawBody = example.rawBody !== undefined ? example.rawBody : example.body === undefined ? undefined : typeof example.body === 'string' && operation.request?.contentMediaType === 'application/octet-stream' ? example.body : JSON.stringify(example.body);
+      if (rawBody !== undefined && !Object.keys(headers).some(key => key.toLowerCase() === 'content-type')) headers['Content-Type'] = operation.request?.contentMediaType ?? 'application/json';
+      const path = requestPath(operation, example);
+      evidence.path = new URL(path, baseUrl).pathname;
+      const response = await fetch(new URL(path, baseUrl), { method: operation.method, headers, body: rawBody });
+      evidence.actualStatus = response.status;
+      const text = await response.text();
+      const noBody = operation.method === 'HEAD' || [204, 304].includes(response.status);
+      const schema = (operation.successStatuses ?? [operation.status ?? 200]).includes(response.status) ? operation.successResponses?.[response.status]?.response ?? operation.response : operation.errors?.[response.status] ?? contract.schemas.Error;
+      const raw = schema?.contentMediaType && schema.contentMediaType !== 'application/json';
+      if (!noBody) {
+        const expectedMedia = schema?.contentMediaType ?? (operation.path === '/' && response.ok ? 'text/html' : 'application/json');
+        assert.equal((response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase(), expectedMedia, `${operation.id}: response Content-Type`);
+      }
+      const body = noBody ? undefined : raw || (operation.path === '/' && response.ok) ? text : JSON.parse(text);
+      // Avoid leaking auth headers, request signatures, or arbitrary response bodies.
+      if (response.status >= 400 && typeof body?.error?.code === 'string' && /^[A-Z][A-Z0-9_]{0,127}$/.test(body.error.code)) evidence.errorCode = body.error.code;
+      assert.equal(response.status, example.expectStatus ?? operation.status ?? 200, `${operation.id}: HTTP status`);
+      if (example.expectBody !== undefined) assert(contains(body, example.expectBody), `${operation.id}: published example mismatch`);
+      if (schema && !noBody && !raw) {
+        const valid = compile(schema);
+        assert(valid(body), `${operation.id}: ${JSON.stringify(valid.errors)}`);
+      }
+      for (const requirement of example.expectContains ?? []) {
+        const rows = requirement.path.reduce((value, key) => value?.[key], body);
+        assert(Array.isArray(rows), `${operation.id}: expected array at ${requirement.path.join('.')}`);
+        assert.equal(rows.filter(row => contains(row, requirement.match)).length, requirement.count ?? 1, `${operation.id}: nonempty record identity mismatch`);
+      }
+      const captured = {};
+      for (const [name, path] of Object.entries(item.capture ?? {})) {
+        const value = path.reduce((current, key) => current?.[key], body);
+        assert.notEqual(value, undefined, `${operation.id}: missing capture ${name}`);
+        captured[name] = value;
+      }
+      if (operation.path === '/openapi.json' && response.ok) {
+        assert.match(body.openapi, /^3\.1\./);
+        for (const op of contract.operations) {
+          const path = op.path.replace(/\/:([A-Za-z][A-Za-z0-9_]*)/g, '/{$1}');
+          assert(body.paths?.[path]?.[op.method.toLowerCase()], `OpenAPI missing ${op.method} ${path}`);
+        }
+      }
+      Object.assign(variables, captured);
+      for (const name of Object.keys(captured)) failedCaptures.delete(name);
+      findings.push({ operationId: operation.id, passed: true });
+    } catch (error) {
+      for (const name of Object.keys(item.capture ?? {})) { delete variables[name]; failedCaptures.set(name, operation.id); }
+      findings.push({ operationId: operation.id, passed: false, status: 'failed', ...evidence, message: error.message });
+    }
+  }
+  return { passed: findings.every(item => item.passed), findings };
+}
+
+async function run(command, args, cwd, environment, stage) {
+  const child = spawn(command, args, { cwd, env: environment, stdio: ["ignore", "pipe", "pipe"] });
+  let stdout = '', stderr = '', spawnError;
+  child.stdout.on('data', chunk => { stdout = (stdout + chunk).slice(-256_000); process.stdout.write(chunk); });
+  child.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-256_000); process.stderr.write(chunk); });
+  child.once('error', error => { spawnError = error.message; });
+  const [exitCode, signal] = await new Promise(done => child.once('close', (...result) => done(result)));
+  if (spawnError || exitCode !== 0) throw Object.assign(new Error(`${stage}: ${command} ${args.join(' ')} ${spawnError ?? `exited ${exitCode ?? signal}`}`), {
+    stage, commandResult: { exitCode, signal, stdout, stderr, ...(spawnError && { spawnError }) },
+  });
+}
+
+export async function checkLive(workspace, author, environment = process.env) {
+  const contract = await checkSource(workspace, author);
+  // Always an isolated checkout + database when invoked by the official gate.
+  try {
+    for (const key of ["DATABASE_URL", "ADMIN_TOKEN"]) assert(environment[key], `Missing environment: ${key}`);
+    await run("npm", ["ci", "--no-audit", "--no-fund"], workspace, environment, 'install');
+  } catch (error) { error.preparationFailed = true; throw error; }
+  await run("npm", ["run", "build"], workspace, environment, 'build');
+  for (let i = 0; i < 2; i++) await run("npm", ["run", "db:migrate"], workspace, environment, 'migrate');
+  const seedCommand = expand(contract.seed.command ?? ['npm', 'run', 'db:seed', '--', '--file', '${SEED_PATH}'], { SEED_PATH: join(author, 'seed.example.json') });
+  for (let i = 0; i < (contract.seed.replay === false ? 1 : 2); i++) await run(seedCommand[0], seedCommand.slice(1), workspace, environment, 'seed');
+  const children = [];
+  let roleFailure, provider;
+  try {
+    if (contract.taskId === 'identitymesh' && contract.providerProtocol) {
+      try {
+        const { startIdentityMeshProvider } = await import(pathToFileURL(join(author, 'identitymesh-provider.mjs')));
+        provider = await startIdentityMeshProvider({ contract });
+        environment = { ...environment, PROVIDER_BASE_URL: provider.baseUrl };
+      } catch (error) { error.preparationFailed = true; error.stage = 'public-provider'; throw error; }
+    }
+    for (const role of ["start:worker", "start:dispatcher"].filter(role => contract.commands.some(command => command.startsWith(`npm run ${role}`)))) {
+      const child = spawn(process.execPath, [join(workspace, "dist/lifecycle.js"), role], { cwd: workspace, env: environment, detached: process.platform !== "win32", stdio: ["ignore", "inherit", "inherit"] });
+      children.push(child);
+      child.once("error", (error) => { roleFailure = error; });
+      child.once("exit", (code, signal) => { roleFailure = new Error(`${role} exited before public checks finished (${code ?? signal})`); });
+    }
+    const api = fork(join(workspace, "contract/server.mjs"), [], { cwd: workspace, env: { ...environment, PORT: "0" }, detached: process.platform !== "win32", stdio: ["ignore", "inherit", "inherit", "ipc"] });
+    children.push(api);
+    const port = await new Promise((done, fail) => {
+      api.once("error", fail);
+      api.once("exit", (code) => fail(new Error(`API exited before listen (${code})`)));
+      api.on("message", (message) => { if (message.kind === "public-api-listening") done(message.port); });
+    });
+    const result = await probe(contract, `http://127.0.0.1:${port}`, environment);
+    // Detect modifications performed by build/migrate/seed/roles as well.
+    await checkSource(workspace, author);
+    if (roleFailure) result.findings.push({ operationId: "production-roles", passed: false, message: roleFailure.message });
+    result.passed = result.findings.every((item) => item.passed);
+    return result;
+  } finally {
+    try {
+      for (const child of children) if (child.pid) {
+        try {
+          // Each detached child leads a fresh group owned solely by this check.
+          // Never signal the caller's/shared process group.
+          if (process.platform !== "win32") process.kill(-child.pid, "SIGTERM");
+          else if (child.exitCode === null) child.kill("SIGTERM");
+        } catch (error) { if (error.code !== "ESRCH") throw error; }
+      }
+      await Promise.all(children.map((child) => child.exitCode !== null || child.signalCode ? undefined : new Promise((done) => child.once("exit", done))));
+    } finally {
+      try { await provider?.close(); }
+      catch (error) { error.preparationFailed = true; error.stage = 'public-provider'; throw error; }
+    }
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const args = process.argv.slice(2);
+  const option = (key, fallback) => args.includes(key) ? args[args.indexOf(key) + 1] : fallback;
+  const workspace = resolve(option("--workspace", "."));
+  const author = resolve(option("--author", join(workspace, "contract")));
+  try {
+    const result = args.includes("--live") ? await checkLive(workspace, author) : (await checkSource(workspace, author), { passed: true, mode: "source-only" });
+    console.log(JSON.stringify({ kind: "frontal-public-contract-result", ...result }));
+    process.exitCode = result.passed ? 0 : 1;
+  } catch (error) {
+    console.log(JSON.stringify({ kind: "frontal-public-contract-result", passed: false, ...(error.preparationFailed && { preparationFailed: true }), message: error.message, ...(error.stage && { stage: error.stage }), ...(error.commandResult && { commandResult: error.commandResult }) }));
+    process.exitCode = 1;
+  }
+}

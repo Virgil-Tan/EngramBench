@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "taskId": "billforge",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "name": "billing-and-frozen-terms", "weight": 30 },
+    "B": { "name": "payments-refunds-and-ledger", "weight": 25 },
+    "C": { "name": "atomic-replay-and-recovery", "weight": 20 },
+    "D": { "name": "manager-cross-layer-contract", "weight": 15 },
+    "E": { "name": "migration-and-snapshot-compatibility", "weight": 10 }
+  },
+  "specGaps": [
+    { "id": "SPEC-GAP-BF-01", "summary": "Manager did not publish Dispute, Adjustment, Chargeback, or mutation wire shapes." },
+    { "id": "SPEC-GAP-BF-02", "summary": "Manager did not publish new errors, snapshot resources, Work kinds, or Event types." },
+    { "id": "SPEC-GAP-BF-03", "summary": "No performance workload, scale, or threshold is public." },
+    { "id": "SPEC-GAP-BF-04", "summary": "Refund UNKNOWN behavior has no public state or wire representation." },
+    { "id": "SPEC-GAP-BF-05", "summary": "Proration, FX rounding, discount allocation, and tax ordering algorithms are not public." },
+    { "id": "SPEC-GAP-BF-06", "summary": "The provider-double control and observation protocol is not public." },
+    { "id": "SPEC-GAP-BF-07", "summary": "The settlement recovery barrier protocol is not public." }
+  ],
+  "hardCaps": [
+    { "id": "MONEY_OR_LEDGER_INVARIANT", "cap": 35, "publicInvariant": "Money stays safe and non-negative and every Posting is immutable and balanced by currency." },
+    { "id": "REFUND_OR_RESERVE_BOUND", "cap": 35, "publicInvariant": "Successful refunds and published reservations cannot exceed captured payment." },
+    { "id": "PROVIDER_IDENTITY_OR_UNKNOWN", "cap": 40, "publicInvariant": "UNKNOWN cannot be recaptured and one provider transaction cannot bind to two intents." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "Unknown outcomes and concurrent replay cannot create a second billing effect." },
+    { "id": "SETTLEMENT_IMMUTABILITY_OR_RECOVERY", "cap": 40, "publicInvariant": "A frozen or CLOSED settlement cannot be recomputed and stale workers cannot commit." },
+    { "id": "MIGRATION_COMPATIBILITY", "cap": 35, "publicInvariant": "Migration preserves V1 identities, ledger, snapshots, events, Work, and saved replay." }
+  ],
+  "cases": [
+    { "id": "BILL-01", "title": "Effective-dated terms freeze into an Invoice", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "BILL-02", "title": "Subscription changes preserve deterministic non-negative proration", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-BILL02-EXACT-PRORATION", "blockedBy": "SPEC-GAP-BF-05", "policy": "fail-closed-diagnostic", "summary": "Exact proration formula and remainder direction are unpublished." }] },
+    { "id": "BILL-03", "title": "Exchange-rate snapshot remains frozen", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-BILL03-EXACT-FX", "blockedBy": "SPEC-GAP-BF-05", "policy": "fail-closed-diagnostic", "summary": "Exact FX conversion and rounding are unpublished." }] },
+    { "id": "BILL-04", "title": "Discount floor and taxable base stay non-negative and frozen", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-BILL04-ORDER", "blockedBy": "SPEC-GAP-BF-05", "policy": "fail-closed-diagnostic", "summary": "Discount, tax, and proration calculation order is unpublished." }] },
+    { "id": "BILL-05", "title": "Invoice authority is unique and finalized facts are immutable", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+
+    { "id": "PAY-01", "title": "PaymentIntent durable idempotency and exact replay", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "PAY-02", "title": "Provider timeout remains UNKNOWN without a second charge", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-PAY02-PROVIDER-CONTROL", "blockedBy": "SPEC-GAP-BF-06", "policy": "fail-closed-diagnostic", "summary": "No public seam can manufacture or count TIMEOUT and RESET facts." }] },
+    { "id": "PAY-03", "title": "Provider transaction identity survives duplicate and reordered Webhooks", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-PAY03-WEBHOOK-WIRE", "blockedBy": "SPEC-GAP-BF-06", "policy": "fail-closed-diagnostic", "summary": "Provider webhook and observation wire is unpublished." }] },
+    { "id": "PAY-04", "title": "Partial Refund conservation under failed and unknown provider facts", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-PAY04-UNKNOWN-STATE", "blockedBy": "SPEC-GAP-BF-04", "policy": "fail-closed-diagnostic", "summary": "Refund UNKNOWN has no published state." }, { "id": "BF-PAY04-PROVIDER-CONTROL", "blockedBy": "SPEC-GAP-BF-06", "policy": "fail-closed-diagnostic", "summary": "Provider failure control and call ledger are unpublished." }] },
+    { "id": "PAY-05", "title": "Every successful payment and refund creates one balanced immutable Posting", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+
+    { "id": "RACE-01", "title": "Lost mutation responses preserve atomic business replay", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RACE-02", "title": "Webhook and reconcile commute to one provider fact", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-RACE02-PROVIDER-FACT", "blockedBy": "SPEC-GAP-BF-06", "policy": "fail-closed-diagnostic", "summary": "No frozen seam can generate the same provider fact in all precedence orders." }] },
+    { "id": "RACE-03", "title": "Refund and Dispute serialize on the last shared reserve", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-RACE03-DISPUTE-WIRE", "blockedBy": "SPEC-GAP-BF-01", "policy": "fail-closed-diagnostic", "summary": "Dispute create and resolve wire is unpublished." }] },
+    { "id": "RACE-04", "title": "Settlement resumes from a fenced frozen phase", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-RACE04-BARRIER", "blockedBy": "SPEC-GAP-BF-07", "policy": "fail-closed-diagnostic", "summary": "Settlement barrier points, header, and payload are unpublished." }] },
+
+    { "id": "ADJUST-01", "title": "Dispute create closes across OpenAPI runtime and snapshot", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-ADJUST01-WIRE", "blockedBy": "SPEC-GAP-BF-01", "policy": "fail-closed-diagnostic", "summary": "Dispute shape and request are unpublished." }, { "id": "BF-ADJUST01-SNAPSHOT", "blockedBy": "SPEC-GAP-BF-02", "policy": "fail-closed-diagnostic", "summary": "Dispute snapshot and error contract is unpublished." }] },
+    { "id": "ADJUST-02", "title": "WON and LOST close through UI ledger and events", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"], "blockedAssertions": [{ "id": "BF-ADJUST02-WIRE", "blockedBy": "SPEC-GAP-BF-01", "policy": "fail-closed-diagnostic", "summary": "Resolve and Chargeback shapes are unpublished." }, { "id": "BF-ADJUST02-EVENT", "blockedBy": "SPEC-GAP-BF-02", "policy": "fail-closed-diagnostic", "summary": "Chargeback Event and snapshot contracts are unpublished." }] },
+    { "id": "ADJUST-03", "title": "Dispute and Refund expose one cross-layer linearization", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"], "blockedAssertions": [{ "id": "BF-ADJUST03-WIRE", "blockedBy": "SPEC-GAP-BF-01", "policy": "fail-closed-diagnostic", "summary": "Dispute reserve wire is unpublished." }, { "id": "BF-ADJUST03-SNAPSHOT", "blockedBy": "SPEC-GAP-BF-02", "policy": "fail-closed-diagnostic", "summary": "Manager snapshot and errors are unpublished." }, { "id": "BF-ADJUST03-PROVIDER", "blockedBy": "SPEC-GAP-BF-06", "policy": "fail-closed-diagnostic", "summary": "Provider outcome control is unpublished." }] },
+
+    { "id": "ADJUST-04", "title": "CLOSED history changes only through next-period Adjustment", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "BF-ADJUST04-WIRE", "blockedBy": "SPEC-GAP-BF-01", "policy": "fail-closed-diagnostic", "summary": "Adjustment request and resource shapes are unpublished." }, { "id": "BF-ADJUST04-SNAPSHOT", "blockedBy": "SPEC-GAP-BF-02", "policy": "fail-closed-diagnostic", "summary": "Adjustment snapshot and errors are unpublished." }] },
+    { "id": "COMPAT-01", "title": "V1 resources Postings and replay identities survive migration", "dimension": "E", "weight": 2.5, "prerequisites": ["V1_CHECKPOINT", "FINAL"] },
+    { "id": "COMPAT-02", "title": "In-flight Work UNKNOWN and provider identity survive migration", "dimension": "E", "weight": 2.5, "prerequisites": ["V1_CHECKPOINT", "FINAL"], "blockedAssertions": [{ "id": "BF-COMPAT02-PROVIDER", "blockedBy": "SPEC-GAP-BF-06", "policy": "fail-closed-diagnostic", "summary": "Delayed provider facts and call identity are not observable." }, { "id": "BF-COMPAT02-BARRIER", "blockedBy": "SPEC-GAP-BF-07", "policy": "fail-closed-diagnostic", "summary": "No frozen lease checkpoint barrier exists." }] },
+    { "id": "COMPAT-03", "title": "V1 seed and point-in-time snapshot preserve accounting exactness", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "COMPAT-04", "title": "OpenAPI and real UI close legacy billing plus Manager correction", "dimension": "D", "weight": 3, "prerequisites": ["V1_CHECKPOINT", "FINAL", "CHROMIUM"], "blockedAssertions": [{ "id": "BF-COMPAT04-WIRE", "blockedBy": "SPEC-GAP-BF-01", "policy": "fail-closed-diagnostic", "summary": "Manager correction wire is unpublished, so the whole Case cannot be split." }, { "id": "BF-COMPAT04-CROSSLAYER", "blockedBy": "SPEC-GAP-BF-02", "policy": "fail-closed-diagnostic", "summary": "Manager cross-layer snapshot and Event contract is unpublished." }] }
+  ]
+}

@@ -1,0 +1,2381 @@
+{
+  "taskId": "escrowguard",
+  "title": "EscrowGuard",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  },
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "parties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Party"
+          }
+        },
+        "escrows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Escrow"
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Milestone"
+          }
+        },
+        "disputes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dispute"
+          }
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyRelease"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "parties",
+        "escrows",
+        "milestones",
+        "disputes",
+        "releases"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-v2-escrowguard-1",
+      "parties": [
+        {
+          "partyId": "b2000101-0000-4000-8000-000000000001",
+          "displayName": "Public buyer"
+        },
+        {
+          "partyId": "b2000101-0000-4000-8000-000000000002",
+          "displayName": "Public seller"
+        },
+        {
+          "partyId": "b2000101-0000-4000-8000-000000000003",
+          "displayName": "Public beneficiary"
+        }
+      ],
+      "escrows": [
+        {
+          "escrowId": "b2000101-0000-4000-8000-000000000004",
+          "buyerId": "b2000101-0000-4000-8000-000000000001",
+          "sellerId": "b2000101-0000-4000-8000-000000000002",
+          "currency": "USD",
+          "totalMinor": 900,
+          "availableMinor": 900,
+          "releasedMinor": 0,
+          "refundedMinor": 0,
+          "state": "FUNDED",
+          "expiresAt": "2099-01-01T00:00:00.000Z",
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "terminalAt": null,
+          "sequence": 0
+        }
+      ],
+      "milestones": [
+        {
+          "milestoneId": "b2000101-0000-4000-8000-000000000005",
+          "escrowId": "b2000101-0000-4000-8000-000000000004",
+          "ordinal": 1,
+          "title": "Public seeded milestone",
+          "amountMinor": 900,
+          "state": "PENDING",
+          "submittedAt": null,
+          "decidedAt": null,
+          "releasedAt": null
+        }
+      ],
+      "disputes": [],
+      "releases": []
+    },
+    "replay": true
+  },
+  "schemas": {
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Json"
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "examples": [
+                "INVALID_ESCROW_TOTAL",
+                "MILESTONE_NOT_CURRENT",
+                "MILESTONE_NOT_SUBMITTED",
+                "ESCROW_DISPUTED",
+                "ESCROW_TERMINAL",
+                "INVALID_BENEFICIARY_ALLOCATION",
+                "BENEFICIARY_PAYOUT_CONFLICT",
+                "IDEMPOTENCY_CONFLICT",
+                "INVALID_CURSOR"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenAPI": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "type": "string",
+          "pattern": "^3\\.1\\."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object"
+        },
+        "components": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Party": {
+      "type": "object",
+      "properties": {
+        "partyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "displayName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "partyId",
+        "displayName"
+      ],
+      "additionalProperties": false
+    },
+    "Escrow": {
+      "type": "object",
+      "properties": {
+        "escrowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "buyerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sellerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "totalMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "availableMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "releasedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "refundedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "FUNDED",
+            "ACTIVE",
+            "DISPUTED",
+            "RELEASED",
+            "REFUNDED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "escrowId",
+        "buyerId",
+        "sellerId",
+        "currency",
+        "totalMinor",
+        "availableMinor",
+        "releasedMinor",
+        "refundedMinor",
+        "state",
+        "expiresAt",
+        "createdAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "Milestone": {
+      "type": "object",
+      "properties": {
+        "milestoneId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "escrowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "title": {
+          "type": "string"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "SUBMITTED",
+            "ACCEPTED",
+            "DISPUTED",
+            "RELEASED",
+            "REFUNDED"
+          ]
+        },
+        "submittedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decidedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "releasedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "milestoneId",
+        "escrowId",
+        "ordinal",
+        "title",
+        "amountMinor",
+        "state",
+        "submittedAt",
+        "decidedAt",
+        "releasedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Dispute": {
+      "type": "object",
+      "properties": {
+        "disputeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "escrowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "milestoneId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "openedBy": {
+          "type": "string",
+          "enum": [
+            "BUYER",
+            "SELLER"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "RESOLVED_RELEASE",
+            "RESOLVED_REFUND"
+          ]
+        },
+        "openedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolutionNote": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "disputeId",
+        "escrowId",
+        "milestoneId",
+        "openedBy",
+        "reason",
+        "state",
+        "openedAt",
+        "resolvedAt",
+        "resolutionNote"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyRelease": {
+      "type": "object",
+      "properties": {
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "escrowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "milestoneId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sellerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "releaseId",
+        "escrowId",
+        "milestoneId",
+        "sellerId",
+        "amountMinor",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "BeneficiaryShare": {
+      "type": "object",
+      "properties": {
+        "beneficiaryShareId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "milestoneId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "beneficiaryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "beneficiaryShareId",
+        "milestoneId",
+        "ordinal",
+        "beneficiaryId",
+        "amountMinor"
+      ],
+      "additionalProperties": false
+    },
+    "BeneficiaryPayout": {
+      "type": "object",
+      "properties": {
+        "payoutId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "beneficiaryShareId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "beneficiaryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "payoutId",
+        "releaseId",
+        "beneficiaryShareId",
+        "beneficiaryId",
+        "amountMinor",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "FundPosition": {
+      "type": "object",
+      "properties": {
+        "totalMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "availableMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "releasedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "refundedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "totalMinor",
+        "availableMinor",
+        "releasedMinor",
+        "refundedMinor"
+      ],
+      "additionalProperties": false
+    },
+    "Release": {
+      "type": "object",
+      "properties": {
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "escrowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "milestoneId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sellerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "payouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BeneficiaryPayout"
+          }
+        }
+      },
+      "required": [
+        "releaseId",
+        "escrowId",
+        "milestoneId",
+        "sellerId",
+        "amountMinor",
+        "createdAt",
+        "payouts"
+      ],
+      "additionalProperties": false
+    },
+    "ReleaseResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LegacyRelease"
+        },
+        {
+          "$ref": "#/$defs/Release"
+        }
+      ]
+    },
+    "EscrowDetail": {
+      "type": "object",
+      "properties": {
+        "escrowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "buyerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sellerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "totalMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "availableMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "releasedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "refundedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "FUNDED",
+            "ACTIVE",
+            "DISPUTED",
+            "RELEASED",
+            "REFUNDED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Milestone"
+          }
+        },
+        "dispute": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Dispute"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReleaseResponse"
+          }
+        },
+        "fundPosition": {
+          "$ref": "#/$defs/FundPosition"
+        },
+        "beneficiaryShares": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BeneficiaryShare"
+          }
+        },
+        "beneficiaryPayouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BeneficiaryPayout"
+          }
+        }
+      },
+      "required": [
+        "escrowId",
+        "buyerId",
+        "sellerId",
+        "currency",
+        "totalMinor",
+        "availableMinor",
+        "releasedMinor",
+        "refundedMinor",
+        "state",
+        "expiresAt",
+        "createdAt",
+        "terminalAt",
+        "sequence",
+        "milestones",
+        "dispute",
+        "releases",
+        "fundPosition",
+        "beneficiaryShares",
+        "beneficiaryPayouts"
+      ],
+      "additionalProperties": false
+    },
+    "CreateEscrow": {
+      "type": "object",
+      "properties": {
+        "buyerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sellerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "totalMinor": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "amountMinor": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "beneficiaries": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "beneficiaryId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                    },
+                    "amountMinor": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "beneficiaryId",
+                    "amountMinor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "title",
+              "amountMinor"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "buyerId",
+        "sellerId",
+        "currency",
+        "totalMinor",
+        "expiresAt",
+        "milestones"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ESCROW_EXPIRY"
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "examples": [
+                  "INVALID_ESCROW_TOTAL",
+                  "MILESTONE_NOT_CURRENT",
+                  "MILESTONE_NOT_SUBMITTED",
+                  "ESCROW_DISPUTED",
+                  "ESCROW_TERMINAL",
+                  "INVALID_BENEFICIARY_ALLOCATION",
+                  "BENEFICIARY_PAYOUT_CONFLICT",
+                  "IDEMPOTENCY_CONFLICT",
+                  "INVALID_CURSOR"
+                ]
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "escrow.funded",
+            "milestone.submitted",
+            "milestone.released",
+            "dispute.opened",
+            "dispute.resolved",
+            "escrow.refunded"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "parties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Party"
+          }
+        },
+        "escrows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Escrow"
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Milestone"
+          }
+        },
+        "disputes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dispute"
+          }
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyRelease"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "parties",
+        "escrows",
+        "milestones",
+        "disputes",
+        "releases"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "parties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Party"
+          }
+        },
+        "escrows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Escrow"
+          }
+        },
+        "milestones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Milestone"
+          }
+        },
+        "disputes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dispute"
+          }
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReleaseResponse"
+          }
+        },
+        "beneficiaryShares": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BeneficiaryShare"
+          }
+        },
+        "beneficiaryPayouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BeneficiaryPayout"
+          }
+        }
+      },
+      "required": [
+        "parties",
+        "escrows",
+        "milestones",
+        "disputes",
+        "releases",
+        "beneficiaryShares",
+        "beneficiaryPayouts"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/OpenAPI"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "list-escrows",
+      "method": "GET",
+      "path": "/api/v1/escrows",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Escrow"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_ESCROW_TOTAL",
+              "MILESTONE_NOT_CURRENT",
+              "MILESTONE_NOT_SUBMITTED",
+              "ESCROW_DISPUTED",
+              "ESCROW_TERMINAL",
+              "INVALID_BENEFICIARY_ALLOCATION",
+              "BENEFICIARY_PAYOUT_CONFLICT",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          }
+        }
+      ],
+      "example": {},
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-escrow",
+      "method": "POST",
+      "path": "/api/v1/escrows",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "$ref": "#/$defs/CreateEscrow"
+      },
+      "response": {
+        "$ref": "#/$defs/Escrow"
+      },
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-create-escrow"
+        },
+        "body": {
+          "buyerId": "b2000101-0000-4000-8000-000000000001",
+          "sellerId": "b2000101-0000-4000-8000-000000000002",
+          "currency": "USD",
+          "totalMinor": 1200,
+          "expiresAt": "2099-01-01T00:00:00.000Z",
+          "milestones": [
+            {
+              "title": "Public delivery",
+              "amountMinor": 1200,
+              "beneficiaries": [
+                {
+                  "beneficiaryId": "b2000101-0000-4000-8000-000000000002",
+                  "amountMinor": 800
+                },
+                {
+                  "beneficiaryId": "b2000101-0000-4000-8000-000000000003",
+                  "amountMinor": 400
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "bodyTransportErrors": [
+        {
+          "path": "/totalMinor",
+          "when": "unsafe_integer",
+          "status": 400,
+          "code": "INVALID_ESCROW_TOTAL"
+        },
+        {
+          "path": "/milestones/*/amountMinor",
+          "when": "unsafe_integer",
+          "status": 400,
+          "code": "INVALID_ESCROW_TOTAL"
+        },
+        {
+          "path": "/milestones/*/beneficiaries/*/amountMinor",
+          "when": "unsafe_integer",
+          "status": 400,
+          "code": "INVALID_BENEFICIARY_ALLOCATION"
+        }
+      ]
+    },
+    {
+      "id": "read-escrow",
+      "method": "GET",
+      "path": "/api/v1/escrows/:escrowId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/EscrowDetail"
+      },
+      "parameters": [
+        {
+          "name": "escrowId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "escrowId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "submit-milestone",
+      "method": "POST",
+      "path": "/api/v1/escrows/:escrowId/milestones/:milestoneId/submit",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "evidence": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        "required": [
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "milestone": {
+            "$ref": "#/$defs/Milestone"
+          },
+          "escrow": {
+            "$ref": "#/$defs/Escrow"
+          }
+        },
+        "required": [
+          "milestone",
+          "escrow"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "escrowId": "b2000999-0000-4000-8000-000000000001",
+          "milestoneId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-submit-milestone"
+        },
+        "body": {
+          "evidence": {
+            "description": "Public delivery evidence"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "escrowId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "milestoneId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "accept-milestone",
+      "method": "POST",
+      "path": "/api/v1/escrows/:escrowId/milestones/:milestoneId/accept",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ReleaseResponse"
+      },
+      "parameters": [
+        {
+          "name": "escrowId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "milestoneId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "escrowId": "b2000999-0000-4000-8000-000000000001",
+          "milestoneId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-accept-milestone"
+        },
+        "body": {}
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "open-dispute",
+      "method": "POST",
+      "path": "/api/v1/escrows/:escrowId/milestones/:milestoneId/disputes",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "openedBy": {
+            "type": "string",
+            "enum": [
+              "BUYER",
+              "SELLER"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "openedBy",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Dispute"
+      },
+      "example": {
+        "params": {
+          "escrowId": "b2000999-0000-4000-8000-000000000001",
+          "milestoneId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-open-dispute"
+        },
+        "body": {
+          "openedBy": "BUYER",
+          "reason": "Public review request"
+        }
+      },
+      "parameters": [
+        {
+          "name": "escrowId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "milestoneId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "resolve-dispute",
+      "method": "POST",
+      "path": "/api/v1/admin/disputes/:disputeId/resolve",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "RELEASE",
+              "REFUND"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision",
+          "note"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Dispute"
+      },
+      "parameters": [
+        {
+          "name": "disputeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "disputeId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Authorization": "Bearer public-example-admin",
+          "Idempotency-Key": "public-v2-resolve-dispute"
+        },
+        "body": {
+          "decision": "REFUND",
+          "note": "Public resolution"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "examples": [
+              "INVALID_ESCROW_TOTAL",
+              "MILESTONE_NOT_CURRENT",
+              "MILESTONE_NOT_SUBMITTED",
+              "ESCROW_DISPUTED",
+              "ESCROW_TERMINAL",
+              "INVALID_BENEFICIARY_ALLOCATION",
+              "BENEFICIARY_PAYOUT_CONFLICT",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_CURSOR"
+            ]
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "b2000999-0000-4000-8000-000000000001"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; docs/frontal-legacy/manager-requirements.md; contract/README.md (V2 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer public-example-admin"
+        }
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "escrows"
+          ],
+          "match": {
+            "escrowId": "b2000101-0000-4000-8000-000000000004",
+            "availableMinor": 900
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "milestones"
+          ],
+          "match": {
+            "milestoneId": "b2000101-0000-4000-8000-000000000005",
+            "escrowId": "b2000101-0000-4000-8000-000000000004",
+            "ordinal": 1
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-escrow",
+      "body": {
+        "buyerId": "b2000101-0000-4000-8000-000000000001",
+        "sellerId": "b2000101-0000-4000-8000-000000000002",
+        "currency": "USD",
+        "totalMinor": 1200,
+        "expiresAt": "2099-01-01T00:00:00.000Z",
+        "milestones": [
+          {
+            "title": "Public delivery",
+            "amountMinor": 1200,
+            "beneficiaries": [
+              {
+                "beneficiaryId": "b2000101-0000-4000-8000-000000000002",
+                "amountMinor": 800
+              },
+              {
+                "beneficiaryId": "b2000101-0000-4000-8000-000000000003",
+                "amountMinor": 400
+              }
+            ]
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-escrow-create"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "state": "FUNDED",
+        "totalMinor": 1200
+      },
+      "capture": {
+        "createdEscrowId": [
+          "escrowId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-escrow",
+      "params": {
+        "escrowId": "${createdEscrowId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "escrowId": "${createdEscrowId}",
+        "availableMinor": 1200
+      },
+      "expectContains": [
+        {
+          "path": [
+            "milestones"
+          ],
+          "match": {
+            "ordinal": 1,
+            "title": "Public delivery",
+            "amountMinor": 1200
+          }
+        }
+      ],
+      "capture": {
+        "createdMilestoneId": [
+          "milestones",
+          0,
+          "milestoneId"
+        ]
+      }
+    },
+    {
+      "operationId": "submit-milestone",
+      "params": {
+        "escrowId": "${createdEscrowId}",
+        "milestoneId": "${createdMilestoneId}"
+      },
+      "body": {
+        "evidence": {
+          "description": "Public accepted delivery"
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-escrow-submit"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "milestone": {
+          "milestoneId": "${createdMilestoneId}",
+          "state": "SUBMITTED"
+        },
+        "escrow": {
+          "escrowId": "${createdEscrowId}"
+        }
+      }
+    },
+    {
+      "operationId": "read-escrow",
+      "params": {
+        "escrowId": "${createdEscrowId}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "milestones"
+          ],
+          "match": {
+            "milestoneId": "${createdMilestoneId}",
+            "state": "SUBMITTED"
+          }
+        },
+        {
+          "path": [
+            "beneficiaryShares"
+          ],
+          "match": {
+            "milestoneId": "${createdMilestoneId}",
+            "beneficiaryId": "b2000101-0000-4000-8000-000000000003",
+            "amountMinor": 400
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-escrow",
+      "body": {
+        "buyerId": "b2000101-0000-4000-8000-000000000001",
+        "sellerId": "b2000101-0000-4000-8000-000000000002",
+        "currency": "USD",
+        "totalMinor": 1200,
+        "expiresAt": "2099-01-01T00:00:00.000Z",
+        "milestones": [
+          {
+            "title": "Public delivery",
+            "amountMinor": 1200,
+            "beneficiaries": [
+              {
+                "beneficiaryId": "b2000101-0000-4000-8000-000000000002",
+                "amountMinor": 800
+              },
+              {
+                "beneficiaryId": "b2000101-0000-4000-8000-000000000003",
+                "amountMinor": 400
+              }
+            ]
+          }
+        ],
+        "unknown": true
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-escrow-unknown"
+      },
+      "expectStatus": 400,
+      "expectBody": {
+        "error": {
+          "code": "UNKNOWN_FIELD"
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Source authority is the full public README, Manager requirements and AGENTS. No hidden evaluator data or solution code is imported. This V2 contract fixes wire boundaries; state machines, algorithms, isolation, migrations and performance remain implementation work.",
+    "V2 wire clarification: every route has the closed request/success schema published here; only business inputs occur in creation requests. Omitted success status is 200. Health returns {status:\"ok\"}; UI returns HTML. Collection nextCursor is string or null, with null denoting completion. Path/query/header parameters and independent request examples are explicit. Examples validate transport only, not eligibility of referenced resources.",
+    "V2 wire clarification: the authenticated verification snapshot is one point-in-time envelope with complete named resource arrays, typed retained Work and ordered DomainEvents. When the legacy source did not specify event fields, V2 uses eventId,aggregateId,sequence,type,occurredAt,schemaVersion,payload; payload remains a JSON object. No hidden event payload is prescribed.",
+    "The seed uses the exact V1 array names and graph references. Repeated identical seed import is a no-op; another digest under the same seedVersion conflicts. Manager resources are derived by migration or created by public operations, never invented V1 seed members.",
+    "V2 wire clarification: GET Escrow detail is the top-level Escrow plus milestones, dispute (current open Dispute or null), releases, fundPosition, beneficiaryShares and beneficiaryPayouts. FundPosition has totalMinor,availableMinor,releasedMinor,refundedMinor and equals the Escrow amounts. Submit returns {milestone,escrow}; accept returns Release; dispute creation/resolution return Dispute. Collections use {items,nextCursor}.",
+    "Evidence is explicitly RFC 8785 JSON, not an invented evidence-resource schema. Escrow and beneficiary count/sign/sum/currency rules retain their named business errors; schema only enforces their JSON scalar types. Unknown keys remain UNKNOWN_FIELD.",
+    "ReleaseResponse permits only the exact V1 Release or its exact Manager extension with payouts. Previously saved V1 replay bodies remain unchanged; a new multi-beneficiary release includes all ordered payouts. Manager snapshot collections expose every captured share and payout.",
+    "The public seed is V1 only: three Parties plus a funded Escrow and one pending Milestone with exactly conserved value. Migration creates its one Seller share. No Manager-only seed members, worker implementation or settlement algorithm is provided.",
+    "All original role authorization, conservation, escrow/dispute/expiry races, migration identities, UI and fixed performance obligations remain mandatory. No new event types or payload members are introduced."
+  ],
+  "httpHost": "127.0.0.1",
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1"
+}

@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "domain-events" | "verification-snapshot" | "list-revisions" | "get-revision" | "compilation-findings" | "update-context-schema" | "create-flag" | "create-revision" | "activate-revision" | "evaluate" | "revision-diff" | "flag-revisions" | "progressive-activate" | "outcome-batch" | "get-rollout";

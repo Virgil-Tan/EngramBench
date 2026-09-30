@@ -1,0 +1,1735 @@
+{
+  "taskId": "ledgerbridge",
+  "title": "LedgerBridge",
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAccount"
+          }
+        },
+        "transfers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedTransfer"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "accounts",
+        "transfers"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "v2-public-ledgerbridge-1",
+      "accounts": [
+        {
+          "accountId": "70000000-0000-4000-8000-000000000031",
+          "currency": "USD",
+          "openingBalanceMinor": 1000
+        },
+        {
+          "accountId": "70000000-0000-4000-8000-000000000032",
+          "currency": "USD",
+          "openingBalanceMinor": 0
+        },
+        {
+          "accountId": "70000000-0000-4000-8000-000000000033",
+          "currency": "USD",
+          "openingBalanceMinor": 0
+        }
+      ],
+      "transfers": [
+        {
+          "transferId": "70000000-0000-4000-8000-000000000034",
+          "sourceAccountId": "70000000-0000-4000-8000-000000000031",
+          "destinationAccountId": "70000000-0000-4000-8000-000000000032",
+          "currency": "USD",
+          "amountMinor": 5,
+          "state": "CANCELLED",
+          "createdAt": "2026-09-07T00:00:00.000Z",
+          "terminalAt": "2026-09-07T00:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "minimum": -1.7976931348623157e+308,
+          "maximum": 1.7976931348623157e+308
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "SETTLEMENT"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "transfer.created",
+            "transfer.posted",
+            "transfer.cancelled",
+            "transfer.reversed"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Account": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "openingBalanceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "balanceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "reservedMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "availableMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "accountId",
+        "currency",
+        "openingBalanceMinor",
+        "balanceMinor",
+        "reservedMinor",
+        "availableMinor",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "TransferLeg": {
+      "type": "object",
+      "properties": {
+        "legId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "destinationAccountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "postingLegId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "legId",
+        "destinationAccountId",
+        "amountMinor",
+        "postingLegId"
+      ],
+      "additionalProperties": false
+    },
+    "Transfer": {
+      "type": "object",
+      "properties": {
+        "transferId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceAccountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "destinationAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "amountMinor": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "POSTED",
+            "CANCELLED",
+            "REVERSED"
+          ]
+        },
+        "postingId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reversalPostingId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "postedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cancelledAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reversedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TransferLeg"
+          },
+          "minItems": 1,
+          "maxItems": 20
+        }
+      },
+      "required": [
+        "transferId",
+        "sourceAccountId",
+        "destinationAccountId",
+        "currency",
+        "amountMinor",
+        "state",
+        "postingId",
+        "reversalPostingId",
+        "createdAt",
+        "postedAt",
+        "cancelledAt",
+        "reversedAt",
+        "sequence",
+        "legs"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyPostingLeg": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "DEBIT",
+            "CREDIT"
+          ]
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "accountId",
+        "direction",
+        "amountMinor"
+      ],
+      "additionalProperties": false
+    },
+    "ManagerPostingLeg": {
+      "type": "object",
+      "properties": {
+        "postingLegId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "legId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "DEBIT",
+            "CREDIT"
+          ]
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "postingLegId",
+        "legId",
+        "accountId",
+        "direction",
+        "amountMinor"
+      ],
+      "additionalProperties": false
+    },
+    "StatementItem": {
+      "type": "object",
+      "properties": {
+        "postingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "transferId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "TRANSFER",
+            "REVERSAL"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "DEBIT",
+            "CREDIT"
+          ]
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "balanceAfterMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "legId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "postingId",
+        "transferId",
+        "kind",
+        "direction",
+        "amountMinor",
+        "balanceAfterMinor",
+        "createdAt",
+        "legId"
+      ],
+      "additionalProperties": false
+    },
+    "SeedAccount": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "openingBalanceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "accountId",
+        "currency",
+        "openingBalanceMinor"
+      ],
+      "additionalProperties": false
+    },
+    "SeedTransfer": {
+      "type": "object",
+      "properties": {
+        "transferId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceAccountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "destinationAccountId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "amountMinor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "POSTED",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "transferId",
+        "sourceAccountId",
+        "destinationAccountId",
+        "currency",
+        "amountMinor",
+        "state",
+        "createdAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "Posting": {
+      "type": "object",
+      "properties": {
+        "postingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "transferId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "TRANSFER",
+            "REVERSAL"
+          ]
+        },
+        "legs": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/LegacyPostingLeg"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ManagerPostingLeg"
+              },
+              "minItems": 2,
+              "maxItems": 21
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "postingId",
+        "transferId",
+        "kind",
+        "legs",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "StatementPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StatementItem"
+          }
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAccount"
+          }
+        },
+        "transfers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedTransfer"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "accounts",
+        "transfers"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "accounts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Account"
+              }
+            },
+            "transfers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Transfer"
+              }
+            },
+            "postings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Posting"
+              }
+            }
+          },
+          "required": [
+            "accounts",
+            "transfers",
+            "postings"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#real-ui",
+      "response": {
+        "type": "string",
+        "minLength": 1
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "list-transfers",
+      "method": "GET",
+      "path": "/api/v1/transfers",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Transfer"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "read-transfer",
+      "method": "GET",
+      "path": "/api/v1/transfers/:transferId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/Transfer"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "transferId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "transferId": "70000000-0000-4000-8000-000000000034"
+        }
+      }
+    },
+    {
+      "id": "create-transfer",
+      "method": "POST",
+      "path": "/api/v1/transfers",
+      "status": 202,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/Transfer"
+      },
+      "request": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "sourceAccountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "destinationAccountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "amountMinor": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "sourceAccountId",
+              "destinationAccountId",
+              "currency",
+              "amountMinor"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sourceAccountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "legs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "destinationAccountId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "amountMinor": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "destinationAccountId",
+                    "amountMinor"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 20
+              }
+            },
+            "required": [
+              "sourceAccountId",
+              "currency",
+              "legs"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "sourceAccountId": "70000000-0000-4000-8000-000000000031",
+          "currency": "USD",
+          "legs": [
+            {
+              "destinationAccountId": "70000000-0000-4000-8000-000000000032",
+              "amountMinor": 7
+            },
+            {
+              "destinationAccountId": "70000000-0000-4000-8000-000000000033",
+              "amountMinor": 3
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-transfer"
+        }
+      }
+    },
+    {
+      "id": "cancel-transfer",
+      "method": "POST",
+      "path": "/api/v1/transfers/:transferId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Transfer"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "transferId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "transferId": "70000000-0000-4000-8000-000000000034"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "v2-public-cancel-transfer"
+        }
+      }
+    },
+    {
+      "id": "reverse-transfer",
+      "method": "POST",
+      "path": "/api/v1/transfers/:transferId/reverse",
+      "status": 202,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Transfer"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "transferId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "transferId": "70000000-0000-4000-8000-000000000034"
+        },
+        "body": {
+          "reason": "Reverse the complete transfer"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-reverse-transfer"
+        }
+      }
+    },
+    {
+      "id": "account-statement",
+      "method": "GET",
+      "path": "/api/v1/accounts/:accountId/statement",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/StatementPage"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "accountId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "accountId": "70000000-0000-4000-8000-000000000031"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "read-account",
+      "method": "GET",
+      "path": "/api/v1/accounts/:accountId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Account"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "accountId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "accountId": "70000000-0000-4000-8000-000000000031"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "70000000-0000-4000-8000-000000000001",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "ok"
+      }
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "accounts"
+          ],
+          "match": {
+            "accountId": "70000000-0000-4000-8000-000000000031",
+            "balanceMinor": 1000,
+            "reservedMinor": 0,
+            "availableMinor": 1000
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "accounts"
+          ],
+          "match": {
+            "accountId": "70000000-0000-4000-8000-000000000032",
+            "balanceMinor": 0
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "accounts"
+          ],
+          "match": {
+            "accountId": "70000000-0000-4000-8000-000000000033",
+            "balanceMinor": 0
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "transfers"
+          ],
+          "match": {
+            "transferId": "70000000-0000-4000-8000-000000000034",
+            "state": "CANCELLED",
+            "postingId": null
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-transfer",
+      "body": {
+        "sourceAccountId": "70000000-0000-4000-8000-000000000031",
+        "currency": "USD",
+        "legs": [
+          {
+            "destinationAccountId": "70000000-0000-4000-8000-000000000032",
+            "amountMinor": 7
+          },
+          {
+            "destinationAccountId": "70000000-0000-4000-8000-000000000033",
+            "amountMinor": 3
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "v2-public-create-transfer"
+      },
+      "expectStatus": 202,
+      "expectBody": {
+        "sourceAccountId": "70000000-0000-4000-8000-000000000031",
+        "destinationAccountId": null,
+        "amountMinor": null,
+        "currency": "USD"
+      },
+      "capture": {
+        "createdTransfer": [
+          "transferId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-transfer",
+      "params": {
+        "transferId": "${createdTransfer}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "transferId": "${createdTransfer}",
+        "sourceAccountId": "70000000-0000-4000-8000-000000000031",
+        "destinationAccountId": null,
+        "amountMinor": null
+      },
+      "expectContains": [
+        {
+          "path": [
+            "legs"
+          ],
+          "match": {
+            "destinationAccountId": "70000000-0000-4000-8000-000000000032",
+            "amountMinor": 7
+          }
+        },
+        {
+          "path": [
+            "legs"
+          ],
+          "match": {
+            "destinationAccountId": "70000000-0000-4000-8000-000000000033",
+            "amountMinor": 3
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Authority: the complete original public README and Manager requirements. This contract uses no private evaluator cases or submitted implementation. Wire validation does not establish workflow, recovery or performance correctness.",
+    "V2 wire clarification: unspecified health body is exactly {status:\"ok\"}; production UI is HTML at /. GET domain-events returns {items:[DomainEvent]} with aggregateId required and optional afterSequence (default 0), limit (default 50, range 1..100), ordered by sequence. No other query keys are accepted.",
+    "Original error details is an exact empty object. Every mutation requires its published Idempotency-Key. Only documented admin routes require ADMIN_TOKEN. Output timestamps retain the original UTC millisecond precision.",
+    "The FINAL snapshot has exactly its published resource keys and explicitly typed Work/DomainEvent records. It is one database snapshot; recursive *Token omission, stable ordering, retained terminal Work and event identity remain business requirements. Manager-only data is created by public APIs, never inserted through the V1 seed.",
+    "Examples are independent public transport examples, not a required stateful sequence. A success requires the state/time/lease/revision prerequisites in the original public documents. Smoke checks identity and a separate write/read path, not every operation or concurrency invariant.",
+    "V2 wire clarification: fresh Transfer create/detail/list/cancel/reverse success bodies use the Manager-extended Transfer at top level; saved pre-migration replay bodies remain unchanged. A single destination preserves destinationAccountId and amountMinor; multiple destinations set both to null.",
+    "V2 wire clarification: Account statement items add required legId:uuid|null. Source aggregate legs of multi-leg transfers use null; destination legs use their stable TransferLeg ID. One-leg statement entries expose that leg ID. One-leg Posting bodies retain their V1 two-leg shape; multi-leg Postings use the Manager shape and ordering.",
+    "Seed stays V1: three funded same-currency Accounts and one CANCELLED Transfer with terminalAt. This avoids an invented derived posting UUID in the example while requiring real Transfer import and Manager leg migration. Cancelled history consumes no balance or reservation.",
+    "Seed-derived POSTED posting and leg IDs must be deterministic, stable across replay and documented by the implementation; the original did not prescribe a UUID derivation algorithm. Smoke checks only published source identities and never assumes an unpublished derivation.",
+    "Smoke verifies new two-destination input through a separate GET; it intentionally permits PENDING or POSTED because a real worker may settle before the read. Atomic posting/reversal, conservation and safe-integer sums remain required business checks.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-applications" | "read-application-legacy-path" | "create-application" | "claim-review" | "decide-review" | "replace-revision" | "read-application" | "read-revision" | "read-stages" | "domain-events" | "verification-snapshot";

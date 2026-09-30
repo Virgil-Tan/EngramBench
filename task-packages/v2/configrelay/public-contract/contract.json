@@ -1,0 +1,2696 @@
+{
+  "taskId": "configrelay",
+  "title": "ConfigRelay",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  },
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "fleets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Fleet"
+          }
+        },
+        "agents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAgent"
+          }
+        },
+        "configurations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Configuration"
+          }
+        },
+        "deployments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Deployment"
+          }
+        },
+        "assignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "fleets",
+        "agents",
+        "configurations",
+        "deployments",
+        "assignments"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-v2-configrelay-1",
+      "fleets": [
+        {
+          "fleetId": "b2000003-0000-4000-8000-000000000001",
+          "name": "Public fleet",
+          "currentRevision": 1
+        }
+      ],
+      "agents": [
+        {
+          "agentId": "b2000003-0000-4000-8000-000000000002",
+          "fleetId": "b2000003-0000-4000-8000-000000000001",
+          "labels": {
+            "region": "public"
+          },
+          "appliedRevision": 1,
+          "appliedDigest": "65b358cd4a752aab86a7f26ea682801ddb238939d8c1bfe1cd9827ccf1989bd1",
+          "lastCommandSequence": 0,
+          "lastSeenAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "configurations": [
+        {
+          "fleetId": "b2000003-0000-4000-8000-000000000001",
+          "revision": 1,
+          "content": {
+            "theme": "public-neutral"
+          },
+          "canonicalDigest": "65b358cd4a752aab86a7f26ea682801ddb238939d8c1bfe1cd9827ccf1989bd1",
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "deployments": [],
+      "assignments": []
+    }
+  },
+  "schemas": {
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Json"
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "$ref": "#/$defs/JsonObject"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenAPI": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "type": "string",
+          "pattern": "^3\\.1\\."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object"
+        },
+        "components": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Fleet": {
+      "type": "object",
+      "properties": {
+        "fleetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currentRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "fleetId",
+        "name",
+        "currentRevision"
+      ],
+      "additionalProperties": false
+    },
+    "Agent": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "fleetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "appliedRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "appliedDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "desiredRevision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "desiredDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "drift": {
+          "type": "boolean"
+        },
+        "lastCommandSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "agentId",
+        "fleetId",
+        "appliedRevision",
+        "appliedDigest",
+        "desiredRevision",
+        "desiredDigest",
+        "drift",
+        "lastCommandSequence",
+        "lastSeenAt",
+        "labels"
+      ],
+      "additionalProperties": false
+    },
+    "Configuration": {
+      "type": "object",
+      "properties": {
+        "fleetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "content": {
+          "$ref": "#/$defs/Json"
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "fleetId",
+        "revision",
+        "content",
+        "canonicalDigest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Deployment": {
+      "type": "object",
+      "properties": {
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "fleetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "configurationRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "targetCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "targetDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERING",
+            "APPLIED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "selector": {
+          "type": "object",
+          "properties": {
+            "labels": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "deploymentId",
+        "fleetId",
+        "configurationRevision",
+        "targetCount",
+        "targetDigest",
+        "state",
+        "createdAt",
+        "completedAt",
+        "sequence",
+        "selector"
+      ],
+      "additionalProperties": false
+    },
+    "Assignment": {
+      "type": "object",
+      "properties": {
+        "assignmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "commandSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "SENT",
+            "ACKED",
+            "FAILED",
+            "SUPERSEDED"
+          ]
+        },
+        "deliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "assignmentToken": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sentAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ackedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "assignmentId",
+        "deploymentId",
+        "agentId",
+        "commandSequence",
+        "revision",
+        "digest",
+        "state",
+        "deliveryId",
+        "assignmentToken",
+        "sentAt",
+        "ackedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Acknowledgement": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "commandSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "assignmentToken": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "REJECTED"
+          ]
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "agentId",
+        "deploymentId",
+        "commandSequence",
+        "revision",
+        "digest",
+        "assignmentToken",
+        "outcome",
+        "reportedAt"
+      ],
+      "additionalProperties": false
+    },
+    "DeploymentCohort": {
+      "type": "object",
+      "properties": {
+        "cohortId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "targetDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "successCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "failureCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "pendingCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "DELIVERING",
+            "OBSERVING",
+            "SUCCEEDED",
+            "FAILED",
+            "ROLLED_BACK"
+          ]
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observationDeadlineAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selector": {
+          "type": "object",
+          "properties": {
+            "labels": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "additionalProperties": false
+        },
+        "minimumSuccessBasisPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "maximumFailureBasisPoints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "observationSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400
+        }
+      },
+      "required": [
+        "cohortId",
+        "deploymentId",
+        "ordinal",
+        "name",
+        "targetCount",
+        "targetDigest",
+        "successCount",
+        "failureCount",
+        "pendingCount",
+        "state",
+        "startedAt",
+        "observationDeadlineAt",
+        "completedAt",
+        "selector",
+        "minimumSuccessBasisPoints",
+        "maximumFailureBasisPoints",
+        "observationSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "RolloutCommand": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "cohortId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "commandSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "APPLY",
+            "ROLLBACK"
+          ]
+        },
+        "fromRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "toRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "toDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "deliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "assignmentToken": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "SENT",
+            "ACKED",
+            "FAILED",
+            "SUPERSEDED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "ackedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "commandId",
+        "deploymentId",
+        "cohortId",
+        "agentId",
+        "commandSequence",
+        "kind",
+        "fromRevision",
+        "toRevision",
+        "toDigest",
+        "deliveryId",
+        "assignmentToken",
+        "state",
+        "createdAt",
+        "ackedAt"
+      ],
+      "additionalProperties": false
+    },
+    "DeploymentRollback": {
+      "type": "object",
+      "properties": {
+        "rollbackId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "failedCohortId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERING",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "commandCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "completedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "rollbackId",
+        "deploymentId",
+        "failedCohortId",
+        "state",
+        "commandCount",
+        "completedCount",
+        "startedAt",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeedAgent": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "fleetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "appliedRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "appliedDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastCommandSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "agentId",
+        "fleetId",
+        "appliedRevision",
+        "appliedDigest",
+        "lastCommandSequence",
+        "lastSeenAt",
+        "labels"
+      ],
+      "additionalProperties": false
+    },
+    "StagedDeployment": {
+      "type": "object",
+      "properties": {
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "fleetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "configurationRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "targetCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "targetDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERING",
+            "APPLIED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "selector": {
+          "type": "object",
+          "properties": {
+            "labels": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "additionalProperties": false
+        },
+        "cohorts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeploymentCohort"
+          },
+          "minItems": 1,
+          "maxItems": 20
+        },
+        "rollback": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeploymentRollback"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "deploymentId",
+        "fleetId",
+        "configurationRevision",
+        "targetCount",
+        "targetDigest",
+        "state",
+        "createdAt",
+        "completedAt",
+        "sequence",
+        "selector",
+        "cohorts",
+        "rollback"
+      ],
+      "additionalProperties": false
+    },
+    "AnyDeployment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Deployment"
+        },
+        {
+          "$ref": "#/$defs/StagedDeployment"
+        }
+      ]
+    },
+    "PollResult": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "const": "NO_CHANGE"
+            },
+            "command": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "status",
+            "command"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "const": "COMMAND"
+            },
+            "command": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Assignment"
+                },
+                {
+                  "$ref": "#/$defs/RolloutCommand"
+                }
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "command"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "SnapshotAssignment": {
+      "type": "object",
+      "properties": {
+        "assignmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "commandSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "SENT",
+            "ACKED",
+            "FAILED",
+            "SUPERSEDED"
+          ]
+        },
+        "deliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sentAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ackedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "assignmentId",
+        "deploymentId",
+        "agentId",
+        "commandSequence",
+        "revision",
+        "digest",
+        "state",
+        "deliveryId",
+        "sentAt",
+        "ackedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotAcknowledgement": {
+      "type": "object",
+      "properties": {
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "commandSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "REJECTED"
+          ]
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "agentId",
+        "deploymentId",
+        "commandSequence",
+        "revision",
+        "digest",
+        "outcome",
+        "reportedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotRolloutCommand": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "deploymentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "cohortId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "agentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "commandSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "APPLY",
+            "ROLLBACK"
+          ]
+        },
+        "fromRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "toRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "toDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "deliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "SENT",
+            "ACKED",
+            "FAILED",
+            "SUPERSEDED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "ackedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "commandId",
+        "deploymentId",
+        "cohortId",
+        "agentId",
+        "commandSequence",
+        "kind",
+        "fromRevision",
+        "toRevision",
+        "toDigest",
+        "deliveryId",
+        "state",
+        "createdAt",
+        "ackedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ASSIGNMENT_DELIVERY",
+            "COHORT_DEADLINE",
+            "ROLLBACK_DELIVERY"
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "deployment.created",
+            "assignment.sent",
+            "assignment.acknowledged",
+            "assignment.failed",
+            "deployment.completed",
+            "deployment.cancelled"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "fleets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Fleet"
+          }
+        },
+        "agents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAgent"
+          }
+        },
+        "configurations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Configuration"
+          }
+        },
+        "deployments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Deployment"
+          }
+        },
+        "assignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "fleets",
+        "agents",
+        "configurations",
+        "deployments",
+        "assignments"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "agents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Agent"
+          }
+        },
+        "configurations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Configuration"
+          }
+        },
+        "deployments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AnyDeployment"
+          }
+        },
+        "assignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotAssignment"
+          }
+        },
+        "acknowledgements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotAcknowledgement"
+          }
+        },
+        "deploymentCohorts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeploymentCohort"
+          }
+        },
+        "rolloutCommands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotRolloutCommand"
+          }
+        },
+        "deploymentRollbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeploymentRollback"
+          }
+        }
+      },
+      "required": [
+        "agents",
+        "configurations",
+        "deployments",
+        "assignments",
+        "acknowledgements",
+        "deploymentCohorts",
+        "rolloutCommands",
+        "deploymentRollbacks"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/OpenAPI"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "deployments-list",
+      "method": "GET",
+      "path": "/api/v1/deployments",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/AnyDeployment"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {}
+    },
+    {
+      "id": "deployment-get",
+      "method": "GET",
+      "path": "/api/v1/deployments/:deploymentId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/AnyDeployment"
+      },
+      "parameters": [
+        {
+          "name": "deploymentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deploymentId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "deployment-create",
+      "method": "POST",
+      "path": "/api/v1/deployments",
+      "status": 202,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "fleetId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "configurationRevision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "selector": {
+                "type": "object",
+                "properties": {
+                  "labels": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "additionalProperties": false
+              },
+              "expectedFleetRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "fleetId",
+              "configurationRevision",
+              "selector",
+              "expectedFleetRevision"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "fleetId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "configurationRevision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "selector": {
+                "type": "object",
+                "properties": {
+                  "labels": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "additionalProperties": false
+              },
+              "expectedFleetRevision": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "cohorts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "selector": {
+                      "type": "object",
+                      "properties": {
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "labels"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minimumSuccessBasisPoints": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "maximumFailureBasisPoints": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "observationSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 86400
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "selector",
+                    "minimumSuccessBasisPoints",
+                    "maximumFailureBasisPoints",
+                    "observationSeconds"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 20
+              }
+            },
+            "required": [
+              "fleetId",
+              "configurationRevision",
+              "selector",
+              "expectedFleetRevision",
+              "cohorts"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$ref": "#/$defs/AnyDeployment"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-deployment-create"
+        },
+        "body": {
+          "fleetId": "b2000999-0000-4000-8000-000000000001",
+          "configurationRevision": 1,
+          "selector": {
+            "labels": {
+              "key": "public1",
+              "value": "public1"
+            }
+          },
+          "expectedFleetRevision": 1
+        }
+      }
+    },
+    {
+      "id": "configuration-create",
+      "method": "POST",
+      "path": "/api/v1/fleets/:fleetId/configurations",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "$ref": "#/$defs/Json"
+          },
+          "expectedFleetRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "content",
+          "expectedFleetRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Configuration"
+      },
+      "example": {
+        "params": {
+          "fleetId": "b2000003-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-configuration-create"
+        },
+        "body": {
+          "content": {
+            "theme": "public-blue"
+          },
+          "expectedFleetRevision": 1
+        }
+      },
+      "parameters": [
+        {
+          "name": "fleetId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "agent-poll",
+      "method": "POST",
+      "path": "/api/v1/agents/:agentId/poll",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "appliedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "lastCommandSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "appliedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PollResult"
+      },
+      "parameters": [
+        {
+          "name": "agentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "agentId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-agent-poll"
+        },
+        "body": {
+          "appliedRevision": 1
+        }
+      }
+    },
+    {
+      "id": "agent-acknowledge",
+      "method": "POST",
+      "path": "/api/v1/agents/:agentId/acknowledgements",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "deploymentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "commandSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "assignmentToken": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "APPLIED",
+              "REJECTED"
+            ]
+          }
+        },
+        "required": [
+          "deploymentId",
+          "commandSequence",
+          "revision",
+          "digest",
+          "assignmentToken",
+          "outcome"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Acknowledgement"
+      },
+      "parameters": [
+        {
+          "name": "agentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "agentId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-agent-acknowledge"
+        },
+        "body": {
+          "deploymentId": "b2000999-0000-4000-8000-000000000001",
+          "commandSequence": 1,
+          "revision": 1,
+          "digest": "d343f09257b005d35d35248617c884a50c55533991008a75ae283f6297d189e6",
+          "assignmentToken": "public1",
+          "outcome": "APPLIED"
+        }
+      }
+    },
+    {
+      "id": "deployment-cancel",
+      "method": "POST",
+      "path": "/api/v1/deployments/:deploymentId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/AnyDeployment"
+      },
+      "parameters": [
+        {
+          "name": "deploymentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deploymentId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-deployment-cancel"
+        },
+        "body": {
+          "reason": "public1"
+        }
+      }
+    },
+    {
+      "id": "agent-get",
+      "method": "GET",
+      "path": "/api/v1/agents/:agentId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Agent"
+      },
+      "parameters": [
+        {
+          "name": "agentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "agentId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "agent-assignments",
+      "method": "GET",
+      "path": "/api/v1/agents/:agentId/assignments",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Assignment"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "agentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "agentId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (event collection envelope)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer public-example-admin"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "agents"
+          ],
+          "match": {
+            "agentId": "b2000003-0000-4000-8000-000000000002",
+            "fleetId": "b2000003-0000-4000-8000-000000000001",
+            "appliedRevision": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "configurations"
+          ],
+          "match": {
+            "fleetId": "b2000003-0000-4000-8000-000000000001",
+            "revision": 1,
+            "canonicalDigest": "65b358cd4a752aab86a7f26ea682801ddb238939d8c1bfe1cd9827ccf1989bd1"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "agent-get",
+      "params": {
+        "agentId": "b2000003-0000-4000-8000-000000000002"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "agentId": "b2000003-0000-4000-8000-000000000002",
+        "fleetId": "b2000003-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "operationId": "configuration-create",
+      "params": {
+        "fleetId": "b2000003-0000-4000-8000-000000000001"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-configuration"
+      },
+      "body": {
+        "content": {
+          "theme": "public-blue"
+        },
+        "expectedFleetRevision": 1
+      },
+      "expectStatus": 201,
+      "capture": {
+        "revision": [
+          "revision"
+        ]
+      },
+      "expectBody": {
+        "fleetId": "b2000003-0000-4000-8000-000000000001",
+        "content": {
+          "theme": "public-blue"
+        }
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "configurations"
+          ],
+          "match": {
+            "fleetId": "b2000003-0000-4000-8000-000000000001",
+            "revision": "${revision}",
+            "content": {
+              "theme": "public-blue"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Source authority is the full public README, Manager requirements and AGENTS. No hidden evaluator data or solution code is imported. This V2 contract fixes wire boundaries; state machines, algorithms, isolation, migrations and performance remain implementation work.",
+    "V2 wire clarification: every route has the closed request/success schema published here; only business inputs occur in creation requests. Omitted success status is 200. Health returns {status:\"ok\"}; UI returns HTML. Collection nextCursor is string or null, with null denoting completion. Path/query/header parameters and independent request examples are explicit. Examples validate transport only, not eligibility of referenced resources.",
+    "V2 wire clarification: the authenticated verification snapshot is one point-in-time envelope with complete named resource arrays, typed retained Work and ordered DomainEvents. When the legacy source did not specify event fields, V2 uses eventId,aggregateId,sequence,type,occurredAt,schemaVersion,payload; payload remains a JSON object. No hidden event payload is prescribed.",
+    "The seed uses the exact V1 array names and graph references. Repeated identical seed import is a no-op; another digest under the same seedVersion conflicts. Manager resources are derived by migration or created by public operations, never invented V1 seed members.",
+    "V2 wire clarification: preserve the published selector shape {labels:{key,value}} (one label predicate). A multi-predicate selector encoding is not specified by V1 and is not silently introduced.",
+    "V2 wire clarification: configuration creation returns Configuration; acknowledgement returns Acknowledgement with server reportedAt; assignment history is {items:[Assignment]}. Poll command is Assignment or Manager RolloutCommand.",
+    "Snapshot intentionally has no fleets array, matching the original exact resource list. Every assignmentToken property is omitted in snapshots, not replaced with a marker; live command and acknowledgement responses retain it. Legacy deployment responses do not gain Manager fields unless a staged rollout was requested.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

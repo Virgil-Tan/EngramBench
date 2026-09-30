@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "ledgerbridge",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "LB-TRANSFER-CREATE",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Creating a Transfer reserves only exact source funds and rejects every published money, account and currency boundary without durable effect."
+      },
+      "privateFailureCodePrefix": "LB_A01_",
+      "publicFeedbackCategory": "transfer-reservation"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "LB-SETTLEMENT-POSTING",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Settlement commits one balanced Posting, balances, reservation, event and chronologically replayable Statement legs atomically."
+      },
+      "privateFailureCodePrefix": "LB_A02_",
+      "publicFeedbackCategory": "posting-statement-ledger"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "LB-CANCEL-REVERSE",
+        "source": "workspace/README.md#domain-and-v1-behavior",
+        "summary": "Cancellation releases a pending reservation once, while Reversal appends one exact compensating Posting without rewriting history."
+      },
+      "privateFailureCodePrefix": "LB_A03_",
+      "publicFeedbackCategory": "ledger-cancel-reversal"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "LB-MULTI-REQUEST",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#manager-message",
+        "summary": "The FINAL request union accepts one to twenty ordered unique destination legs with a stepwise safe sum and exact legacy discriminator."
+      },
+      "privateFailureCodePrefix": "LB_A04_",
+      "publicFeedbackCategory": "multileg-request-sum"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "LB-MULTI-POSTING",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#manager-message",
+        "summary": "Multi-leg settlement and reversal expose ordered stable linkage and every ledger leg appears atomically across detail, statements and snapshot."
+      },
+      "privateFailureCodePrefix": "LB_A05_",
+      "publicFeedbackCategory": "multileg-atomic-posting"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "LB-LEDGER-INVARIANTS",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Public accounts, Transfers, Postings and Statements independently reconcile currency conservation, pending reservations and integer balances."
+      },
+      "privateFailureCodePrefix": "LB_B01_",
+      "publicFeedbackCategory": "ledger-conservation-oracle"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "LB-DURABLE-IDEMPOTENCY",
+        "source": "workspace/README.md#durable-idempotency",
+        "summary": "Concurrent and unknown-response mutation replay survives API restart with its original status, semantic body and single durable effect."
+      },
+      "privateFailureCodePrefix": "LB_B02_",
+      "publicFeedbackCategory": "transfer-durable-replay"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "LB-SETTLE-CANCEL-RACE",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Settlement and cancellation have one final authority at each public barrier boundary and cannot double-release or half-post funds."
+      },
+      "privateFailureCodePrefix": "LB_B03_",
+      "publicFeedbackCategory": "settlement-cancel-race"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "LB-REVERSAL-EXACTLY-ONCE",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Concurrent Reversal and duplicate settlement delivery leave at most one original Posting and one compensating Posting with contiguous events."
+      },
+      "privateFailureCodePrefix": "LB_B04_",
+      "publicFeedbackCategory": "reversal-exactly-once"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "LB-MULTI-HOTSPOT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#manager-message",
+        "summary": "Concurrent multi-leg Transfers sharing funds and destinations finish without deadlock and preserve all-or-none ordered ledger effects."
+      },
+      "privateFailureCodePrefix": "LB_B05_",
+      "publicFeedbackCategory": "multileg-hotspot-atomicity"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "LB-CLAIM-RECOVERY",
+        "source": "workspace/README.md#controlled-recovery-barrier",
+        "summary": "A claimed Settlement lease survives SIGKILL, is reclaimed after expiry and fences every stale commit token."
+      },
+      "privateFailureCodePrefix": "LB_C01_",
+      "publicFeedbackCategory": "settlement-claim-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "LB-COMMIT-WINDOW-RECOVERY",
+        "source": "workspace/README.md#controlled-recovery-barrier",
+        "summary": "SIGKILL at effect-complete and before-commit never exposes a partial one- or multi-leg Posting and replacement commits exactly once."
+      },
+      "privateFailureCodePrefix": "LB_C02_",
+      "publicFeedbackCategory": "posting-crash-window"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "LB-EVENT-UNKNOWN-ACK",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Transactionally committed Domain Events retry an unknown webhook acknowledgement with stable identity, headers, body and aggregate order."
+      },
+      "privateFailureCodePrefix": "LB_C03_",
+      "publicFeedbackCategory": "event-unknown-ack"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "LB-ORDERED-DRAIN",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Multiple workers claim eligible Settlement Tasks by createdAt then transferId and drain lease failures without starvation or duplication."
+      },
+      "privateFailureCodePrefix": "LB_C04_",
+      "publicFeedbackCategory": "settlement-ordered-drain"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "LB-UI-V1",
+        "source": "workspace/README.md#real-ui",
+        "summary": "Production Chromium completes the one-leg create, settle, cancel, reverse and Statement workflow using visible public-API-backed controls."
+      },
+      "privateFailureCodePrefix": "LB_D01_",
+      "publicFeedbackCategory": "ui-v1-ledger"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "LB-UI-MULTI",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#manager-message",
+        "summary": "Production Chromium edits ordered beneficiary legs and visibly distinguishes validation, insufficient funds, atomic success and Reversal."
+      },
+      "privateFailureCodePrefix": "LB_D02_",
+      "publicFeedbackCategory": "ui-multileg-transfer"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "LB-CONTRACT-SNAPSHOT",
+        "source": "workspace/README.md#v1-verification-snapshot",
+        "summary": "OpenAPI and the FINAL point-in-time snapshot publish exact conditional Transfer, Posting, Work and Event wires with stable sorting and secret omission."
+      },
+      "privateFailureCodePrefix": "LB_D03_",
+      "publicFeedbackCategory": "contract-ledger-snapshot"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "LB-CROSS-LAYER-LINEAGE",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Every public Transfer identifier, amount, leg order, timestamp and sequence traces consistently through Work, Posting, Statements, Events and snapshot."
+      },
+      "privateFailureCodePrefix": "LB_D04_",
+      "publicFeedbackCategory": "cross-layer-ledger-lineage"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "LB-V1-FINAL-COMPAT",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current transfer postings, statements and replay survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "LB_E01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "LB-PERF-STATEMENT",
+        "source": "workspace/README.md#scenario-statement-read",
+        "summary": "The exact 64-client statement-read workload sustains 150 complete responses per second at p95 at most 150 ms and preserves ledger invariants."
+      },
+      "privateFailureCodePrefix": "LB_E02_",
+      "publicFeedbackCategory": "perf-statement-read"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "LB-PERF-MUTATION",
+        "source": "workspace/README.md#scenario-transfer-mutation-mix",
+        "summary": "The exact CREATE, CREATE, CANCEL, REVERSE mutation workload sustains 40 successes per second at p95 at most 500 ms with disjoint identities."
+      },
+      "privateFailureCodePrefix": "LB_E03_",
+      "publicFeedbackCategory": "perf-transfer-mix"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "LB-PERF-RECOVERY",
+        "source": "workspace/README.md#scenario-settlement-recovery",
+        "summary": "Two replacement workers drain exactly two thousand killed-and-expired Settlement Tasks in at most 45 seconds with one Posting per Transfer."
+      },
+      "privateFailureCodePrefix": "LB_E04_",
+      "publicFeedbackCategory": "perf-settlement-recovery"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

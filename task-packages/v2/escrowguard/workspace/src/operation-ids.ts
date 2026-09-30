@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-escrows" | "create-escrow" | "read-escrow" | "submit-milestone" | "accept-milestone" | "open-dispute" | "resolve-dispute" | "domain-events" | "verification-snapshot";

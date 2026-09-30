@@ -1,0 +1,9 @@
+{
+  "id": "superhard-v2-author-pgdata32-connections256-20260908",
+  "scope": "Independent hidden evaluation only; never change coding containers or public task contracts",
+  "pgdata": { "target": "/tmp/frontal-benchmark-pgdata", "sizeMiB": 32768 },
+  "postgres": { "maxConnections": 256 },
+  "resources": { "cpus": 4, "memoryMiB": 65536 },
+  "reason": "Access E09 reproduced PostgreSQL temporary-file exhaustion and WAL PANIC on the original 2048 MiB tmpfs; no cgroup OOM. The measured 2 API + 8 Worker + 4 Dispatcher topology also competed for the unpublished PostgreSQL100 default budget. Provide a versioned finite 256-connection server budget before starting candidate roles. Retain the native image, CPU allocation and all workload/latency/throughput/RSS assertions.",
+  "comparisonRule": "Use this same environment revision for compared performance cases; keep original environment results and do not silently pool them."
+}

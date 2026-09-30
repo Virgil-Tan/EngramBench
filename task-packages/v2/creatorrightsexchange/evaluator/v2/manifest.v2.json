@@ -1,0 +1,458 @@
+{
+  "schemaVersion": 2,
+  "taskId": "creatorrightsexchange",
+  "profile": "transfer-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Requirements and public contract", "weight": 30 },
+    "B": {
+      "title": "Data correctness idempotency and concurrency",
+      "weight": 25
+    },
+    "C": { "title": "Worker recovery and persistence", "weight": 20 },
+    "D": { "title": "OpenAPI UI and cross-layer closure", "weight": 15 },
+    "E": { "title": "Migration performance and operability", "weight": 10 }
+  },
+  "hardCaps": [
+    {
+      "id": "PRODUCTION_BOOT",
+      "cap": 25,
+      "publicInvariant": "The clean migration build API Worker Dispatcher and production UI must boot through published commands."
+    },
+    {
+      "id": "MEDIA_LINEAGE_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "Accepted bytes digest chunk manifest scan rendition and immutable Edition lineage must remain one atomic authority."
+    },
+    {
+      "id": "DURABLE_REPLAY",
+      "cap": 30,
+      "publicInvariant": "Concurrent unknown-response and restart replay must not create a second commercial fact or media object."
+    },
+    {
+      "id": "STALE_WORK_FENCING",
+      "cap": 35,
+      "publicInvariant": "Pending Work survives process death and stale owners cannot publish scan rendition License close or delivery results."
+    },
+    {
+      "id": "LICENSE_AUTHORITY_ATOMICITY",
+      "cap": 30,
+      "publicInvariant": "License Grant balanced posting and entitlement authority commit atomically and a committed fence never permits access."
+    },
+    {
+      "id": "ROYALTY_IMMUTABILITY",
+      "cap": 35,
+      "publicInvariant": "Royalty postings remain balanced and CLOSED period history and digest are immutable."
+    },
+    {
+      "id": "EVENT_NOTIFICATION_DELIVERY",
+      "cap": 40,
+      "publicInvariant": "Events and Notifications are transactional ordered and never lost while delivery retries preserve identity and bytes."
+    },
+    {
+      "id": "HOLD_ADJUSTMENT_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "An active Hold cannot coexist with allowed authority and an adjustment cannot rewrite its original posting."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "V1 media replay identity Work Event entitlement and settled royalty state survive the FINAL migration unchanged."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-01",
+      "summary": "Asset creation and public resource shape are not fully published; opaque IDs must be discovered only through public responses."
+    },
+    {
+      "id": "SPEC-GAP-02",
+      "summary": "ProviderEvent does not publish a sequence field; tests enforce authority monotonicity without inventing sequence ordering."
+    },
+    {
+      "id": "SPEC-GAP-03",
+      "summary": "Adjustment RoyaltyEntry wire fields do not publish a new sourceType; tests verify public posting semantics without inventing one."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Clean lifecycle and independent roles",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-02",
+      "title": "Repeatable migration and legal seed replay",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-03",
+      "title": "Atomic seed rejection and media cleanup",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-04",
+      "title": "OpenAPI 3.1 complete contract",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-05",
+      "title": "Common validation, tenancy and errors",
+      "dimension": "A",
+      "weight": 1.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-06",
+      "title": "Boundary values, money, rights and cursors",
+      "dimension": "A",
+      "weight": 1.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-07",
+      "title": "Creator, Work and immutable RightsSplit revisions",
+      "dimension": "A",
+      "weight": 1.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-08",
+      "title": "Resumable upload and chunks",
+      "dimension": "A",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-09",
+      "title": "Completion, scan and transcode pipeline",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-10",
+      "title": "Immutable Edition publication",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-11",
+      "title": "Offer, Purchase and deterministic fraud",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-12",
+      "title": "Review, payment, License and entitlement",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-13",
+      "title": "Refund and entitlement revocation",
+      "dimension": "A",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-14",
+      "title": "Royalty ledger and period close",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-15",
+      "title": "Notifications, delivery and snapshot",
+      "dimension": "A",
+      "weight": 1,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-16",
+      "title": "FINAL RightsDispute evidence and resolution",
+      "dimension": "A",
+      "weight": 0.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-17",
+      "title": "FINAL Hold scope selectivity and waiting payment",
+      "dimension": "A",
+      "weight": 0.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "A-18",
+      "title": "FINAL adjustment creates target OPEN period",
+      "dimension": "A",
+      "weight": 0.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-01",
+      "title": "Chunk identity and completion contention",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-02",
+      "title": "Rights/Edition immutable CAS race",
+      "dimension": "B",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-03",
+      "title": "Unknown-response durable replay",
+      "dimension": "B",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-04",
+      "title": "Same-key multi-API semantic convergence",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-05",
+      "title": "Provider event authority and uncertainty",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-06",
+      "title": "License/Grant/posting atomicity",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-07",
+      "title": "Refund cap and grant-revision race",
+      "dimension": "B",
+      "weight": 3,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-08",
+      "title": "Deterministic royalty remainder and close race",
+      "dimension": "B",
+      "weight": 3,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-09",
+      "title": "Hold/payment/refund contention",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "B-10",
+      "title": "Adjustment uniqueness and remaining balance",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-01",
+      "title": "Work lifecycle, leases and retention",
+      "dimension": "C",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-02",
+      "title": "Scan Worker killed after claim",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-03",
+      "title": "Local transcode claim recovery",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-04",
+      "title": "Fraud/payment reconcile recovery",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-05",
+      "title": "Royalty period close fencing",
+      "dimension": "C",
+      "weight": 3,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-06",
+      "title": "Manual abort/Hold/refund fences obsolete Work",
+      "dimension": "C",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-07",
+      "title": "Dispatcher unknown acknowledgement",
+      "dimension": "C",
+      "weight": 3,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "C-08",
+      "title": "Aggregate order and transactional events",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-01",
+      "title": "Independent OpenAPI/live traffic validation",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-02",
+      "title": "Browser upload-to-published-Edition",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-03",
+      "title": "Browser checkout-to-entitlement/refund",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-04",
+      "title": "Browser FINAL disputes/Holds/adjustments",
+      "dimension": "D",
+      "weight": 2.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-05",
+      "title": "Loading, empty, validation, conflict, stale, offline, permission",
+      "dimension": "D",
+      "weight": 1.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-06",
+      "title": "Keyboard, labels and focus",
+      "dimension": "D",
+      "weight": 1.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-07",
+      "title": "Project-owned tests are real",
+      "dimension": "D",
+      "weight": 1.5,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "D-08",
+      "title": "README-to-evidence closure",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": ["FINAL"]
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1→FINAL migration",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": ["V1", "FINAL"]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved replay and Event compatibility",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": ["V1", "FINAL"]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Work and managed bytes compatibility",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": ["V1", "FINAL"]
+    },
+    {
+      "id": "E-04",
+      "title": "`multipart-edition-pipeline`",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": ["FINAL", "PERF"]
+    },
+    {
+      "id": "E-05",
+      "title": "`license-checkout-uncertainty`",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": ["FINAL", "PERF"]
+    },
+    {
+      "id": "E-06",
+      "title": "`fraud-review-release`",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": ["FINAL", "PERF"]
+    },
+    {
+      "id": "E-07",
+      "title": "`entitlement-read-storm`",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": ["FINAL", "PERF"]
+    },
+    {
+      "id": "E-08",
+      "title": "`royalty-ledger-close`",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": ["FINAL", "PERF"]
+    },
+    {
+      "id": "E-09",
+      "title": "`notification-recovery`",
+      "dimension": "E",
+      "weight": 0.5,
+      "prerequisites": ["FINAL", "PERF"]
+    },
+    {
+      "id": "E-10",
+      "title": "Cleanup, reproducibility and log hygiene",
+      "dimension": "E",
+      "weight": 0.5,
+      "prerequisites": ["FINAL"]
+    }
+  ]
+}

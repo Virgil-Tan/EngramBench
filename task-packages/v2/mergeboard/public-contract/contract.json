@@ -1,0 +1,3401 @@
+{
+  "taskId": "mergeboard",
+  "title": "MergeBoard",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedDocument"
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Change"
+          }
+        },
+        "snapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedSnapshot"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "documents",
+        "changes",
+        "snapshots"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-mergeboard-v2",
+      "documents": [
+        {
+          "documentId": "00000000-0000-4000-8000-000000000001",
+          "title": "Public Document",
+          "initialBlocks": [
+            {
+              "blockId": "00000000-0000-4000-8000-000000000002",
+              "text": "Initial public text"
+            }
+          ],
+          "createdAt": "2026-01-01T00:00:00.000Z"
+        }
+      ],
+      "changes": [],
+      "snapshots": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "SNAPSHOT_COMPACTION"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "document.created",
+            "document.changed",
+            "change.conflicted",
+            "conflict.resolved",
+            "snapshot.created",
+            "merge-request.approved",
+            "merge-request.merged"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Block": {
+      "type": "object",
+      "properties": {
+        "blockId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 10000
+        }
+      },
+      "required": [
+        "blockId",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "Operation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "INSERT_AFTER"
+            },
+            "afterBlockId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "block": {
+              "$ref": "#/$defs/Block"
+            }
+          },
+          "required": [
+            "op",
+            "afterBlockId",
+            "block"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "REPLACE"
+            },
+            "blockId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "expectedText": {
+              "type": "string",
+              "maxLength": 10000
+            },
+            "newText": {
+              "type": "string",
+              "maxLength": 10000
+            }
+          },
+          "required": [
+            "op",
+            "blockId",
+            "expectedText",
+            "newText"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "MOVE_AFTER"
+            },
+            "blockId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "afterBlockId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "expectedAfterBlockId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "blockId",
+            "afterBlockId",
+            "expectedAfterBlockId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "DELETE"
+            },
+            "blockId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "expectedText": {
+              "type": "string",
+              "maxLength": 10000
+            }
+          },
+          "required": [
+            "op",
+            "blockId",
+            "expectedText"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Document": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "headRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Block"
+          }
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "documentId",
+        "title",
+        "headRevision",
+        "blocks",
+        "canonicalDigest",
+        "createdAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "Change": {
+      "type": "object",
+      "properties": {
+        "changeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Operation"
+          },
+          "minItems": 1,
+          "maxItems": 100
+        },
+        "state": {
+          "enum": [
+            "APPLIED",
+            "CONFLICTED",
+            "REJECTED"
+          ]
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Conflict"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "changeId",
+        "documentId",
+        "clientId",
+        "clientSequence",
+        "baseRevision",
+        "operations",
+        "state",
+        "revision",
+        "conflicts",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Conflict": {
+      "type": "object",
+      "properties": {
+        "conflictId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "changeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "operationIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "code": {
+          "enum": [
+            "TARGET_MISSING",
+            "TARGET_CHANGED",
+            "ANCHOR_MISSING",
+            "BLOCK_ID_EXISTS",
+            "MOVE_BASE_CHANGED"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "baseValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "headValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "conflictId",
+        "changeId",
+        "operationIndex",
+        "code",
+        "path",
+        "baseValue",
+        "headValue"
+      ],
+      "additionalProperties": false
+    },
+    "DocumentRevision": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Block"
+          }
+        },
+        "changeId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "documentId",
+        "revision",
+        "blocks",
+        "changeId",
+        "canonicalDigest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "DocumentDiff": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fromRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "toRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "blockId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "kind": {
+                "enum": [
+                  "DELETE",
+                  "INSERT",
+                  "REPLACE",
+                  "MOVE"
+                ]
+              },
+              "fromIndex": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "toIndex": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fromText": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "toText": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 10000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "blockId",
+              "kind",
+              "fromIndex",
+              "toIndex",
+              "fromText",
+              "toText"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "documentId",
+        "fromRevision",
+        "toRevision",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "DocumentSnapshot": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "documentId",
+        "revision",
+        "canonicalDigest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Branch": {
+      "type": "object",
+      "properties": {
+        "branchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9-]{0,31}$"
+        },
+        "sourceBranchId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "headRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "const": "ACTIVE"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "branchId",
+        "documentId",
+        "name",
+        "sourceBranchId",
+        "sourceRevision",
+        "headRevision",
+        "state",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "MergeApproval": {
+      "type": "object",
+      "properties": {
+        "approvalId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "mergeRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "reviewerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "resultDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "approvalId",
+        "mergeRequestId",
+        "reviewerId",
+        "resultDigest",
+        "approvedAt"
+      ],
+      "additionalProperties": false
+    },
+    "MergeOperation": {
+      "type": "object",
+      "properties": {
+        "sourceRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sourceOperationIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operation": {
+          "$ref": "#/$defs/Operation"
+        }
+      },
+      "required": [
+        "sourceRevision",
+        "sourceOperationIndex",
+        "operation"
+      ],
+      "additionalProperties": false
+    },
+    "MergeConflict": {
+      "type": "object",
+      "properties": {
+        "sourceRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sourceOperationIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "code": {
+          "enum": [
+            "TARGET_MISSING",
+            "TARGET_CHANGED",
+            "ANCHOR_MISSING",
+            "BLOCK_ID_EXISTS",
+            "MOVE_BASE_CHANGED"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "baseValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "headValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sourceRevision",
+        "sourceOperationIndex",
+        "code",
+        "path",
+        "baseValue",
+        "headValue"
+      ],
+      "additionalProperties": false
+    },
+    "MergeRequest": {
+      "type": "object",
+      "properties": {
+        "mergeRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceBranchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "targetBranchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceHeadRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "targetHeadRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "CONFLICTED",
+            "IN_REVIEW",
+            "APPROVED",
+            "MERGED",
+            "STALE"
+          ]
+        },
+        "reviewPolicy": {
+          "type": "object",
+          "properties": {
+            "reviewerIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "minItems": 1,
+              "maxItems": 20,
+              "uniqueItems": true
+            },
+            "requiredApprovals": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            }
+          },
+          "required": [
+            "reviewerIds",
+            "requiredApprovals"
+          ],
+          "additionalProperties": false
+        },
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MergeApproval"
+          }
+        },
+        "mergeOperations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MergeOperation"
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MergeConflict"
+          }
+        },
+        "resultDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mergedTargetRevision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mergeRequestId",
+        "documentId",
+        "sourceBranchId",
+        "targetBranchId",
+        "sourceHeadRevision",
+        "targetHeadRevision",
+        "state",
+        "reviewPolicy",
+        "approvals",
+        "mergeOperations",
+        "conflicts",
+        "resultDigest",
+        "mergedTargetRevision",
+        "createdAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "BranchDocumentSnapshot": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "branchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "documentId",
+        "branchId",
+        "revision",
+        "canonicalDigest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeedDocument": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "initialBlocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Block"
+          },
+          "maxItems": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "documentId",
+        "title",
+        "initialBlocks",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeedSnapshot": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "assetPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\\\]+$"
+        }
+      },
+      "required": [
+        "documentId",
+        "revision",
+        "canonicalDigest",
+        "assetPath"
+      ],
+      "additionalProperties": false
+    },
+    "BranchChange": {
+      "type": "object",
+      "properties": {
+        "changeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Operation"
+          },
+          "minItems": 1,
+          "maxItems": 100
+        },
+        "state": {
+          "enum": [
+            "APPLIED",
+            "CONFLICTED",
+            "REJECTED"
+          ]
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Conflict"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "branchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "changeId",
+        "documentId",
+        "clientId",
+        "clientSequence",
+        "baseRevision",
+        "operations",
+        "state",
+        "revision",
+        "conflicts",
+        "createdAt",
+        "branchId"
+      ],
+      "additionalProperties": false
+    },
+    "BranchDocumentRevision": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Block"
+          }
+        },
+        "changeId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "branchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "mergeRequestId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "documentId",
+        "revision",
+        "blocks",
+        "changeId",
+        "canonicalDigest",
+        "createdAt",
+        "branchId",
+        "mergeRequestId"
+      ],
+      "additionalProperties": false
+    },
+    "ChangeApplied": {
+      "type": "object",
+      "properties": {
+        "changeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Operation"
+          },
+          "minItems": 1,
+          "maxItems": 100
+        },
+        "state": {
+          "enum": [
+            "APPLIED",
+            "CONFLICTED",
+            "REJECTED"
+          ]
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Conflict"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "changeId",
+        "documentId",
+        "clientId",
+        "clientSequence",
+        "baseRevision",
+        "operations",
+        "state",
+        "revision",
+        "conflicts",
+        "createdAt",
+        "canonicalDigest"
+      ],
+      "additionalProperties": false
+    },
+    "BranchChangeApplied": {
+      "type": "object",
+      "properties": {
+        "changeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "clientSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "baseRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Operation"
+          },
+          "minItems": 1,
+          "maxItems": 100
+        },
+        "state": {
+          "enum": [
+            "APPLIED",
+            "CONFLICTED",
+            "REJECTED"
+          ]
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Conflict"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "branchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "changeId",
+        "documentId",
+        "clientId",
+        "clientSequence",
+        "baseRevision",
+        "operations",
+        "state",
+        "revision",
+        "conflicts",
+        "createdAt",
+        "branchId",
+        "canonicalDigest"
+      ],
+      "additionalProperties": false
+    },
+    "RevisionRead": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Block"
+          }
+        },
+        "changeId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "snapshotRevision": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "changeIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            }
+          },
+          "required": [
+            "snapshotRevision",
+            "changeIds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "documentId",
+        "revision",
+        "blocks",
+        "changeId",
+        "canonicalDigest",
+        "createdAt",
+        "provenance"
+      ],
+      "additionalProperties": false
+    },
+    "BranchRevisionRead": {
+      "type": "object",
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Block"
+          }
+        },
+        "changeId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "branchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "mergeRequestId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "snapshotRevision": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "changeIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            }
+          },
+          "required": [
+            "snapshotRevision",
+            "changeIds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "documentId",
+        "revision",
+        "blocks",
+        "changeId",
+        "canonicalDigest",
+        "createdAt",
+        "branchId",
+        "mergeRequestId",
+        "provenance"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedDocument"
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Change"
+          }
+        },
+        "snapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedSnapshot"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "documents",
+        "changes",
+        "snapshots"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "documents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Document"
+          }
+        },
+        "documentRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BranchDocumentRevision"
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BranchChange"
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Conflict"
+          }
+        },
+        "documentSnapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DocumentSnapshot"
+          }
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Branch"
+          }
+        },
+        "mergeRequests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MergeRequest"
+          }
+        },
+        "branchDocumentSnapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BranchDocumentSnapshot"
+          }
+        }
+      },
+      "required": [
+        "documents",
+        "documentRevisions",
+        "changes",
+        "conflicts",
+        "documentSnapshots",
+        "branches",
+        "mergeRequests",
+        "branchDocumentSnapshots"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "list-documents",
+      "method": "GET",
+      "path": "/api/v1/documents",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Document"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-document",
+      "method": "GET",
+      "path": "/api/v1/documents/:documentId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/Document"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001"
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-document",
+      "method": "POST",
+      "path": "/api/v1/documents",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Block"
+            },
+            "maxItems": 1000
+          }
+        },
+        "required": [
+          "title",
+          "blocks"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Document"
+      },
+      "example": {
+        "body": {
+          "title": "Created Through Public HTTP",
+          "blocks": [
+            {
+              "blockId": "00000000-0000-4000-8000-000000000003",
+              "text": "First block"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-document"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apply-change",
+      "method": "POST",
+      "path": "/api/v1/documents/:documentId/changes",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "clientSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Operation"
+            },
+            "minItems": 1,
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "clientId",
+          "clientSequence",
+          "baseRevision",
+          "operations"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ChangeApplied"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001"
+        },
+        "body": {
+          "clientId": "00000000-0000-4000-8000-000000000004",
+          "clientSequence": 1,
+          "baseRevision": 0,
+          "operations": [
+            {
+              "op": "REPLACE",
+              "blockId": "00000000-0000-4000-8000-000000000002",
+              "expectedText": "Initial public text",
+              "newText": "Updated public text"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-apply-change"
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "resolve-conflict",
+      "method": "POST",
+      "path": "/api/v1/documents/:documentId/conflicts/:conflictId/resolve",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedHeadRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "resolutionOperations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Operation"
+            },
+            "minItems": 1,
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "expectedHeadRevision",
+          "resolutionOperations"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ChangeApplied"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001",
+          "conflictId": "00000000-0000-4000-8000-000000000005"
+        },
+        "body": {
+          "expectedHeadRevision": 1,
+          "resolutionOperations": [
+            {
+              "op": "REPLACE",
+              "blockId": "00000000-0000-4000-8000-000000000002",
+              "expectedText": "Updated public text",
+              "newText": "Resolved text"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-resolve-conflict"
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "conflictId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-revision",
+      "method": "GET",
+      "path": "/api/v1/documents/:documentId/revisions/:revision",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/RevisionRead"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001",
+          "revision": 0
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "revision",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-document-diff",
+      "method": "GET",
+      "path": "/api/v1/documents/:documentId/diff",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/DocumentDiff"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001"
+        },
+        "query": {
+          "fromRevision": 0,
+          "toRevision": 1
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "fromRevision",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "toRevision",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-changes",
+      "method": "GET",
+      "path": "/api/v1/documents/:documentId/changes",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Change"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001"
+        },
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "aggregateId": "00000000-0000-4000-8000-000000000001",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-branch",
+      "method": "POST",
+      "path": "/api/v1/documents/:documentId/branches",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9-]{0,31}$"
+          },
+          "sourceBranchId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "sourceRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "name",
+          "sourceBranchId",
+          "sourceRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Branch"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001"
+        },
+        "body": {
+          "name": "review",
+          "sourceBranchId": "00000000-0000-4000-8000-000000000006",
+          "sourceRevision": 0
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-branch"
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-branches",
+      "method": "GET",
+      "path": "/api/v1/documents/:documentId/branches",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Branch"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001"
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apply-branch-change",
+      "method": "POST",
+      "path": "/api/v1/documents/:documentId/branches/:branchId/changes",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "clientSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Operation"
+            },
+            "minItems": 1,
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "clientId",
+          "clientSequence",
+          "baseRevision",
+          "operations"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/BranchChangeApplied"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001",
+          "branchId": "00000000-0000-4000-8000-000000000007"
+        },
+        "body": {
+          "clientId": "00000000-0000-4000-8000-000000000004",
+          "clientSequence": 1,
+          "baseRevision": 0,
+          "operations": [
+            {
+              "op": "REPLACE",
+              "blockId": "00000000-0000-4000-8000-000000000002",
+              "expectedText": "Initial public text",
+              "newText": "Branch text"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-apply-branch-change"
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "branchId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-merge-request",
+      "method": "POST",
+      "path": "/api/v1/documents/:documentId/merge-requests",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "sourceBranchId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "targetBranchId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expectedSourceHeadRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expectedTargetHeadRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reviewPolicy": {
+            "type": "object",
+            "properties": {
+              "reviewerIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "minItems": 1,
+                "maxItems": 20,
+                "uniqueItems": true
+              },
+              "requiredApprovals": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "reviewerIds",
+              "requiredApprovals"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "sourceBranchId",
+          "targetBranchId",
+          "expectedSourceHeadRevision",
+          "expectedTargetHeadRevision",
+          "reviewPolicy"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/MergeRequest"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001"
+        },
+        "body": {
+          "sourceBranchId": "00000000-0000-4000-8000-000000000007",
+          "targetBranchId": "00000000-0000-4000-8000-000000000006",
+          "expectedSourceHeadRevision": 1,
+          "expectedTargetHeadRevision": 0,
+          "reviewPolicy": {
+            "reviewerIds": [
+              "00000000-0000-4000-8000-000000000008"
+            ],
+            "requiredApprovals": 1
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-merge-request"
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "approve-merge-request",
+      "method": "POST",
+      "path": "/api/v1/merge-requests/:mergeRequestId/approvals",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reviewerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "required": [
+          "reviewerId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/MergeRequest"
+      },
+      "example": {
+        "params": {
+          "mergeRequestId": "00000000-0000-4000-8000-000000000009"
+        },
+        "body": {
+          "reviewerId": "00000000-0000-4000-8000-000000000008"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-approve-merge-request"
+        }
+      },
+      "parameters": [
+        {
+          "name": "mergeRequestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "merge-request",
+      "method": "POST",
+      "path": "/api/v1/merge-requests/:mergeRequestId/merge",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/MergeRequest"
+      },
+      "example": {
+        "params": {
+          "mergeRequestId": "00000000-0000-4000-8000-000000000009"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-merge-request"
+        }
+      },
+      "parameters": [
+        {
+          "name": "mergeRequestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-merge-request",
+      "method": "GET",
+      "path": "/api/v1/merge-requests/:mergeRequestId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/MergeRequest"
+      },
+      "example": {
+        "params": {
+          "mergeRequestId": "00000000-0000-4000-8000-000000000009"
+        }
+      },
+      "parameters": [
+        {
+          "name": "mergeRequestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-branch-revision",
+      "method": "GET",
+      "path": "/api/v1/documents/:documentId/branches/:branchId/revisions/:revision",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/BranchRevisionRead"
+      },
+      "example": {
+        "params": {
+          "documentId": "00000000-0000-4000-8000-000000000001",
+          "branchId": "00000000-0000-4000-8000-000000000007",
+          "revision": 1
+        }
+      },
+      "parameters": [
+        {
+          "name": "documentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "branchId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "revision",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      ]
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "documents"
+          ],
+          "match": {
+            "documentId": "00000000-0000-4000-8000-000000000001",
+            "title": "Public Document",
+            "headRevision": 0,
+            "blocks": [
+              {
+                "blockId": "00000000-0000-4000-8000-000000000002",
+                "text": "Initial public text"
+              }
+            ],
+            "canonicalDigest": "4f4f597a025c2e8c35098957037a69e509ac6a5b8aa20f0493af359bcf92a048"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "read-document",
+      "params": {
+        "documentId": "00000000-0000-4000-8000-000000000001"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "documentId": "00000000-0000-4000-8000-000000000001",
+        "headRevision": 0,
+        "blocks": [
+          {
+            "blockId": "00000000-0000-4000-8000-000000000002",
+            "text": "Initial public text"
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "create-document",
+      "body": {
+        "title": "Created Through Public HTTP",
+        "blocks": [
+          {
+            "blockId": "00000000-0000-4000-8000-000000000003",
+            "text": "First block"
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-create-document"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "title": "Created Through Public HTTP",
+        "headRevision": 0,
+        "blocks": [
+          {
+            "blockId": "00000000-0000-4000-8000-000000000003",
+            "text": "First block"
+          }
+        ]
+      },
+      "capture": {
+        "newDocumentId": [
+          "documentId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-document",
+      "params": {
+        "documentId": "${newDocumentId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "documentId": "${newDocumentId}",
+        "title": "Created Through Public HTTP",
+        "headRevision": 0,
+        "blocks": [
+          {
+            "blockId": "00000000-0000-4000-8000-000000000003",
+            "text": "First block"
+          }
+        ]
+      }
+    },
+    {
+      "operationId": "apply-change",
+      "params": {
+        "documentId": "${newDocumentId}"
+      },
+      "body": {
+        "clientId": "00000000-0000-4000-8000-000000000004",
+        "clientSequence": 1,
+        "baseRevision": 0,
+        "operations": [
+          {
+            "op": "REPLACE",
+            "blockId": "00000000-0000-4000-8000-000000000003",
+            "expectedText": "First block",
+            "newText": "Changed through public HTTP"
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-apply-change"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "documentId": "${newDocumentId}",
+        "state": "APPLIED",
+        "revision": 1
+      }
+    },
+    {
+      "operationId": "read-document",
+      "params": {
+        "documentId": "${newDocumentId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "documentId": "${newDocumentId}",
+        "headRevision": 1,
+        "blocks": [
+          {
+            "blockId": "00000000-0000-4000-8000-000000000003",
+            "text": "Changed through public HTTP"
+          }
+        ]
+      }
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 wire clarification: successful Change submission/resolution returns the exact Change plus canonicalDigest of its resulting revision, satisfying the published performance digest assertion. Stored Change and collection shapes omit this response-only digest. Branch change success adds branchId and canonicalDigest; FINAL stored revisions/changes have their required branch fields, while V1 endpoints omit Manager fields.",
+    "V2 wire clarification: revision reads return the exact legacy or Branch-local DocumentRevision plus provenance:{snapshotRevision,changeIds}. snapshotRevision is the verified compaction prefix used (null if none); changeIds are the ordered applied Changes replayed after that prefix. Reads cannot fabricate provenance or trigger compaction. Revision path parameters are nonnegative integers.",
+    "V2 wire clarification: Branch list returns {items:[Branch]}, main first then name/branchId. MergeRequest creation uses default 200, branch change inherits 201 from V1, and approval/merge return MergeRequest. CHANGE_CONFLICT uses error.details:{changeId,conflicts:[Conflict]}; every Conflict is also retained in snapshot. Review quorum and branch head checks are business validation.",
+    "Seed Document initialBlocks creates exact immutable revision 0 and derived main Branch without asset files; a supplied Snapshot asset must independently verify. Initial seeded snapshot identity is checked against derived Document fields, not import-only initialBlocks. Unicode scalar limits and forbidden unpaired surrogates require validation beyond ordinary string type checks.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

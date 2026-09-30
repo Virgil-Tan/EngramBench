@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "deployments-list" | "deployment-get" | "deployment-create" | "configuration-create" | "agent-poll" | "agent-acknowledge" | "deployment-cancel" | "agent-get" | "agent-assignments" | "domain-events" | "verification-snapshot";

@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 2,
+  "taskId": "quotamesh",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Vector, state, admission and hierarchy contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Idempotency and concurrent quota authority",
+      "weight": 25
+    },
+    "C": {
+      "title": "Expiry, promotion recovery and outbox",
+      "weight": 20
+    },
+    "D": {
+      "title": "HTTP, production UI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Compatibility and published full-scale workloads",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "VECTOR_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "No Dimension is negative or oversubscribed; vector mutations are atomic; admission is head-only; and terminal transitions have one winner."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Durable mutation replay never creates a second quota effect."
+    },
+    {
+      "id": "WORK_RECOVERY_CORRECTNESS",
+      "cap": 40,
+      "publicInvariant": "Stale workers cannot commit and valid retained Work is never lost."
+    },
+    {
+      "id": "MIGRATION_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Compatibility migration preserves identities, vectors, events, Work and saved replay bodies."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-QM-01",
+      "summary": "Non-scoring scope note: The Manager publishes no hierarchy-only Work kind or Domain Event type; evaluators require none."
+    },
+    {
+      "id": "SPEC-GAP-QM-02",
+      "summary": "Non-scoring scope note: Same-value Project allocation CAS response collection ordering is not separately defined; exact resource shape is authoritative."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Atomic multi-dimension Reservation conservation",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Commit, release and expiry state closure",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Admission order and strict head-only promotion",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Project Reservation consumes Project and Organization",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Capacity and allocation CAS feasible region",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Reservation durable replay and key scope",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Hot Pool concurrent vector requests do not oversubscribe",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Commit, release and expiry three-way terminal race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Concurrent release preserves head-only admission",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Two-level CAS and Reservation race preserves allocation",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Expiry Work lease reclaim and stale fencing",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Recoverable expiry-to-admission promotion chain",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Hierarchy update and Reservation crash atomicity",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Quota Event unknown acknowledgement identity and order",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Pool, Reservation, Admission and hierarchy wire closure",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production browser V1 quota workflow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production browser Organization and Project quotas",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "FINAL point-in-time vector snapshot",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current quota vectors, admission order and expiry survive FINAL restart",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Published quota-pool-read workload",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Published hot-pool-reservation-race workload",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Published expiry-and-admission-recovery workload",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

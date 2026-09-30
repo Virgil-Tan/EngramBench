@@ -1,0 +1,555 @@
+{
+  "schemaVersion": 2,
+  "taskId": "flagfoundry",
+  "profile": "transfer-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Public flag revision and evaluation contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Digest bucket and rollout correctness",
+      "weight": 25
+    },
+    "C": {
+      "title": "Compilation recovery and outbox",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI browser and cross-layer closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration performance and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "PRODUCTION_BOOT",
+      "cap": 25,
+      "publicInvariant": "The clean production stack migrates builds boots and terminates through published commands."
+    },
+    {
+      "id": "FLAG_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Exactly one observable active authority produces the independent snapshot digest rule and percentage result."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Unknown and concurrent replay preserves one response activation and outcome effect."
+    },
+    {
+      "id": "EVENT_TRANSACTIONALITY",
+      "cap": 40,
+      "publicInvariant": "Every published V1 transition commits one stable ordered Event and rejected transitions commit none."
+    },
+    {
+      "id": "STALE_WORK_OR_LOST_WORK",
+      "cap": 40,
+      "publicInvariant": "Compilation and deadline Work survive process death and stale leases cannot publish."
+    },
+    {
+      "id": "ROLLOUT_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Progressive routing uses one frozen cohort bucket and rollback never overwrites a newer activation."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "V1 snapshots digests replay Work Events and client responses migrate unchanged."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-01",
+      "summary": "RUNNING rollout prior and candidate FlagRevision state projection is unpublished."
+    },
+    {
+      "id": "SPEC-GAP-02",
+      "summary": "Legacy activate persistence of a ProgressiveRollout row is unpublished."
+    },
+    {
+      "id": "SPEC-GAP-03",
+      "summary": "Stale outcome snapshot digest rejection code is unpublished."
+    },
+    {
+      "id": "SPEC-GAP-04",
+      "summary": "Outcome ID text boundaries are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-05",
+      "summary": "CompilationFinding has no published response or resource surface."
+    },
+    {
+      "id": "SPEC-GAP-06",
+      "summary": "Rollout step transition Domain Event names are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-07",
+      "summary": "Environment context schema has no public mutation route."
+    },
+    {
+      "id": "SPEC-GAP-08",
+      "summary": "DEFAULT evaluation and unknown attribute behavior are unpublished."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Published commands and production boot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Repeatable populated migration",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Atomic deterministic seed",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "OpenAPI 3.1 exact contract",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Common errors and DSL/cardinality boundaries",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-06",
+      "title": "Pagination, reads and point-in-time snapshot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-07",
+      "title": "Flag identity and Draft revision creation",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-08",
+      "title": "Deterministic Compilation and Snapshot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-09",
+      "title": "Rule Evaluation semantics",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "FF-A09-DEFAULT-UNKNOWN-ATTRIBUTE",
+          "blockedBy": "SPEC-GAP-08",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-10",
+      "title": "Percentage Evaluation semantics",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-11",
+      "title": "CAS Activation and stale compilation",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "FF-A11-SCHEMA-RACE",
+          "blockedBy": "SPEC-GAP-07",
+          "policy": "fail-closed-diagnostic"
+        },
+        {
+          "id": "FF-A11-FINDINGS-SURFACE",
+          "blockedBy": "SPEC-GAP-05",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-12",
+      "title": "Revision diff and V1 Domain Events",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-13",
+      "title": "FINAL progressive activation and deterministic routing",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "FF-A13-RUNNING-REVISION-STATE",
+          "blockedBy": "SPEC-GAP-01",
+          "policy": "fail-closed-diagnostic"
+        },
+        {
+          "id": "FF-A13-LEGACY-ROLLOUT-ROW",
+          "blockedBy": "SPEC-GAP-02",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-14",
+      "title": "Outcome batches, step advancement and rollback",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "FF-A14-STALE-ERROR-CODE",
+          "blockedBy": "SPEC-GAP-03",
+          "policy": "fail-closed-diagnostic"
+        },
+        {
+          "id": "FF-A14-OUTCOME-ID-BOUNDARY",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "RFC8785 digest and immutability oracle",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Rule order, type and diff correctness",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Allocation and bucket boundary correctness",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Unknown-response durable replay",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Same-key contention across two APIs",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-06",
+      "title": "Distinct-key activation contention",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-07",
+      "title": "Compilation versus schema/active changes",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-08",
+      "title": "Outcome batch atomicity and semantic dedupe",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-09",
+      "title": "Outcome versus deadline resolution race",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-10",
+      "title": "Progressive versus immediate activation race",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Work schema, lifecycle and retention",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "SIGKILL after `worker.claimed`",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "SIGKILL after `worker.effect-complete`",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "SIGKILL at `worker.before-commit`",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-05",
+      "title": "Expired-lease fencing",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-06",
+      "title": "Obsolete compilation/deadline Work convergence",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-07",
+      "title": "Unknown Domain Event ACK",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-08",
+      "title": "Transactional events and rollout recovery",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "FF-C08-ROLLOUT-EVENT-NAME",
+          "blockedBy": "SPEC-GAP-06",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Independent OpenAPI/live-traffic validation",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production-browser V1 lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production-browser progressive lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Loading, empty, conflict, stale, offline and permission",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-05",
+      "title": "Keyboard, labels, focus and mobile",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-06",
+      "title": "Project-owned gates are not fake green",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-07",
+      "title": "README-to-evidence closure",
+      "weight": 3,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1→FINAL migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved replay and event identity migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Compilation continuity",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Evaluation/compilation sustained performance",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-05",
+      "title": "Disjoint activation performance and operability",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ]
+}

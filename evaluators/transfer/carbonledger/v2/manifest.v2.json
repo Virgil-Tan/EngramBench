@@ -1,0 +1,528 @@
+{
+  "schemaVersion": 2,
+  "taskId": "carbonledger",
+  "profile": "transfer-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "name": "requirements-and-public-contract",
+      "weight": 30
+    },
+    "B": {
+      "name": "data-correctness-idempotency-and-concurrency",
+      "weight": 25
+    },
+    "C": {
+      "name": "worker-recovery-and-persistence",
+      "weight": 20
+    },
+    "D": {
+      "name": "openapi-ui-and-cross-layer-verification",
+      "weight": 15
+    },
+    "E": {
+      "name": "compatibility-performance-and-operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "BUILD_MIGRATION_OR_BOOT",
+      "cap": 25,
+      "publicInvariant": "Clean build, migration, API, Worker, Dispatcher, and production UI boot must succeed."
+    },
+    {
+      "id": "LOT_CONSERVATION_OR_ATOMIC_REJECTION",
+      "cap": 35,
+      "publicInvariant": "Every Credit Lot conserves issued grams and every rejected Retirement has zero partial effect."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Unknown outcomes and retries must replay one durable Retirement result."
+    },
+    {
+      "id": "EVENT_ATOMICITY_OR_IDENTITY",
+      "cap": 40,
+      "publicInvariant": "Business state and Registry Events commit together and retries preserve event identity and body."
+    },
+    {
+      "id": "STALE_WORK_OR_LOST_WORK",
+      "cap": 40,
+      "publicInvariant": "Pending Work remains recoverable and expired owners cannot commit."
+    },
+    {
+      "id": "SPLIT_ATOMICITY_OR_CERTIFICATE",
+      "cap": 35,
+      "publicInvariant": "Split allocation, release, retirement, and Certificate publication are all-or-nothing."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "Migration preserves V1 history, replay bodies, Certificate bytes, Work, Events, and clients."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-01",
+      "summary": "The Manager publishes no new split-retirement Event type or payload; no evaluator assertion invents one."
+    },
+    {
+      "id": "SPEC-GAP-02",
+      "summary": "The allocations collection publishes no pagination contract; the evaluator asserts only the complete ordered items array."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Published lifecycle and production boot",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Repeatable migration and legal seed replay",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Atomic seed rejection",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "OpenAPI 3.1 exact contract",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Common failures and admin authentication",
+      "dimension": "A",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-06",
+      "title": "Quantity filter and timestamp boundaries",
+      "dimension": "A",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-07",
+      "title": "Reads pagination and cursor stability",
+      "dimension": "A",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-08",
+      "title": "V1 single-Lot reservation",
+      "dimension": "A",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-09",
+      "title": "Release and expiry",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-10",
+      "title": "Certificate bytes and immutable publication",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-11",
+      "title": "Retirement state transitions",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-12",
+      "title": "Credit Lot provenance and availability reads",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-13",
+      "title": "FINAL cross-Lot allocation",
+      "dimension": "A",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-14",
+      "title": "Verification snapshot",
+      "dimension": "A",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-15",
+      "title": "Registry Event query",
+      "dimension": "A",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-16",
+      "title": "FINAL limits errors and compatibility",
+      "dimension": "A",
+      "weight": 1,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Single-Lot-first dominates split",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Deterministic greedy prefix and remainder",
+      "dimension": "B",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Conservation under atomic rejection",
+      "dimension": "B",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Unknown-response durable replay",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Idempotency scope and semantic fingerprint",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-06",
+      "title": "Same-key contention across two APIs",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-07",
+      "title": "Distinct-key hot-Lot contention",
+      "dimension": "B",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-08",
+      "title": "Certification release and expiry races",
+      "dimension": "B",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-09",
+      "title": "Split allocation atomicity and lock-order freedom",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-10",
+      "title": "Split certificate and release contention",
+      "dimension": "B",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Work lifecycle and retention",
+      "dimension": "C",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "SIGKILL after worker.claimed",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "SIGKILL after worker.effect-complete",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "SIGKILL at worker.before-commit",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-05",
+      "title": "Expired lease fencing",
+      "dimension": "C",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-06",
+      "title": "Manual transition closes obsolete Work",
+      "dimension": "C",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-07",
+      "title": "Unknown webhook ACK",
+      "dimension": "C",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-08",
+      "title": "Event transaction order and dispatcher recovery",
+      "dimension": "C",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "OpenAPI validates live traffic",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Browser V1 reserve-to-certificate",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Browser release expiry and failure states",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Browser FINAL split lifecycle",
+      "dimension": "D",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-05",
+      "title": "Permission secret and offline safety",
+      "dimension": "D",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-06",
+      "title": "Keyboard labels focus and viewport",
+      "dimension": "D",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-07",
+      "title": "Project-owned gates are real",
+      "dimension": "D",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-08",
+      "title": "README-to-evidence closure",
+      "dimension": "D",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1 to FINAL migration",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "V1_CHECKPOINT",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved replay and Event identity across migration",
+      "dimension": "E",
+      "weight": 1.5,
+      "prerequisites": [
+        "V1_CHECKPOINT",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Work and delivery across migration",
+      "dimension": "E",
+      "weight": 1.5,
+      "prerequisites": [
+        "V1_CHECKPOINT",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "lot-and-provenance-read",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-05",
+      "title": "competing-retirement-create",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-06",
+      "title": "certificate-recovery",
+      "dimension": "E",
+      "weight": 1.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-07",
+      "title": "Cleanup reproducibility and log hygiene",
+      "dimension": "E",
+      "weight": 1,
+      "prerequisites": [
+        "FINAL"
+      ]
+    }
+  ]
+}

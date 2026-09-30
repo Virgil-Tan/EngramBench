@@ -1,0 +1,2409 @@
+{
+  "taskId": "clinicgrid",
+  "title": "ClinicGrid",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  },
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "clinicians": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clinician"
+          }
+        },
+        "rooms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Room"
+          }
+        },
+        "equipmentUnits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EquipmentUnit"
+          }
+        },
+        "patients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Patient"
+          }
+        },
+        "serviceTypes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ServiceType"
+          }
+        },
+        "appointments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Appointment"
+          }
+        },
+        "waitlistEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WaitlistEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "clinicians",
+        "rooms",
+        "equipmentUnits",
+        "patients",
+        "serviceTypes",
+        "appointments",
+        "waitlistEntries"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-v2-clinicgrid-1",
+      "clinicians": [
+        {
+          "clinicianId": "b2000002-0000-4000-8000-000000000001",
+          "name": "Public clinician",
+          "priority": 1,
+          "availability": [
+            {
+              "startAt": "2035-04-03T09:00:00.000Z",
+              "endAt": "2035-04-03T18:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "rooms": [
+        {
+          "roomId": "b2000002-0000-4000-8000-000000000002",
+          "name": "Public room",
+          "priority": 1,
+          "availability": [
+            {
+              "startAt": "2035-04-03T09:00:00.000Z",
+              "endAt": "2035-04-03T18:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "equipmentUnits": [
+        {
+          "equipmentUnitId": "b2000002-0000-4000-8000-000000000005",
+          "equipmentType": "public-scanner",
+          "priority": 1,
+          "availability": [
+            {
+              "startAt": "2035-04-03T09:00:00.000Z",
+              "endAt": "2035-04-03T18:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "patients": [
+        {
+          "patientId": "b2000002-0000-4000-8000-000000000003",
+          "name": "Public patient"
+        }
+      ],
+      "serviceTypes": [
+        {
+          "serviceTypeId": "b2000002-0000-4000-8000-000000000004",
+          "name": "Public consultation",
+          "durationMinutes": 30,
+          "requiredEquipmentTypes": [
+            "public-scanner"
+          ]
+        }
+      ],
+      "appointments": [],
+      "waitlistEntries": []
+    }
+  },
+  "schemas": {
+    "Json": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Json"
+      }
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "$ref": "#/$defs/JsonObject"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenAPI": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "type": "string",
+          "pattern": "^3\\.1\\."
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "paths": {
+          "type": "object"
+        },
+        "components": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Clinician": {
+      "type": "object",
+      "properties": {
+        "clinicianId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "endAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            },
+            "required": [
+              "startAt",
+              "endAt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "clinicianId",
+        "name",
+        "priority",
+        "availability"
+      ],
+      "additionalProperties": false
+    },
+    "Room": {
+      "type": "object",
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "endAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            },
+            "required": [
+              "startAt",
+              "endAt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "roomId",
+        "name",
+        "priority",
+        "availability"
+      ],
+      "additionalProperties": false
+    },
+    "EquipmentUnit": {
+      "type": "object",
+      "properties": {
+        "equipmentUnitId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "equipmentType": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "endAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            },
+            "required": [
+              "startAt",
+              "endAt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "equipmentUnitId",
+        "equipmentType",
+        "priority",
+        "availability"
+      ],
+      "additionalProperties": false
+    },
+    "Patient": {
+      "type": "object",
+      "properties": {
+        "patientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "patientId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "ServiceType": {
+      "type": "object",
+      "properties": {
+        "serviceTypeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "durationMinutes": {
+          "type": "integer",
+          "minimum": 15,
+          "maximum": 240,
+          "multipleOf": 15
+        },
+        "requiredEquipmentTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "serviceTypeId",
+        "name",
+        "durationMinutes",
+        "requiredEquipmentTypes"
+      ],
+      "additionalProperties": false
+    },
+    "Appointment": {
+      "type": "object",
+      "properties": {
+        "appointmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "patientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "serviceTypeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "clinicianId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "roomId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "equipmentUnitIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "HELD",
+            "CONFIRMED",
+            "CANCELLED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "confirmedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "appointmentId",
+        "patientId",
+        "serviceTypeId",
+        "clinicianId",
+        "roomId",
+        "equipmentUnitIds",
+        "startAt",
+        "endAt",
+        "state",
+        "expiresAt",
+        "confirmedAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "AvailabilitySlot": {
+      "type": "object",
+      "properties": {
+        "serviceTypeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "clinicianId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "roomIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        "equipmentOptions": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            }
+          }
+        }
+      },
+      "required": [
+        "serviceTypeId",
+        "clinicianId",
+        "startAt",
+        "endAt",
+        "roomIds",
+        "equipmentOptions"
+      ],
+      "additionalProperties": false
+    },
+    "WaitlistEntry": {
+      "type": "object",
+      "properties": {
+        "waitlistEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "patientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "serviceTypeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "earliestStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "latestEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "WITHDRAWN"
+          ]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "appointmentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "waitlistEntryId",
+        "patientId",
+        "serviceTypeId",
+        "earliestStart",
+        "latestEnd",
+        "state",
+        "joinedAt",
+        "appointmentId",
+        "priority"
+      ],
+      "additionalProperties": false
+    },
+    "CalendarEntry": {
+      "type": "object",
+      "properties": {
+        "appointmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "appointmentId",
+        "startAt",
+        "endAt"
+      ],
+      "additionalProperties": false
+    },
+    "CarePlan": {
+      "type": "object",
+      "properties": {
+        "carePlanId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "patientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "HELD",
+            "PARTIALLY_CONFIRMED",
+            "CONFIRMED",
+            "TERMINATED"
+          ]
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "visits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "visitIndex": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "appointment": {
+                "$ref": "#/$defs/Appointment"
+              }
+            },
+            "required": [
+              "visitIndex",
+              "appointment"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 2,
+          "maxItems": 12
+        }
+      },
+      "required": [
+        "carePlanId",
+        "patientId",
+        "state",
+        "expiresAt",
+        "createdAt",
+        "terminalAt",
+        "sequence",
+        "visits"
+      ],
+      "additionalProperties": false
+    },
+    "CarePlanWaitlistEntry": {
+      "type": "object",
+      "properties": {
+        "waitlistEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "patientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "WITHDRAWN"
+          ]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "carePlanId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "visits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "visitIndex": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "serviceTypeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "clinicianId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "earliestStart": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "latestEnd": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            },
+            "required": [
+              "visitIndex",
+              "serviceTypeId",
+              "clinicianId",
+              "earliestStart",
+              "latestEnd"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 2,
+          "maxItems": 12
+        }
+      },
+      "required": [
+        "waitlistEntryId",
+        "patientId",
+        "state",
+        "joinedAt",
+        "carePlanId",
+        "priority",
+        "visits"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "APPOINTMENT_EXPIRY",
+            "WAITLIST_PROMOTION"
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "appointment.held",
+            "appointment.confirmed",
+            "appointment.cancelled",
+            "appointment.expired",
+            "waitlist.promoted"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "clinicians": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clinician"
+          }
+        },
+        "rooms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Room"
+          }
+        },
+        "equipmentUnits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EquipmentUnit"
+          }
+        },
+        "patients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Patient"
+          }
+        },
+        "serviceTypes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ServiceType"
+          }
+        },
+        "appointments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Appointment"
+          }
+        },
+        "waitlistEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WaitlistEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "clinicians",
+        "rooms",
+        "equipmentUnits",
+        "patients",
+        "serviceTypes",
+        "appointments",
+        "waitlistEntries"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "clinicians": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clinician"
+          }
+        },
+        "rooms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Room"
+          }
+        },
+        "equipmentUnits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EquipmentUnit"
+          }
+        },
+        "patients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Patient"
+          }
+        },
+        "serviceTypes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ServiceType"
+          }
+        },
+        "appointments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Appointment"
+          }
+        },
+        "waitlistEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WaitlistEntry"
+          }
+        },
+        "carePlans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CarePlan"
+          }
+        },
+        "carePlanWaitlistEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CarePlanWaitlistEntry"
+          }
+        }
+      },
+      "required": [
+        "clinicians",
+        "rooms",
+        "equipmentUnits",
+        "patients",
+        "serviceTypes",
+        "appointments",
+        "waitlistEntries",
+        "carePlans",
+        "carePlanWaitlistEntries"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/OpenAPI"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "appointments-list",
+      "method": "GET",
+      "path": "/api/v1/appointments",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Appointment"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {}
+    },
+    {
+      "id": "appointment-get",
+      "method": "GET",
+      "path": "/api/v1/appointments/:appointmentId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/Appointment"
+      },
+      "parameters": [
+        {
+          "name": "appointmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "appointmentId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "appointment-create",
+      "method": "POST",
+      "path": "/api/v1/appointments",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "serviceTypeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "clinicianId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "patientId",
+          "serviceTypeId",
+          "clinicianId",
+          "startAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Appointment"
+      },
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-appointment-create"
+        },
+        "body": {
+          "patientId": "b2000002-0000-4000-8000-000000000003",
+          "serviceTypeId": "b2000002-0000-4000-8000-000000000004",
+          "clinicianId": "b2000002-0000-4000-8000-000000000001",
+          "startAt": "2035-04-03T12:00:00.000Z"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "appointment-confirm",
+      "method": "POST",
+      "path": "/api/v1/appointments/:appointmentId/confirm",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Appointment"
+      },
+      "parameters": [
+        {
+          "name": "appointmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "appointmentId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-appointment-confirm"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "appointment-cancel",
+      "method": "POST",
+      "path": "/api/v1/appointments/:appointmentId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Appointment"
+      },
+      "parameters": [
+        {
+          "name": "appointmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "appointmentId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-appointment-cancel"
+        },
+        "body": {
+          "reason": "public1"
+        }
+      }
+    },
+    {
+      "id": "waitlist-create",
+      "method": "POST",
+      "path": "/api/v1/waitlist-entries",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "patientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "serviceTypeId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "earliestStart": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "latestEnd": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "patientId",
+              "serviceTypeId",
+              "earliestStart",
+              "latestEnd",
+              "priority"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "patientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "visits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "serviceTypeId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                    },
+                    "clinicianId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                    },
+                    "earliestStart": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                    },
+                    "latestEnd": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                    }
+                  },
+                  "required": [
+                    "serviceTypeId",
+                    "clinicianId",
+                    "earliestStart",
+                    "latestEnd"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 2,
+                "maxItems": 12
+              }
+            },
+            "required": [
+              "patientId",
+              "priority",
+              "visits"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/WaitlistEntry"
+          },
+          {
+            "$ref": "#/$defs/CarePlanWaitlistEntry"
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-waitlist-create"
+        },
+        "body": {
+          "patientId": "b2000999-0000-4000-8000-000000000001",
+          "serviceTypeId": "b2000999-0000-4000-8000-000000000001",
+          "earliestStart": "2026-09-07T00:00:00.000Z",
+          "latestEnd": "2026-09-07T00:00:00.000Z",
+          "priority": 1
+        }
+      }
+    },
+    {
+      "id": "availability",
+      "method": "GET",
+      "path": "/api/v1/availability",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/AvailabilitySlot"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "serviceTypeId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "clinicianId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "from",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "to",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "serviceTypeId": "b2000999-0000-4000-8000-000000000001",
+          "clinicianId": "b2000999-0000-4000-8000-000000000001",
+          "from": "2026-09-07T00:00:00.000Z",
+          "to": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "resource-calendar",
+      "method": "GET",
+      "path": "/api/v1/resources/:resourceType/:resourceId/calendar",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CalendarEntry"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "resourceType",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "clinician",
+              "room",
+              "equipmentUnit"
+            ]
+          }
+        },
+        {
+          "name": "resourceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "from",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "to",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "resourceType": "clinician",
+          "resourceId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "query": {
+          "from": "2026-09-07T00:00:00.000Z",
+          "to": "2026-09-07T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "care-plan-create",
+      "method": "POST",
+      "path": "/api/v1/care-plans",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "visits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "serviceTypeId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                },
+                "clinicianId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                },
+                "startAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                }
+              },
+              "required": [
+                "serviceTypeId",
+                "clinicianId",
+                "startAt"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 2,
+            "maxItems": 12
+          }
+        },
+        "required": [
+          "patientId",
+          "visits"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CarePlan"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Idempotency-Key": "public-v2-care-plan-create"
+        },
+        "body": {
+          "patientId": "b2000999-0000-4000-8000-000000000001",
+          "visits": [
+            {
+              "serviceTypeId": "b2000999-0000-4000-8000-000000000001",
+              "clinicianId": "b2000999-0000-4000-8000-000000000001",
+              "startAt": "2026-09-07T00:00:00.000Z"
+            },
+            {
+              "serviceTypeId": "b2000999-0000-4000-8000-000000000002",
+              "clinicianId": "b2000999-0000-4000-8000-000000000002",
+              "startAt": "2026-09-07T00:00:00.000Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "care-plan-get",
+      "method": "GET",
+      "path": "/api/v1/care-plans/:carePlanId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/CarePlan"
+      },
+      "parameters": [
+        {
+          "name": "carePlanId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "carePlanId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "care-plan-visit-confirm",
+      "method": "POST",
+      "path": "/api/v1/care-plans/:carePlanId/visits/:visitIndex/confirm",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CarePlan"
+      },
+      "parameters": [
+        {
+          "name": "carePlanId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "visitIndex",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "carePlanId": "b2000999-0000-4000-8000-000000000001",
+          "visitIndex": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-care-plan-visit-confirm"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "care-plan-visit-cancel",
+      "method": "POST",
+      "path": "/api/v1/care-plans/:carePlanId/visits/:visitIndex/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CarePlan"
+      },
+      "parameters": [
+        {
+          "name": "carePlanId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "visitIndex",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "carePlanId": "b2000999-0000-4000-8000-000000000001",
+          "visitIndex": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-care-plan-visit-cancel"
+        },
+        "body": {
+          "reason": "public1"
+        }
+      }
+    },
+    {
+      "id": "care-plan-terminate",
+      "method": "POST",
+      "path": "/api/v1/care-plans/:carePlanId/terminate",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CarePlan"
+      },
+      "parameters": [
+        {
+          "name": "carePlanId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "carePlanId": "b2000999-0000-4000-8000-000000000001"
+        },
+        "headers": {
+          "Idempotency-Key": "public-v2-care-plan-terminate"
+        },
+        "body": {
+          "reason": "public1"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md) (event collection envelope)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "b2000999-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md; V2 wire clarification (contracts/learning contract and generated contract/README.md)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer public-example-admin"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "clinicians"
+          ],
+          "match": {
+            "clinicianId": "b2000002-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "rooms"
+          ],
+          "match": {
+            "roomId": "b2000002-0000-4000-8000-000000000002"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "patients"
+          ],
+          "match": {
+            "patientId": "b2000002-0000-4000-8000-000000000003"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "serviceTypes"
+          ],
+          "match": {
+            "serviceTypeId": "b2000002-0000-4000-8000-000000000004"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "equipmentUnits"
+          ],
+          "match": {
+            "equipmentUnitId": "b2000002-0000-4000-8000-000000000005"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "appointment-create",
+      "body": {
+        "patientId": "b2000002-0000-4000-8000-000000000003",
+        "serviceTypeId": "b2000002-0000-4000-8000-000000000004",
+        "clinicianId": "b2000002-0000-4000-8000-000000000001",
+        "startAt": "2035-04-03T12:00:00.000Z"
+      },
+      "headers": {
+        "Idempotency-Key": "public-v2-clinic-hold"
+      },
+      "expectStatus": 201,
+      "capture": {
+        "appointmentId": [
+          "appointmentId"
+        ]
+      },
+      "expectBody": {
+        "patientId": "b2000002-0000-4000-8000-000000000003",
+        "serviceTypeId": "b2000002-0000-4000-8000-000000000004"
+      }
+    },
+    {
+      "operationId": "appointment-get",
+      "params": {
+        "appointmentId": "${appointmentId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "appointmentId": "${appointmentId}",
+        "patientId": "b2000002-0000-4000-8000-000000000003"
+      }
+    }
+  ],
+  "notes": [
+    "Source authority is the full public README, Manager requirements and AGENTS. No hidden evaluator data or solution code is imported. This V2 contract fixes wire boundaries; state machines, algorithms, isolation, migrations and performance remain implementation work.",
+    "V2 wire clarification: every route has the closed request/success schema published here; only business inputs occur in creation requests. Omitted success status is 200. Health returns {status:\"ok\"}; UI returns HTML. Collection nextCursor is string or null, with null denoting completion. Path/query/header parameters and independent request examples are explicit. Examples validate transport only, not eligibility of referenced resources.",
+    "V2 wire clarification: the authenticated verification snapshot is one point-in-time envelope with complete named resource arrays, typed retained Work and ordered DomainEvents. When the legacy source did not specify event fields, V2 uses eventId,aggregateId,sequence,type,occurredAt,schemaVersion,payload; payload remains a JSON object. No hidden event payload is prescribed.",
+    "The seed uses the exact V1 array names and graph references. Repeated identical seed import is a no-op; another digest under the same seedVersion conflicts. Manager resources are derived by migration or created by public operations, never invented V1 seed members.",
+    "V2 wire clarification: calendar success is {items:[{appointmentId,startAt,endAt}]}; resourceType is clinician, room or equipmentUnit. Care-plan visit mutations return the complete CarePlan. A care-plan waitlist uses the distinct visits input and result shape. Availability is {items:[AvailabilitySlot]}. These envelopes and resourceType spellings were not fully fixed by the original route prose.",
+    "Seed is a usable future clinician/room/equipment/patient/service graph. It does not seed elapsed holds or assert allocation outside the published priorities. Manager visitIndex is one-based, as published.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

@@ -1,0 +1,164 @@
+// Policy revision: learning-final-system-2026-09-08.1. Current FINAL state and public lifecycle only; no historical binary upgrade.
+import { assignmentBucket, observationBody, rolloutBody, v1Seed, publishBody } from "../lib/fixtures.mjs";
+import { assertGenerationClosure, assertSnapshot } from "../lib/oracle.mjs";
+import { EvaluationInfrastructureError } from "../lib/runtime.mjs";
+import { caseResult, createDraft, defineCase, environmentFrom, expectError, fetchClient, publishDraft, snapshot, waitGeneration, waitSnapshot } from "./helpers.mjs";
+function v1Resources(state) { return Object.fromEntries(["tenants", "applications", "environments", "configRevisions", "releases", "clientObservations", "invalidations", "auditEntries"].map((key) => [key, state.resources[key]])); }
+function mutationCapture(shield) { const capture = [...shield.captures].reverse().find(({ dropped }) => dropped); if (!capture)
+    throw new Error("response shield did not capture a dropped committed response"); let json; try {
+    json = JSON.parse(capture.response.body);
+}
+catch { } return { status: capture.response.status, json }; }
+function seedClone(seed, label) { const copy = structuredClone(seed); copy.seedVersion = label; return copy; }
+function openApiOperation(document, path, method) { const operation = document.paths?.[path]?.[method.toLowerCase()]; if (!operation)
+    throw new Error(`missing OpenAPI operation ${method} ${path}`); return operation; }
+async function visibleControl(page, role, name) { const controls = page.getByRole(role, { name }); for (let index = 0; index < await controls.count(); index += 1) {
+    const control = controls.nth(index);
+    if (await control.isVisible())
+        return control;
+} throw new Error(`missing visible ${role}: ${name}`); }
+async function visibleRolloutInput(page) { const labelled = page.getByLabel(/rollout|basis|percentage|流量|比例/iu); for (let index = 0; index < await labelled.count(); index += 1)
+    if (await labelled.nth(index).isVisible())
+        return labelled.nth(index); const numeric = page.locator('input[type="number"],input[type="range"]'); for (let index = 0; index < await numeric.count(); index += 1)
+    if (await numeric.nth(index).isVisible())
+        return numeric.nth(index); throw new Error("missing visible rollout input"); }
+async function clickMutation(page, name, path) { const response = page.waitForResponse((candidate) => candidate.request().method() === "POST" && new URL(candidate.url()).pathname.match(path)); await (await visibleControl(page, "button", name)).click(); return response; }
+const MIGRATE01 = defineCase("MIGRATE-01", "multi-generation base-system authority", "Create base-system rollout history, observations and pending invalidations, record cohort decisions, then reinitialize twice", "Every base-system identity, digest, salt, generation, observation and cohort survives and no PromotionTrain is synthesized", ["FINAL public operations", "public client-config", "snapshot"], async (ctx) => {
+    const initialRuntime = ctx, catalog = ctx.catalog("reinitialize-01");
+    await initialRuntime.migrate();
+    await ctx.seed(v1Seed(ctx.fixtures, "reinitialize-01", { catalog }), { workspace: ctx.workspace });
+    const oldApi = await initialRuntime.startApi(), environment = catalog.environments[0], draft = await createDraft(ctx, oldApi.baseUrl, catalog, { version: "retained" });
+    await publishDraft(ctx, oldApi.baseUrl, draft.revision, { rolloutBasisPoints: 2500, audienceSalt: "reinitialize-01-publish", expectedGeneration: 1 });
+    await ctx.rollout(oldApi.baseUrl, environment.environmentId, rolloutBody(2, 7000));
+    const clients = ["reinitialization-client-a", "reinitialization-client-b", "reinitialization-client-c"], beforeFetch = [];
+    for (const clientId of clients) {
+        const response = await fetchClient(ctx, oldApi.baseUrl, catalog, clientId, { environment, knownGeneration: 0 });
+        beforeFetch.push(response.json);
+        await ctx.observeClient(oldApi.baseUrl, observationBody({ clientId, environmentId: environment.environmentId, lastGeneration: response.json.generation, lastReleaseId: response.json.releaseId }));
+    }
+    const before = await ctx.snapshot(oldApi.baseUrl);
+    ctx.assert("base-system snapshot exact", () => assertSnapshot(before, { final: true }));
+    ctx.equal("base-system accumulated three generations", environmentFrom(before, environment.environmentId).generation, 3);
+    ctx.ok("base-system retains pending invalidations", before.resources.invalidations.some(({ state }) => state === "PENDING"));
+    for (let index = 0; index < clients.length; index += 1) {
+        const resolved = beforeFetch[index], release = before.resources.releases.find(({ releaseId }) => releaseId === resolved.releaseId);
+        ctx.equal("base-system cohort matches independent assignment", resolved.releaseId, assignmentBucket({ tenantId: catalog.tenant.tenantId, applicationId: catalog.application.applicationId, environmentId: environment.environmentId, releaseId: before.resources.releases.find(({ environmentId, generation }) => environmentId === environment.environmentId && generation === 3).releaseId, audienceSalt: before.resources.releases.find(({ environmentId, generation }) => environmentId === environment.environmentId && generation === 3).audienceSalt, clientId: clients[index] }) < 7000 ? before.resources.releases.find(({ environmentId, generation }) => environmentId === environment.environmentId && generation === 3).releaseId : before.resources.releases.find(({ environmentId, generation }) => environmentId === environment.environmentId && generation === 3).previousReleaseId);
+        ctx.ok("resolved base-system Release exists", release);
+    }
+    await ctx.kill(oldApi);
+    await ctx.migrate();
+    await ctx.migrate();
+    const api = await ctx.startApi(), after = await snapshot(ctx, api.baseUrl);
+    ctx.equal("base-system resources survive byte-semantically", v1Resources(after), v1Resources(before), { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.equal("reinitialization creates no PromotionTrain", after.resources.promotionTrains, [], { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.equal("reinitialization creates no PromotionStage", after.resources.promotionStages, [], { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    for (let index = 0; index < clients.length; index += 1)
+        ctx.equal("client assignment survives reinitialization", (await fetchClient(ctx, api.baseUrl, catalog, clients[index], { environment, knownGeneration: 0 })).json, beforeFetch[index], { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.assert("retained generation closure", () => assertGenerationClosure(after));
+    return caseResult(ctx, { environmentId: environment.environmentId, generation: 3, clientCount: clients.length });
+});
+const MIGRATE02 = defineCase("MIGRATE-02", "leased Work and durable replay", "Drop one committed base-system publish response, establish saved success/conflict and hold one claimed Work through SIGKILL, then reinitialize", "Work identity lease attempt, Event identity/body/order, audit and saved replay stay exact and replacement recovery continues", ["base-system worker.claimed", "response shield", "FINAL worker"], async (ctx) => {
+    const initialRuntime = ctx, catalog = ctx.catalog("reinitialize-02");
+    await initialRuntime.migrate();
+    await ctx.seed(v1Seed(ctx.fixtures, "reinitialize-02", { catalog }), { workspace: ctx.workspace });
+    const oldApi = await initialRuntime.startApi(), draft = await createDraft(ctx, oldApi.baseUrl, catalog, { reinitialization: "in-flight" }), path = `/api/v1/config-revisions/${draft.revision.revisionId}/publish`, key = ctx.key("reinitialize-saved-publish"), body = publishBody({ rolloutBasisPoints: 10000, audienceSalt: "reinitialize-02", expectedGeneration: 1 }), shield = await ctx.responseShield(oldApi.baseUrl);
+    shield.dropNextMutation();
+    await ctx.mutate(shield.baseUrl, path, key, body).catch(() => undefined);
+    await ctx.waitFor(() => shield.captures.some(({ dropped }) => dropped), { label: "base-system committed response dropped" });
+    const dropped = mutationCapture(shield), saved = await ctx.mutate(oldApi.baseUrl, path, key, body), conflict = await ctx.mutate(oldApi.baseUrl, path, key, { ...body, rolloutBasisPoints: 9999 });
+    ctx.equal("base-system replay matches unknown response status", saved.status, dropped.status);
+    ctx.equal("base-system replay matches unknown response body", saved.json, dropped.json);
+    expectError(ctx, conflict, 409, "IDEMPOTENCY_CONFLICT", { hardCapIds: ["IDEMPOTENCY_CORRECTNESS"] });
+    const pending = await ctx.snapshot(oldApi.baseUrl), work = pending.work.find(({ kind, terminal }) => !terminal && ["CACHE_INVALIDATE", "EVENT_DELIVERY"].includes(kind));
+    ctx.ok("base-system has pending invalidation or Event-delivery Work", work);
+    const barrier = ctx.workerBarrier(({ workId }) => workId === work.workId), stale = await initialRuntime.startWorker({ env: { TEST_BARRIER_URL: barrier.url, TEST_BARRIER_TOKEN: barrier.token } }), held = await barrier.waitFor((entry) => entry.json.workId === work.workId, { label: "base-system Work claimed", processes: [stale] }), leased = await ctx.snapshot(oldApi.baseUrl), leasedWork = leased.work.find(({ workId }) => workId === work.workId);
+    ctx.equal("base-system Work is leased", leasedWork.state, "LEASED");
+    ctx.equal("barrier attempt equals snapshot attempt", held.json.attempt, leasedWork.attempt);
+    await ctx.kill(stale);
+    await ctx.kill(oldApi);
+    await ctx.migrate();
+    const api = await ctx.startApi(), retained = await snapshot(ctx, api.baseUrl), migratedWork = retained.work.find(({ workId }) => workId === work.workId);
+    ctx.ok("leased Work ID survives reinitialization", migratedWork, undefined, { hardCapIds: ["MIGRATION_CORRECTNESS", "WORK_RECOVERY_CORRECTNESS"] });
+    ctx.equal("lease owner survives reinitialization", migratedWork.leaseOwner, leasedWork.leaseOwner, { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.equal("lease expiry survives reinitialization", migratedWork.leaseExpiresAt, leasedWork.leaseExpiresAt, { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.equal("attempt survives reinitialization", migratedWork.attempt, leasedWork.attempt, { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.equal("Event history survives reinitialization", retained.events, leased.events, { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.equal("audit history survives reinitialization", retained.resources.auditEntries, leased.resources.auditEntries, { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    const replay = await ctx.mutate(api.baseUrl, path, key, body), replayedConflict = await ctx.mutate(api.baseUrl, path, key, { ...body, rolloutBasisPoints: 9999 });
+    ctx.equal("saved replay status survives reinitialization", replay.status, saved.status, { hardCapIds: ["MIGRATION_CORRECTNESS", "IDEMPOTENCY_CORRECTNESS"] });
+    ctx.equal("saved replay body survives reinitialization", replay.json, saved.json, { hardCapIds: ["MIGRATION_CORRECTNESS", "IDEMPOTENCY_CORRECTNESS"] });
+    ctx.equal("saved conflict survives reinitialization", replayedConflict.json, conflict.json, { hardCapIds: ["MIGRATION_CORRECTNESS", "IDEMPOTENCY_CORRECTNESS"] });
+    await ctx.sleep(3200);
+    const replacement = await ctx.startWorker(), recovered = await waitSnapshot(ctx, api.baseUrl, (state) => state.work.find(({ workId }) => workId === work.workId)?.terminal === true, { label: "retained Work recovery", timeoutMs: 60000, processes: [replacement] });
+    await ctx.stop(replacement);
+    ctx.ok("replacement advances Work attempt", recovered.work.find(({ workId }) => workId === work.workId).attempt > leasedWork.attempt, undefined, { hardCapIds: ["WORK_RECOVERY_CORRECTNESS"] });
+    ctx.assert("reinitialization recovery generation closure", () => assertGenerationClosure(recovered));
+    return caseResult(ctx, { workId: work.workId, eventCount: leased.events.length, auditCount: leased.resources.auditEntries.length });
+});
+const MIGRATE03 = defineCase("MIGRATE-03", "base-system seed atomic matrix", "Import one complete base-system seed, exact replay, same-version conflict, unknown Manager member and six referential inconsistency variants", "Only the valid seed changes resources; FINAL snapshot is the exact sorted base-system plus PromotionTrain union", ["db:seed", "task-local fixtures", "FINAL snapshot"], async (ctx) => {
+    const catalog = ctx.catalog("reinitialize-03"), legal = v1Seed(ctx.fixtures, "reinitialize-03", { catalog, clientCount: 3, invalidations: [{ invalidationId: ctx.fixtures.uuid("reinitialize-03-invalidation"), environmentId: catalog.environments[0].environmentId, generation: 1, releaseId: catalog.environments[0].activeReleaseId, eventId: ctx.fixtures.uuid("reinitialize-03-event"), state: "PENDING", createdAt: ctx.fixtures.at({ seconds: 90 }), deliveredAt: null }] });
+    await ctx.seed(legal);
+    await ctx.seed(legal);
+    const api = await ctx.startApi(), baseline = await snapshot(ctx, api.baseUrl);
+    for (const key of ["tenants", "applications", "environments", "configRevisions", "releases", "clientObservations", "invalidations", "auditEntries"])
+        ctx.equal(`valid base-system seed imported ${key}`, baseline.resources[key].map((item) => ctx.canonical(item)).sort(), legal[key].map((item) => ctx.canonical(item)).sort());
+    const conflict = structuredClone(legal);
+    conflict.applications[0].name = "different digest";
+    const conflictResult = await ctx.seed(conflict, { expectFailure: true });
+    ctx.ok("same seedVersion different digest reports stable conflict", /SEED_VERSION_CONFLICT/u.test(`${conflictResult.stdout}\n${conflictResult.stderr}`));
+    const invalid = [];
+    const unknown = seedClone(legal, "invalid-unknown-member");
+    unknown.promotionTrains = [];
+    invalid.push(unknown);
+    const dangling = seedClone(legal, "invalid-dangling-reference");
+    dangling.configRevisions[0].environmentId = ctx.fixtures.uuid("missing-environment");
+    invalid.push(dangling);
+    const generation = seedClone(legal, "invalid-generation");
+    generation.environments[0].generation = 2;
+    invalid.push(generation);
+    const active = seedClone(legal, "invalid-active-release");
+    active.environments[0].activeReleaseId = catalog.environments[1].activeReleaseId;
+    invalid.push(active);
+    const observation = seedClone(legal, "invalid-observation");
+    observation.clientObservations[0].lastGeneration = 2;
+    invalid.push(observation);
+    const invalidation = seedClone(legal, "invalid-invalidation");
+    invalidation.invalidations[0].releaseId = catalog.environments[1].activeReleaseId;
+    invalid.push(invalidation);
+    for (const candidate of invalid)
+        await ctx.seed(candidate, { expectFailure: true, ...(candidate === unknown ? { contractExpectation: "invalid" } : {}) });
+    const after = await snapshot(ctx, api.baseUrl);
+    ctx.equal("all invalid seeds have zero resources Work Event or audit effect", { resources: after.resources, work: after.work, events: after.events }, { resources: baseline.resources, work: baseline.work, events: baseline.events }, { hardCapIds: ["MIGRATION_CORRECTNESS"] });
+    ctx.assert("FINAL snapshot exact union and order", () => assertSnapshot(after, { final: true }));
+    ctx.equal("FINAL seed does not synthesize Trains", after.resources.promotionTrains, []);
+    ctx.equal("FINAL seed does not synthesize Stages", after.resources.promotionStages, []);
+    return caseResult(ctx, { validSeedVersion: legal.seedVersion, invalidSeedCount: invalid.length + 1 });
+});
+const MIGRATE04 = defineCase("MIGRATE-04", "retained base-system public control plane", "reinitialize base-system data, validate every base-system and PromotionTrain OpenAPI operation, exercise live base-system API and production UI controls", "Runtime, OpenAPI, refreshed UI, client resolution and snapshot expose one consistent base-system release workflow", ["FINAL public operations", "OpenAPI 3.1", "Chromium public traffic"], async (ctx) => {
+    const initialRuntime = ctx, catalog = ctx.catalog("reinitialize-04");
+    await initialRuntime.migrate();
+    await ctx.seed(v1Seed(ctx.fixtures, "reinitialize-04", { catalog }), { workspace: ctx.workspace });
+    await ctx.migrate();
+    const api = await ctx.startApi(), openapi = await ctx.readOpenApi(api.baseUrl);
+    ctx.equal("OpenAPI version exact", "3.1.0", openapi.openapi);
+    for (const [path, method] of [["/api/v1/tenants", "post"], ["/api/v1/applications", "post"], ["/api/v1/environments", "post"], ["/api/v1/config-revisions", "post"], ["/api/v1/config-revisions/{revisionId}", "get"], ["/api/v1/config-revisions/{revisionId}/publish", "post"], ["/api/v1/environments/{environmentId}/rollout", "post"], ["/api/v1/environments/{environmentId}/rollback", "post"], ["/api/v1/environments/{environmentId}/releases", "get"], ["/api/v1/client-config", "get"], ["/api/v1/client-observations", "post"], ["/api/v1/audit", "get"], ["/api/v1/verification-snapshot", "get"], ["/api/v1/promotion-trains", "post"], ["/api/v1/promotion-trains/{trainId}/start", "post"], ["/api/v1/promotion-trains/{trainId}/advance", "post"], ["/api/v1/promotion-trains/{trainId}/rollback", "post"]])
+        ctx.assert(`OpenAPI publishes ${method.toUpperCase()} ${path}`, () => openApiOperation(openapi, path, method));
+    const environment = catalog.environments[0], draft = await createDraft(ctx, api.baseUrl, catalog, { ui: "runtime-closure" });
+    await publishDraft(ctx, api.baseUrl, draft.revision, { rolloutBasisPoints: 5000, audienceSalt: "reinitialize-04", expectedGeneration: 1 });
+    await waitGeneration(ctx, api.baseUrl, environment.environmentId, 2);
+    await ctx.rollout(api.baseUrl, environment.environmentId, rolloutBody(2, 7500));
+    await waitGeneration(ctx, api.baseUrl, environment.environmentId, 3);
+    const client = await fetchClient(ctx, api.baseUrl, catalog, "reinitialize-ui-client", { environment, knownGeneration: 0 });
+    ctx.equal("runtime client reports current generation", client.json.generation, 3);
+    const observed = [];
+    await ctx.withPage(api, { width: 1280, height: 800 }, async (page) => { page.on("request", (request) => { const path = new URL(request.url()).pathname; if (path.startsWith("/api/"))
+        observed.push({ method: request.method(), path }); }); await page.goto("/", { waitUntil: "networkidle" }); ctx.ok("UI renders retained application", await page.getByText(catalog.application.name, { exact: false }).count() > 0); ctx.ok("UI renders development environment", await page.getByText(/development/iu).count() > 0); ctx.ok("UI exposes draft document editor", await page.locator("textarea").count() > 0); await page.locator("textarea").first().fill(JSON.stringify({ ui: "chromium-draft", nested: { enabled: true } }, null, 2)); const draftResponse = await clickMutation(page, /save.*draft|create.*revision|保存.*草稿|创建.*修订/iu, /^\/api\/initialRuntime\/config-revisions$/u); ctx.equal("UI draft uses public API", draftResponse.status(), 200); await (await visibleControl(page, "button", /review|diff|差异|预览/iu)).click(); ctx.ok("UI displays a real diff", await page.getByText(/chromium-draft|nested|enabled/iu).count() > 0); const publishResponse = await clickMutation(page, /publish|发布/iu, /^\/api\/initialRuntime\/config-revisions\/[^/]+\/publish$/u); ctx.equal("UI publish uses public API", publishResponse.status(), 200); await page.reload({ waitUntil: "networkidle" }); ctx.ok("UI refresh renders generation", await page.getByText(/generation|代次|版本代/iu).count() > 0); await (await visibleRolloutInput(page)).fill("7500"); const rolloutResponse = await clickMutation(page, /change.*rollout|update.*rollout|rollout|调整.*流量|更新.*比例/iu, /^\/api\/initialRuntime\/environments\/[^/]+\/rollout$/u); ctx.equal("UI rollout uses public API", rolloutResponse.status(), 200); await page.reload({ waitUntil: "networkidle" }); const rollbackResponse = await clickMutation(page, /rollback|回滚/iu, /^\/api\/initialRuntime\/environments\/[^/]+\/rollback$/u); ctx.equal("UI rollback uses public API", rollbackResponse.status(), 200); await page.reload({ waitUntil: "networkidle" }); ctx.ok("UI refreshed after rollback", await page.getByText(/generation|rollback|回滚|代次/iu).count() > 0); ctx.ok("UI never calls a private route", observed.every(({ path }) => !/(?:internal|private|admin)/iu.test(path))); });
+    const after = await snapshot(ctx, api.baseUrl);
+    ctx.assert("base-system UI closure generation invariant", () => assertGenerationClosure(after));
+    ctx.ok("UI created a published revision", after.resources.configRevisions.some(({ document, state }) => document?.ui === "chromium-draft" && state === "PUBLISHED"));
+    ctx.ok("UI flow committed invalidation", after.resources.invalidations.some(({ environmentId }) => environmentId === environment.environmentId));
+    ctx.ok("UI flow committed audit", after.resources.auditEntries.length > 0);
+    ctx.ok("UI draft publish rollout and rollback advanced generations", environmentFrom(after, environment.environmentId).generation >= 6);
+    return caseResult(ctx, { observedPublicRequests: observed.length, generation: environmentFrom(after, environment.environmentId).generation });
+});
+export const MIGRATE_CASES = Object.freeze([MIGRATE01, MIGRATE02, MIGRATE03, MIGRATE04]);

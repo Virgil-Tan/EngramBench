@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 2,
+  "taskId": "schemaharbor",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "name": "requirements-and-public-contract",
+      "weight": 30
+    },
+    "B": {
+      "name": "data-correctness-idempotency-and-concurrency",
+      "weight": 25
+    },
+    "C": {
+      "name": "worker-recovery-and-persistence",
+      "weight": 20
+    },
+    "D": {
+      "name": "openapi-ui-and-cross-layer-verification",
+      "weight": 15
+    },
+    "E": {
+      "name": "compatibility-performance-and-operability",
+      "weight": 10
+    }
+  },
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-SH-01",
+      "summary": "Non-scoring scope note: No public cross-aggregate total-order field exists for bundle publication events."
+    },
+    {
+      "id": "SPEC-GAP-SH-02",
+      "summary": "Non-scoring scope note: The HTTP operation returning RELEASE_BUNDLE_INCOMPATIBLE is not published."
+    }
+  ],
+  "hardCaps": [
+    {
+      "id": "BUILD_MIGRATION_OR_BOOT",
+      "cap": 25,
+      "publicInvariant": "Published build, migration, seed, and production processes must run."
+    },
+    {
+      "id": "VERSION_OR_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "Versions are gapless and rejected or bundle operations have no partial effects."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Unknown responses, concurrency, and restart cannot create a second effect."
+    },
+    {
+      "id": "EVENT_ATOMICITY_OR_IDENTITY",
+      "cap": 40,
+      "publicInvariant": "Committed publication has stable events and rollback has none."
+    },
+    {
+      "id": "RECOVERY_OR_FENCING",
+      "cap": 40,
+      "publicInvariant": "Pending validation survives SIGKILL and stale owners cannot commit."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "Migration preserves V1 identities, digests, replay, work, and events."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "RecordSchema canonical digest, dialect, and dependency DAG",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "BACKWARD, FORWARD, and FULL compatibility history",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Validation snapshot and standalone gapless publication",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "ReleaseBundle frozen catalog and combined DAG",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "A-05",
+      "title": "All-or-none bundle publication and per-aggregate Event closure",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "B-01",
+      "title": "Standalone durable replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Concurrent standalone publication without duplicate or gap",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Mode, head, and dependency CAS versus validation commit",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Bundle versus standalone publication contention",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Bundle replay preserves all member identities",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "SCHEMA_VALIDATION reclaim and stale fence",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Standalone publish unknown response does not renumber",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "BUNDLE_VALIDATION recovery preserves snapshot and digest",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Publication Events survive unknown ACK and dispatcher crash",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "D-01",
+      "title": "Subject, Draft, Version, Bundle wire and errors",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production browser V1 validate, diff, and publish",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production browser multi-subject bundle",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "FINAL point-in-time catalog closure snapshot",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Schema publication and pending validation survive FINAL restart",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "latest-schema-read fixed load",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "schema-validation fixed worker load",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "gapless-publish fixed load",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

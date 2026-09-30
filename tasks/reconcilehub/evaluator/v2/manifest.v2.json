@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "taskId": "reconcilehub",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Domain contract and deterministic reconciliation", "weight": 30 },
+    "B": { "title": "Atomicity, idempotency and concurrent ownership", "weight": 25 },
+    "C": { "title": "Recovery, leases, persistence and outbox", "weight": 20 },
+    "D": { "title": "Wire, OpenAPI, browser and snapshot closure", "weight": 15 },
+    "E": { "title": "Migration, performance and operability", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "CONSERVATION_OR_ATOMICITY", "cap": 35, "publicInvariant": "A batch or Match Group is all-or-none, members have one active owner, and currency and integer sums are conserved." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "A replay or unknown response cannot create a second durable effect or rewrite the saved response." },
+    { "id": "STALE_WORK_OR_LOST_WORK", "cap": 40, "publicInvariant": "Expired ownership cannot commit and every persisted Suggestion Task remains recoverable." },
+    { "id": "MIGRATION_COMPATIBILITY", "cap": 35, "publicInvariant": "Migration cannot rewrite V1 identity, decision history, event identity/body/sequence, or replay JSON." }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-RH-01", "summary": "No public transition changes a MatchGroup to REJECTED." },
+    { "id": "SPEC-GAP-RH-02", "summary": "No Manager-only MatchGroup event type name is published." }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "StatementBatch full atomic import", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "One-to-one score and total order", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Immutable confirm reject ignore reverse history", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "MatchGroup member currency and sum atomicity", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-05", "title": "Group suggestions after one-to-one within four members", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "B-01", "title": "Batch import durable idempotency and response loss", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "Concurrent one-to-one ownership", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Concurrent review actions form one legal history", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "MatchGroup and legacy Match ownership race", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "Group confirm and reverse conservation", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-01", "title": "Suggestion Work lease reclaim and stale fence", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-02", "title": "Atomic batch recovery after unknown response", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-03", "title": "MatchGroup terminal commit crash atomicity", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-04", "title": "Reconciliation event unknown acknowledgement", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "D-01", "title": "V1 and Manager wire errors cursor deterministic reads", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "D-02", "title": "Browser V1 import suggestion review reverse", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "D-03", "title": "Browser MatchGroup create confirm reverse", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "D-04", "title": "FINAL point-in-time snapshot and history audit", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"] },
+    { "id": "E-01", "title": "V1 one-to-one to FINAL MatchGroup migration", "dimension": "E", "weight": 3, "prerequisites": ["V1", "FINAL"] },
+    { "id": "E-02", "title": "Formal statement-batch-import workload", "dimension": "E", "weight": 3, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "E-03", "title": "Formal reconciliation-review workload", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "E-04", "title": "Formal suggestion-generation drain", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF"] }
+  ]
+}

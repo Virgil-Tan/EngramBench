@@ -1,0 +1,3646 @@
+{
+  "taskId": "routepilot",
+  "title": "RoutePilot",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "UPSTREAM_TIMEOUT_MS"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "backends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedBackend"
+          }
+        },
+        "routeDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RouteDefinition"
+          }
+        },
+        "routeRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RouteRevision"
+          }
+        },
+        "rateLimitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateLimitPolicy"
+          }
+        },
+        "circuitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CircuitPolicy"
+          }
+        },
+        "configReleases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRelease"
+          }
+        },
+        "gatewayRequests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GatewayRequest"
+          }
+        },
+        "upstreamAttempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpstreamAttempt"
+          }
+        },
+        "rateWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateWindow"
+          }
+        },
+        "circuitWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CircuitWindow"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "backends",
+        "routeDefinitions",
+        "routeRevisions",
+        "rateLimitPolicies",
+        "circuitPolicies",
+        "configReleases",
+        "gatewayRequests",
+        "upstreamAttempts",
+        "rateWindows",
+        "circuitWindows"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-routepilot-v2",
+      "importedAt": "2026-01-01T00:00:00.000Z",
+      "tenants": [
+        {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Gateway Tenant"
+        }
+      ],
+      "backends": [
+        {
+          "backendId": "00000000-0000-4000-8000-000000000002",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Local Backend",
+          "origin": "http://127.0.0.1:4012",
+          "state": "ACTIVE"
+        }
+      ],
+      "routeDefinitions": [
+        {
+          "routeId": "00000000-0000-4000-8000-000000000003",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Health Route",
+          "priority": 10
+        }
+      ],
+      "routeRevisions": [
+        {
+          "routeRevisionId": "00000000-0000-4000-8000-000000000006",
+          "routeId": "00000000-0000-4000-8000-000000000003",
+          "revision": 1,
+          "pathPattern": "/public/*",
+          "methods": [
+            "GET"
+          ],
+          "headerMatches": {},
+          "backends": [
+            {
+              "backendId": "00000000-0000-4000-8000-000000000002",
+              "version": "1",
+              "weight": 10000
+            }
+          ],
+          "rateLimitPolicyId": "00000000-0000-4000-8000-000000000004",
+          "circuitPolicyId": "00000000-0000-4000-8000-000000000005",
+          "createdAt": "2026-01-01T00:00:00.000Z"
+        }
+      ],
+      "rateLimitPolicies": [
+        {
+          "rateLimitPolicyId": "00000000-0000-4000-8000-000000000004",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "windowSeconds": 60,
+          "limit": 1000
+        }
+      ],
+      "circuitPolicies": [
+        {
+          "circuitPolicyId": "00000000-0000-4000-8000-000000000005",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "sampleSize": 10,
+          "failureThresholdPercent": 50,
+          "openSeconds": 5,
+          "halfOpenMax": 1
+        }
+      ],
+      "configReleases": [
+        {
+          "configReleaseId": "00000000-0000-4000-8000-000000000007",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "version": 1,
+          "state": "ACTIVE",
+          "routeRevisionIds": [
+            "00000000-0000-4000-8000-000000000006"
+          ],
+          "priorReleaseId": null,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "activatedAt": "2026-01-01T00:00:00.000Z"
+        }
+      ],
+      "gatewayRequests": [],
+      "upstreamAttempts": [],
+      "rateWindows": [],
+      "circuitWindows": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "CONFIG_ACTIVATE",
+            "CIRCUIT_RECONCILE",
+            "REGIONAL_ROLLOUT_ADVANCE"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "config.release.created",
+            "config.release.activated",
+            "config.release.rolled_back",
+            "gateway.request.completed",
+            "gateway.request.rejected",
+            "circuit.changed"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Backend": {
+      "type": "object",
+      "properties": {
+        "backendId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "originRedacted": {
+          "const": true
+        },
+        "state": {
+          "enum": [
+            "ACTIVE",
+            "DISABLED"
+          ]
+        }
+      },
+      "required": [
+        "backendId",
+        "tenantId",
+        "name",
+        "originRedacted",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "SeedBackend": {
+      "type": "object",
+      "properties": {
+        "backendId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^https?://[^/@?#]+(?::[0-9]+)?(?:/[^?#]*)?$"
+        },
+        "state": {
+          "enum": [
+            "ACTIVE",
+            "DISABLED"
+          ]
+        }
+      },
+      "required": [
+        "backendId",
+        "tenantId",
+        "name",
+        "origin",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "RouteDefinition": {
+      "type": "object",
+      "properties": {
+        "routeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "routeId",
+        "tenantId",
+        "name",
+        "priority"
+      ],
+      "additionalProperties": false
+    },
+    "RouteRevision": {
+      "type": "object",
+      "properties": {
+        "routeRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "routeId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "pathPattern": {
+          "type": "string",
+          "minLength": 1
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "GET",
+              "HEAD",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "OPTIONS"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "headerMatches": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "backends": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "backendId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "weight": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              }
+            },
+            "required": [
+              "backendId",
+              "version",
+              "weight"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "rateLimitPolicyId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "circuitPolicyId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "routeRevisionId",
+        "routeId",
+        "revision",
+        "pathPattern",
+        "methods",
+        "headerMatches",
+        "backends",
+        "rateLimitPolicyId",
+        "circuitPolicyId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RateLimitPolicy": {
+      "type": "object",
+      "properties": {
+        "rateLimitPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "windowSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "rateLimitPolicyId",
+        "tenantId",
+        "revision",
+        "windowSeconds",
+        "limit"
+      ],
+      "additionalProperties": false
+    },
+    "CircuitPolicy": {
+      "type": "object",
+      "properties": {
+        "circuitPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "sampleSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "failureThresholdPercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "openSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "halfOpenMax": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "circuitPolicyId",
+        "tenantId",
+        "revision",
+        "sampleSize",
+        "failureThresholdPercent",
+        "openSeconds",
+        "halfOpenMax"
+      ],
+      "additionalProperties": false
+    },
+    "ConfigRelease": {
+      "type": "object",
+      "properties": {
+        "configReleaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "ACTIVE",
+            "SUPERSEDED",
+            "ROLLED_BACK"
+          ]
+        },
+        "routeRevisionIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "priorReleaseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "configReleaseId",
+        "tenantId",
+        "version",
+        "state",
+        "routeRevisionIds",
+        "priorReleaseId",
+        "createdAt",
+        "activatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "GatewayRequest": {
+      "type": "object",
+      "properties": {
+        "gatewayRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "requestKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "configReleaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "routeRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "backendId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "backendVersion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bucket": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "SUCCEEDED",
+            "REJECTED",
+            "FAILED"
+          ]
+        },
+        "responseStatus": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "gatewayRequestId",
+        "tenantId",
+        "requestKey",
+        "configReleaseId",
+        "routeRevisionId",
+        "backendId",
+        "backendVersion",
+        "bucket",
+        "status",
+        "responseStatus",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "UpstreamAttempt": {
+      "type": "object",
+      "properties": {
+        "gatewayRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "backendId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "requestIdentity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED",
+            "TIMEOUT"
+          ]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "gatewayRequestId",
+        "attempt",
+        "backendId",
+        "requestIdentity",
+        "outcome",
+        "startedAt",
+        "finishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "RateWindow": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "rateLimitPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "windowStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "consumed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "tenantId",
+        "rateLimitPolicyId",
+        "windowStart",
+        "consumed"
+      ],
+      "additionalProperties": false
+    },
+    "CircuitWindow": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "backendId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "CLOSED",
+            "OPEN",
+            "HALF_OPEN"
+          ]
+        },
+        "sampleCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "failureCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "openUntil": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "backendId",
+        "epoch",
+        "state",
+        "sampleCount",
+        "failureCount",
+        "openUntil"
+      ],
+      "additionalProperties": false
+    },
+    "DispatchResult": {
+      "type": "object",
+      "properties": {
+        "gatewayRequestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "routeRevisionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "backendVersion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "SUCCEEDED",
+            "REJECTED",
+            "FAILED"
+          ]
+        },
+        "responseStatus": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "responseHeaders": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "gatewayRequestId",
+        "routeRevisionId",
+        "backendVersion",
+        "status",
+        "responseStatus",
+        "responseHeaders",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "RegionalRollout": {
+      "type": "object",
+      "properties": {
+        "regionalRolloutId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "targetConfigReleaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "requestRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "PAUSED",
+            "COMPLETED",
+            "CANCELLED",
+            "ROLLED_BACK"
+          ]
+        },
+        "currentStageOrdinal": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "regionalRolloutId",
+        "tenantId",
+        "targetConfigReleaseId",
+        "requestRef",
+        "state",
+        "currentStageOrdinal",
+        "createdAt",
+        "updatedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "RegionalStage": {
+      "type": "object",
+      "properties": {
+        "regionalStageId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "regionalRolloutId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minimumObservationSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400
+        },
+        "failureThresholdPercent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "priorConfigReleaseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targetConfigReleaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "ACTIVE",
+            "SUCCEEDED",
+            "FAILED",
+            "ROLLED_BACK"
+          ]
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "regionalStageId",
+        "regionalRolloutId",
+        "ordinal",
+        "region",
+        "minimumObservationSeconds",
+        "failureThresholdPercent",
+        "priorConfigReleaseId",
+        "targetConfigReleaseId",
+        "state",
+        "activatedAt",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "backends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedBackend"
+          }
+        },
+        "routeDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RouteDefinition"
+          }
+        },
+        "routeRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RouteRevision"
+          }
+        },
+        "rateLimitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateLimitPolicy"
+          }
+        },
+        "circuitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CircuitPolicy"
+          }
+        },
+        "configReleases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRelease"
+          }
+        },
+        "gatewayRequests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GatewayRequest"
+          }
+        },
+        "upstreamAttempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpstreamAttempt"
+          }
+        },
+        "rateWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateWindow"
+          }
+        },
+        "circuitWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CircuitWindow"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "backends",
+        "routeDefinitions",
+        "routeRevisions",
+        "rateLimitPolicies",
+        "circuitPolicies",
+        "configReleases",
+        "gatewayRequests",
+        "upstreamAttempts",
+        "rateWindows",
+        "circuitWindows"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "backends": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Backend"
+          }
+        },
+        "routeDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RouteDefinition"
+          }
+        },
+        "routeRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RouteRevision"
+          }
+        },
+        "rateLimitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateLimitPolicy"
+          }
+        },
+        "circuitPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CircuitPolicy"
+          }
+        },
+        "configReleases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRelease"
+          }
+        },
+        "gatewayRequests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GatewayRequest"
+          }
+        },
+        "upstreamAttempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpstreamAttempt"
+          }
+        },
+        "rateWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RateWindow"
+          }
+        },
+        "circuitWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CircuitWindow"
+          }
+        },
+        "regionalRollouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegionalRollout"
+          }
+        },
+        "regionalStages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegionalStage"
+          }
+        }
+      },
+      "required": [
+        "tenants",
+        "backends",
+        "routeDefinitions",
+        "routeRevisions",
+        "rateLimitPolicies",
+        "circuitPolicies",
+        "configReleases",
+        "gatewayRequests",
+        "upstreamAttempts",
+        "rateWindows",
+        "circuitWindows",
+        "regionalRollouts",
+        "regionalStages"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "list-tenants",
+      "method": "GET",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Tenant"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-tenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "example": {
+        "body": {
+          "name": "Another Public Gateway Tenant"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-tenant"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-backends",
+      "method": "GET",
+      "path": "/api/v1/backends",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Backend"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-backend",
+      "method": "POST",
+      "path": "/api/v1/backends",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^https?://[^/@?#]+(?::[0-9]+)?(?:/[^?#]*)?$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "name",
+          "origin"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Backend"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Second Local Backend",
+          "origin": "http://127.0.0.1:4013"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-backend"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-route-definitions",
+      "method": "GET",
+      "path": "/api/v1/route-definitions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RouteDefinition"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-route-definition",
+      "method": "POST",
+      "path": "/api/v1/route-definitions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "tenantId",
+          "name",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RouteDefinition"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Created Through Public HTTP",
+          "priority": 20
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-route-definition"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-route-revisions",
+      "method": "GET",
+      "path": "/api/v1/route-revisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RouteRevision"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-route-revision",
+      "method": "POST",
+      "path": "/api/v1/route-revisions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "routeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "pathPattern": {
+            "type": "string",
+            "minLength": 1
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "GET",
+                "HEAD",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "headerMatches": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "backends": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "backendId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                }
+              },
+              "required": [
+                "backendId",
+                "version",
+                "weight"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "rateLimitPolicyId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "circuitPolicyId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "routeId",
+          "revision",
+          "pathPattern",
+          "methods",
+          "headerMatches",
+          "backends",
+          "rateLimitPolicyId",
+          "circuitPolicyId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RouteRevision"
+      },
+      "example": {
+        "body": {
+          "routeId": "00000000-0000-4000-8000-000000000003",
+          "revision": 2,
+          "pathPattern": "/public/new/*",
+          "methods": [
+            "GET"
+          ],
+          "headerMatches": {},
+          "backends": [
+            {
+              "backendId": "00000000-0000-4000-8000-000000000002",
+              "version": "1",
+              "weight": 10000
+            }
+          ],
+          "rateLimitPolicyId": "00000000-0000-4000-8000-000000000004",
+          "circuitPolicyId": "00000000-0000-4000-8000-000000000005"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-route-revision"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-rate-limit-policies",
+      "method": "GET",
+      "path": "/api/v1/rate-limit-policies",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RateLimitPolicy"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-rate-limit-policy",
+      "method": "POST",
+      "path": "/api/v1/rate-limit-policies",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "windowSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "tenantId",
+          "revision",
+          "windowSeconds",
+          "limit"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RateLimitPolicy"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "windowSeconds": 60,
+          "limit": 100
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-rate-limit-policy"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-circuit-policies",
+      "method": "GET",
+      "path": "/api/v1/circuit-policies",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CircuitPolicy"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-circuit-policy",
+      "method": "POST",
+      "path": "/api/v1/circuit-policies",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "sampleSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "failureThresholdPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "openSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "halfOpenMax": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "tenantId",
+          "revision",
+          "sampleSize",
+          "failureThresholdPercent",
+          "openSeconds",
+          "halfOpenMax"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CircuitPolicy"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "sampleSize": 10,
+          "failureThresholdPercent": 50,
+          "openSeconds": 10,
+          "halfOpenMax": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-circuit-policy"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-config-releases",
+      "method": "GET",
+      "path": "/api/v1/config-releases",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ConfigRelease"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-config-release",
+      "method": "POST",
+      "path": "/api/v1/config-releases",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "routeRevisionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "uniqueItems": true
+          },
+          "expectedActiveVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "tenantId",
+          "version",
+          "routeRevisionIds",
+          "expectedActiveVersion"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ConfigRelease"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "version": 2,
+          "routeRevisionIds": [
+            "00000000-0000-4000-8000-000000000006"
+          ],
+          "expectedActiveVersion": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-config-release"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-config-release",
+      "method": "GET",
+      "path": "/api/v1/config-releases/:configReleaseId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/ConfigRelease"
+      },
+      "example": {
+        "params": {
+          "configReleaseId": "00000000-0000-4000-8000-000000000007"
+        }
+      },
+      "parameters": [
+        {
+          "name": "configReleaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rollback-config-release",
+      "method": "POST",
+      "path": "/api/v1/config-releases/:configReleaseId/rollback",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedActiveVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedActiveVersion"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ConfigRelease"
+      },
+      "example": {
+        "params": {
+          "configReleaseId": "00000000-0000-4000-8000-000000000007"
+        },
+        "body": {
+          "expectedActiveVersion": 2
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-rollback-config-release"
+        }
+      },
+      "parameters": [
+        {
+          "name": "configReleaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dispatch-gateway",
+      "method": "POST",
+      "path": "/api/v1/gateway/dispatch",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "method": {
+            "enum": [
+              "GET",
+              "HEAD",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "OPTIONS"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "requestKey": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "method",
+          "path",
+          "headers",
+          "body",
+          "requestKey"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/DispatchResult"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "method": "GET",
+          "path": "/public/ping",
+          "headers": {
+            "x-route-affinity": "public-customer"
+          },
+          "body": null,
+          "requestKey": "public-request-1"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-dispatch-gateway"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-gateway-request",
+      "method": "GET",
+      "path": "/api/v1/gateway-requests/:gatewayRequestId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/GatewayRequest"
+      },
+      "example": {
+        "params": {
+          "gatewayRequestId": "00000000-0000-4000-8000-000000000008"
+        }
+      },
+      "parameters": [
+        {
+          "name": "gatewayRequestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-regional-rollouts",
+      "method": "GET",
+      "path": "/api/v1/regional-rollouts",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RegionalRollout"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-regional-rollout",
+      "method": "POST",
+      "path": "/api/v1/regional-rollouts",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "targetConfigReleaseId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "region": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minimumObservationSeconds": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 86400
+                },
+                "failureThresholdPercent": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "region",
+                "minimumObservationSeconds",
+                "failureThresholdPercent"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "requestRef": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "targetConfigReleaseId",
+          "stages",
+          "requestRef"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "regionalRollout": {
+            "$ref": "#/$defs/RegionalRollout"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RegionalStage"
+            }
+          }
+        },
+        "required": [
+          "regionalRollout",
+          "stages"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "targetConfigReleaseId": "00000000-0000-4000-8000-000000000007",
+          "stages": [
+            {
+              "region": "EU",
+              "minimumObservationSeconds": 30,
+              "failureThresholdPercent": 10
+            }
+          ],
+          "requestRef": "public-regional-1"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-regional-rollout"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-regional-rollout",
+      "method": "GET",
+      "path": "/api/v1/regional-rollouts/:regionalRolloutId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "regionalRollout": {
+            "$ref": "#/$defs/RegionalRollout"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RegionalStage"
+            }
+          }
+        },
+        "required": [
+          "regionalRollout",
+          "stages"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "regionalRolloutId": "00000000-0000-4000-8000-000000000009"
+        }
+      },
+      "parameters": [
+        {
+          "name": "regionalRolloutId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pause-regional-rollout",
+      "method": "POST",
+      "path": "/api/v1/regional-rollouts/:regionalRolloutId/pause",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RegionalRollout"
+      },
+      "example": {
+        "params": {
+          "regionalRolloutId": "00000000-0000-4000-8000-000000000009"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-pause-regional-rollout"
+        }
+      },
+      "parameters": [
+        {
+          "name": "regionalRolloutId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "resume-regional-rollout",
+      "method": "POST",
+      "path": "/api/v1/regional-rollouts/:regionalRolloutId/resume",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RegionalRollout"
+      },
+      "example": {
+        "params": {
+          "regionalRolloutId": "00000000-0000-4000-8000-000000000009"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-resume-regional-rollout"
+        }
+      },
+      "parameters": [
+        {
+          "name": "regionalRolloutId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel-regional-rollout",
+      "method": "POST",
+      "path": "/api/v1/regional-rollouts/:regionalRolloutId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RegionalRollout"
+      },
+      "example": {
+        "params": {
+          "regionalRolloutId": "00000000-0000-4000-8000-000000000009"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-cancel-regional-rollout"
+        }
+      },
+      "parameters": [
+        {
+          "name": "regionalRolloutId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "rollback-regional-rollout",
+      "method": "POST",
+      "path": "/api/v1/regional-rollouts/:regionalRolloutId/rollback",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RegionalRollout"
+      },
+      "example": {
+        "params": {
+          "regionalRolloutId": "00000000-0000-4000-8000-000000000009"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-rollback-regional-rollout"
+        }
+      },
+      "parameters": [
+        {
+          "name": "regionalRolloutId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "tenants"
+          ],
+          "match": {
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Gateway Tenant"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "backends"
+          ],
+          "match": {
+            "backendId": "00000000-0000-4000-8000-000000000002",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Local Backend",
+            "state": "ACTIVE",
+            "originRedacted": true
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "routeDefinitions"
+          ],
+          "match": {
+            "routeId": "00000000-0000-4000-8000-000000000003",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Health Route",
+            "priority": 10
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "routeRevisions"
+          ],
+          "match": {
+            "routeRevisionId": "00000000-0000-4000-8000-000000000006",
+            "routeId": "00000000-0000-4000-8000-000000000003",
+            "revision": 1,
+            "pathPattern": "/public/*",
+            "methods": [
+              "GET"
+            ],
+            "headerMatches": {},
+            "backends": [
+              {
+                "backendId": "00000000-0000-4000-8000-000000000002",
+                "version": "1",
+                "weight": 10000
+              }
+            ],
+            "rateLimitPolicyId": "00000000-0000-4000-8000-000000000004",
+            "circuitPolicyId": "00000000-0000-4000-8000-000000000005",
+            "createdAt": "2026-01-01T00:00:00.000Z"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "rateLimitPolicies"
+          ],
+          "match": {
+            "rateLimitPolicyId": "00000000-0000-4000-8000-000000000004",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "windowSeconds": 60,
+            "limit": 1000
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "circuitPolicies"
+          ],
+          "match": {
+            "circuitPolicyId": "00000000-0000-4000-8000-000000000005",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "sampleSize": 10,
+            "failureThresholdPercent": 50,
+            "openSeconds": 5,
+            "halfOpenMax": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "configReleases"
+          ],
+          "match": {
+            "configReleaseId": "00000000-0000-4000-8000-000000000007",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "version": 1,
+            "state": "ACTIVE",
+            "routeRevisionIds": [
+              "00000000-0000-4000-8000-000000000006"
+            ],
+            "priorReleaseId": null,
+            "createdAt": "2026-01-01T00:00:00.000Z",
+            "activatedAt": "2026-01-01T00:00:00.000Z"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "read-config-release",
+      "params": {
+        "configReleaseId": "00000000-0000-4000-8000-000000000007"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "configReleaseId": "00000000-0000-4000-8000-000000000007",
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "version": 1,
+        "state": "ACTIVE",
+        "routeRevisionIds": [
+          "00000000-0000-4000-8000-000000000006"
+        ],
+        "priorReleaseId": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "activatedAt": "2026-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "operationId": "create-route-definition",
+      "body": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "name": "Created Through Public HTTP",
+        "priority": 20
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-create-route"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "name": "Created Through Public HTTP",
+        "priority": 20
+      },
+      "capture": {
+        "newRouteId": [
+          "routeId"
+        ]
+      }
+    },
+    {
+      "operationId": "list-route-definitions",
+      "query": {
+        "tenantId": "00000000-0000-4000-8000-000000000001"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "routeId": "${newRouteId}",
+            "name": "Created Through Public HTTP",
+            "priority": 20
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "routeDefinitions"
+          ],
+          "match": {
+            "routeId": "${newRouteId}",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Created Through Public HTTP"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 wire clarification: Backend.origin is accepted only by create and seed; every response uses originRedacted:true and omits origin. Methods are uppercase; headerMatches is an exact-match string map, backend version is a nonempty opaque string, and absent rate/circuit policy is represented by a required null ID.",
+    "V2 wire clarification: administrative create bodies are exactly the schemas here; lists except tenants require tenantId. Dispatch body is JSON or a JSON string for textual bytes; null means no upstream body. Response body preserves the upstream decoded JSON, textual string or null. Rejected requests may have null route/backend/bucket fields. No private or hop-by-hop header is returned.",
+    "V2 wire clarification: RegionalRollout list returns paged RegionalRollout summaries; detail and create return {regionalRollout,stages}. Stage priorConfigReleaseId is nullable only for a region with no prior active release, where rollback is unavailable. Region selection for dispatch uses x-route-region, default GLOBAL; without this clarified input regional behavior would be unobservable. No region may see a partially activated release.",
+    "V2 compatibility clarification: legacy-global migration creates one deterministic completed Rollout/Stage only for each existing Tenant that has an ACTIVE ConfigRelease; a Tenant without a release cannot supply the required release identity and receives no synthetic record until it has an active release. The nonempty seed includes an active release so the published migration case is always testable.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {}
+}

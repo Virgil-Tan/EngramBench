@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "queueforge",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "QF-OPERATIONS",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "ECHO, SHA256, and SUM_INTEGERS validate input and persist exact deterministic outcomes."
+      },
+      "privateFailureCodePrefix": "QF_A01_",
+      "publicFeedbackCategory": "operation-contract"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "QF-CLAIM-ORDER",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Eligible Runs claim by the complete published priority and time order."
+      },
+      "privateFailureCodePrefix": "QF_A02_",
+      "publicFeedbackCategory": "claim-ordering"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "QF-QUEUE-INVARIANT",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Capacity, Attempt numbering, retry backoff, and terminal exclusion are exact."
+      },
+      "privateFailureCodePrefix": "QF_A03_",
+      "publicFeedbackCategory": "queue-invariants"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "QF-WORKFLOW-DAG",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Workflow creation atomically freezes one valid 1-50 node DAG."
+      },
+      "privateFailureCodePrefix": "QF_A04_",
+      "publicFeedbackCategory": "workflow-contract"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "QF-WORKFLOW-CLOSURE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Eligibility, failed-ancestor blocking, and aggregate terminal state follow the frozen DAG."
+      },
+      "privateFailureCodePrefix": "QF_A05_",
+      "publicFeedbackCategory": "workflow-closure"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "QF-IDEMPOTENCY",
+        "source": "workspace/README.md#durable-idempotency",
+        "summary": "Enqueue retries and concurrent requests preserve one Run, Work, event, and response."
+      },
+      "privateFailureCodePrefix": "QF_B01_",
+      "publicFeedbackCategory": "durable-idempotency"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "QF-CLAIM-CONTENTION",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Concurrent workers cannot double-lease or bypass the committed total order."
+      },
+      "privateFailureCodePrefix": "QF_B02_",
+      "publicFeedbackCategory": "claim-contention"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "QF-TERMINAL-RACE",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Cancellation and valid completion serialize to one legal terminal outcome."
+      },
+      "privateFailureCodePrefix": "QF_B03_",
+      "publicFeedbackCategory": "terminal-race"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "QF-FANOUT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Concurrent Workflow fan-out claims only nodes with satisfied predecessors."
+      },
+      "privateFailureCodePrefix": "QF_B04_",
+      "publicFeedbackCategory": "fanout-concurrency"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "QF-SELECTIVE-RETRY",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Retry resets one failed node and only descendants with no other failed ancestor."
+      },
+      "privateFailureCodePrefix": "QF_B05_",
+      "publicFeedbackCategory": "selective-reentry"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "QF-LEASE-RECOVERY",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Expired leases reclaim with increasing Attempts and stale-token fencing."
+      },
+      "privateFailureCodePrefix": "QF_C01_",
+      "publicFeedbackCategory": "lease-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "QF-EFFECT-RECOVERY",
+        "source": "workspace/README.md#controlled-recovery-barrier",
+        "summary": "Effect-complete crash recovery retains one deterministic terminal result."
+      },
+      "privateFailureCodePrefix": "QF_C02_",
+      "publicFeedbackCategory": "effect-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "QF-WORKFLOW-RECOVERY",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "A partially progressed Workflow closes correctly after repeated worker crashes."
+      },
+      "privateFailureCodePrefix": "QF_C03_",
+      "publicFeedbackCategory": "workflow-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "QF-OUTBOX",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Committed Run Events retry with stable identity, body, and per-Run order."
+      },
+      "privateFailureCodePrefix": "QF_C04_",
+      "publicFeedbackCategory": "run-events"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "QF-HTTP-CONTRACT",
+        "source": "workspace/README.md#http-and-openapi-31",
+        "summary": "Runtime and OpenAPI expose exact closed V1 and Workflow contracts."
+      },
+      "privateFailureCodePrefix": "QF_D01_",
+      "publicFeedbackCategory": "http-contract"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "QF-UI-V1",
+        "source": "workspace/README.md#real-ui",
+        "summary": "The production browser completes V1 Run enqueue, progress, cancellation, and history."
+      },
+      "privateFailureCodePrefix": "QF_D02_",
+      "publicFeedbackCategory": "browser-v1"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "QF-UI-WORKFLOW",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "The production browser shows Workflow edges, eligibility, blocking, retry, and cancellation."
+      },
+      "privateFailureCodePrefix": "QF_D03_",
+      "publicFeedbackCategory": "browser-workflow"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "QF-SNAPSHOT",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "The FINAL snapshot is one sorted, redacted, point-in-time queue and Workflow closure."
+      },
+      "privateFailureCodePrefix": "QF_D04_",
+      "publicFeedbackCategory": "verification-snapshot"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "QF-MIGRATION",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Standalone Run and Workflow execution after FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "QF_E01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "QF-PERF-ENQUEUE",
+        "source": "workspace/README.md#scenario-run-enqueue",
+        "summary": "The fixed run-enqueue workload meets throughput, latency, and post-load invariants."
+      },
+      "privateFailureCodePrefix": "QF_E02_",
+      "publicFeedbackCategory": "enqueue-performance"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "QF-PERF-EXECUTION",
+        "source": "workspace/README.md#scenario-short-run-execution",
+        "summary": "Four clients claim and complete exactly 5,000 short Runs within the fixed window."
+      },
+      "privateFailureCodePrefix": "QF_E03_",
+      "publicFeedbackCategory": "execution-performance"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "QF-PERF-RECOVERY",
+        "source": "workspace/README.md#scenario-expired-lease-recovery",
+        "summary": "Four workers recover exactly 2,000 expired leases within the fixed window."
+      },
+      "privateFailureCodePrefix": "QF_E04_",
+      "publicFeedbackCategory": "recovery-performance"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

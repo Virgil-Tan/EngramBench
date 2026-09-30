@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "fullstack-node22-postgres16-chromium",
+      "version": 1,
+      "platform": "linux/arm64",
+      "image": "sha256:11f0760eb37a48ffa89350710657257ff54bb46ea253bc6e83c2184afc5eebc5",
+      "context": "fullstack-node22-postgres16-chromium",
+      "contextSha256": "cac30b546741eb90686a76ac124b27039fda41b2a1e190d402fda188fb76474c",
+      "capabilities": [
+        "nodejs:22",
+        "postgresql-server:16",
+        "chromium",
+        "native-node-build",
+        "git",
+        "curl",
+        "python3"
+      ],
+      "runtime": {
+        "workdir": "/workspace",
+        "networkPolicy": "ephemeral-bridge",
+        "readiness": {
+          "command": [
+            "test",
+            "-f",
+            "/tmp/frontal-benchmark-pgdata/.frontal-benchmark-ready"
+          ],
+          "timeoutMs": 30000,
+          "intervalMs": 100
+        },
+        "tmpfs": [
+          {
+            "target": "/tmp/frontal-benchmark-pgdata",
+            "sizeMiB": 2048
+          }
+        ],
+        "resources": {
+          "cpus": 4,
+          "memoryMiB": 8192
+        }
+      }
+    }
+  ]
+}

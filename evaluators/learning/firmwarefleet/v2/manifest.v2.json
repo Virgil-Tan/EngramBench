@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 2,
+  "taskId": "firmwarefleet",
+  "profile": "learning-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Firmware and upgrade public contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Authority, replay and aggregate closure",
+      "weight": 25
+    },
+    "C": {
+      "title": "Command work and event recovery",
+      "weight": 20
+    },
+    "D": {
+      "title": "Chromium, OpenAPI and lineage closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "V1 compatibility and fixed workloads",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "IMAGE_INTEGRITY",
+      "cap": 40,
+      "publicInvariant": "Firmware versions, digests, sizes and download paths are exact immutable authority."
+    },
+    {
+      "id": "CAMPAIGN_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "A Campaign freezes every target and Upgrade Plan atomically or creates nothing."
+    },
+    {
+      "id": "ACTIVE_AUTHORITY",
+      "cap": 30,
+      "publicInvariant": "A Device has at most one active Update and one current Command."
+    },
+    {
+      "id": "REPORT_REPLAY",
+      "cap": 30,
+      "publicInvariant": "Report sequence, command identity, token and exact replay produce at most one effect."
+    },
+    {
+      "id": "INSTALL_FENCE",
+      "cap": 30,
+      "publicInvariant": "Only the current exact VERIFY digest and token may change installed firmware."
+    },
+    {
+      "id": "ROLLBACK_FENCE",
+      "cap": 30,
+      "publicInvariant": "Failure, timeout and cancellation converge on one rollback to captured prior firmware."
+    },
+    {
+      "id": "WORK_RECOVERY",
+      "cap": 35,
+      "publicInvariant": "Expired Command Work is recoverable and stale lease owners cannot commit."
+    },
+    {
+      "id": "MIGRATION_IDENTITY",
+      "cap": 30,
+      "publicInvariant": "Migration preserves commands, tokens, reports, versions, events and saved replay identity."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "FF-GAP-01",
+      "summary": "Non-scoring scope note: Manager references DeviceUpdate upgradePlan/currentHopIndex fields without publishing a closed DeviceUpdate extension."
+    },
+    {
+      "id": "FF-GAP-02",
+      "summary": "Non-scoring scope note: Divergent version-sequence lexicographic rules are unpublished; executable path fixtures avoid the divergence."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Firmware Image version path and compatibility boundaries",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Frozen Campaign selector target digest and maxParallel",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Command poll Report verify and rollback V1 state machine",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Deterministic one to five hop Upgrade Plan",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Per-hop gate local rollback and explicit retry",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Campaign all-or-none durable replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Device active authority and maxParallel contention",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Report identity sequence token and digest precedence",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Failure timeout cancel and rollback terminal race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Concurrent hop completion retry and Campaign closure",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Command delivery claimed and before-commit recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Report timeout and rollback effect-complete recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Multi-hop boundary crash and global sequence",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Campaign and Update event unknown acknowledgement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Browser V1 image Campaign report and rollback",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Browser Upgrade Plan attempts and retry",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI and current UpgradePlan public shape",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "D-04",
+      "title": "Image Plan Command Report installed cross-layer closure",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current Campaign, command and UpgradePlan identities survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Fixed public Command poll workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Fixed half-replay Report batch workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "One hundred thousand Command Work recovery",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

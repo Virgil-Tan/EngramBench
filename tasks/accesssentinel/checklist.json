@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "personaId": "accesssentinel-security-delivery-lead",
+  "taskId": "accesssentinel",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout installs, builds, migrates, strictly seeds, and starts the independent API, worker, dispatcher, and production UI.","weight":4,"testGates":["H-01"]},
+    {"id":"contract-secret-boundary","category":"correctness","requirement":"OpenAPI, strict validation, exact snapshots, tenant isolation, and responses match the contract without exposing secrets.","weight":6,"testGates":["H-02","H-19"]},
+    {"id":"session-device-trust","category":"correctness","requirement":"Session rotation, token reuse detection, immutable device trust, and revocation are durable and race safe.","weight":8,"testGates":["H-14","H-22"]},
+    {"id":"policy-revisions","category":"correctness","requirement":"Policy revisions are immutable, CAS-published, rollback creates history, and every request retains its frozen revision.","weight":8,"testGates":["H-15","H-21"]},
+    {"id":"risk-location","category":"correctness","requirement":"Risk decisions use frozen inputs and deterministic bounded late location replay with no duplicate effects.","weight":8,"testGates":["H-03","H-23"]},
+    {"id":"review-and-grant","category":"correctness","requirement":"Independent review, deny override, exact grant scope, TTL, and state transitions are enforced atomically.","weight":8,"testGates":["H-04","H-16"]},
+    {"id":"revocation-fences","category":"correctness","requirement":"Grant, session, device, principal, tenant, and region revocations fail closed immediately across processes and recoveries.","weight":8,"testGates":["H-06","H-17","H-21"]},
+    {"id":"audit-and-outbox","category":"correctness","requirement":"Security transitions append one immutable secret-free audit link and one transactional Event whose retry identity/body are stable.","weight":7,"testGates":["H-08","H-18","H-24"]},
+    {"id":"worker-recovery","category":"correctness","requirement":"Lease fencing, controlled SIGKILL, replacement workers, and multi-process races never duplicate or lose an effect.","weight":7,"testGates":["H-05","H-07","H-24"]},
+    {"id":"manager-break-glass","category":"correctness","requirement":"The Manager workflow preserves V1 state while enforcing captured two-person emergency quorum, scoped regional control, expiry, and independent retrospective review.","weight":10,"testGates":["H-09","H-10","H-11","H-25","H-26"]},
+    {"id":"performance","category":"correctness","requirement":"All eight fixed sustained scenarios meet their thresholds and their post-load security and recovery invariants.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The repository owns meaningful unit, real PostgreSQL integration, production Chromium, multi-process concurrency, controlled recovery, and exact performance gates.","weight":6,"testGates":["H-13"]},
+    {"id":"batch-atomicity","category":"correctness","requirement":"Batch requests and every compound transition are all-or-nothing under invalid input and concurrency.","weight":5,"testGates":["H-04","H-20"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex clearly explains authorities, frozen inputs, state transitions, recovery, and the reason for each security boundary.","weight":2},
+    {"id":"evidence-quality","category":"persona","requirement":"Plans, reviews, and handoff report actual commands, results, unresolved findings, risks, and unexecuted checks accurately.","weight":3}
+  ]
+}

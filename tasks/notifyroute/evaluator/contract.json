@@ -1,0 +1,39 @@
+{
+  "seedKeys": ["tenants", "recipients", "channelEndpoints", "templates", "templateVersions", "routePolicies", "rateLimitPolicies", "notifications", "deliveries", "deliveryAttempts", "suppressions", "providerReceipts"],
+  "publicPaths": [
+    "/api/v1/tenants", "/api/v1/recipients", "/api/v1/channel-endpoints", "/api/v1/templates",
+    "/api/v1/template-versions", "/api/v1/route-policies", "/api/v1/rate-limit-policies",
+    "/api/v1/notifications", "/api/v1/notifications/:notificationId", "/api/v1/notifications/:notificationId/cancel",
+    "/api/v1/recipients/:recipientId/unsubscribe", "/api/v1/recipients/:recipientId/resubscribe",
+    "/api/v1/provider/receipts", "/api/v1/deliveries/:deliveryId/reconcile", "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"recipients","shape":"Recipient","sort":["recipientId"]},
+      {"key":"channelEndpoints","shape":"ChannelEndpoint","sort":["endpointId"]},
+      {"key":"templates","shape":"Template","sort":["templateId"]},
+      {"key":"templateVersions","shape":"TemplateVersion","sort":["templateVersionId"]},
+      {"key":"routePolicies","shape":"RoutePolicy","sort":["routePolicyId","revision"]},
+      {"key":"rateLimitPolicies","shape":"RateLimitPolicy","sort":["rateLimitPolicyId","revision"]},
+      {"key":"notifications","shape":"Notification","sort":["notificationId"]},
+      {"key":"deliveries","shape":"Delivery","sort":["deliveryId"]},
+      {"key":"deliveryAttempts","shape":"DeliveryAttempt","sort":["deliveryId","attemptNumber"]},
+      {"key":"suppressions","shape":"Suppression","sort":["recipientId","revision"]},
+      {"key":"providerReceipts","shape":"ProviderReceipt","sort":["providerReceiptId"]}
+    ],
+    "managerResources": [
+      {"key":"campaigns","shape":"Campaign","sort":["campaignId"]},
+      {"key":"campaignRecipients","shape":"CampaignRecipient","sort":["campaignId","recipientId"]}
+    ]
+  },
+  "workKinds": {
+    "v1": ["NOTIFICATION_ROUTE", "DELIVERY_SEND", "DELIVERY_RECONCILE"],
+    "manager": ["CAMPAIGN_FANOUT"]
+  },
+  "perfScenarios": [
+    {"id":"notification-ingest"},
+    {"id":"hot-recipient-quota"},
+    {"id":"delivery-recovery"}
+  ]
+}

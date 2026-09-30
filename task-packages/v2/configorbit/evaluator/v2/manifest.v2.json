@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 2,
+  "taskId": "configorbit",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Revision and public contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Generation and frozen authority",
+      "weight": 25
+    },
+    "C": {
+      "title": "Replay outbox and recovery",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI UI and cross-layer closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration and fixed performance",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "GENERATION_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Each accepted generation has one immutable Release and neither rollback nor PromotionTrain can move another environment backward."
+    },
+    {
+      "id": "REVISION_IMMUTABILITY",
+      "cap": 35,
+      "publicInvariant": "Published revision documents and canonical digests never change and secret-like documents never become visible."
+    },
+    {
+      "id": "CLIENT_GENERATION_FENCE",
+      "cap": 40,
+      "publicInvariant": "Client resolution and 304 decisions observe the database generation fence and old invalidations cannot re-enable stale content."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Unknown and concurrent mutation replay returns one saved response and creates one generation, Release, invalidation, audit, Work and Event effect."
+    },
+    {
+      "id": "WORK_RECOVERY_CORRECTNESS",
+      "cap": 40,
+      "publicInvariant": "Claimed Work and dispatcher delivery survive process death without stale commit, lost invalidation or changed Event identity."
+    },
+    {
+      "id": "MIGRATION_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Migration preserves V1 revisions, releases, assignments, observations, invalidations, audit, events, Work and replay without synthesizing Trains."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-CO-01",
+      "summary": "Non-scoring scope note: No Manager-only Domain Event type name is published; the evaluator invents none."
+    },
+    {
+      "id": "SPEC-GAP-CO-02",
+      "summary": "Non-scoring scope note: Cross-environment ConfigRevision identity and copy semantics are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-CO-03",
+      "summary": "Non-scoring scope note: CANCELLED and PROMOTION_TRAIN_FROZEN have no public cancel or update mutation."
+    },
+    {
+      "id": "SPEC-GAP-CO-04",
+      "summary": "Non-scoring scope note: Only the claimed recovery point is public; later worker barrier points and exact payload are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-CO-05",
+      "summary": "Non-scoring scope note: No PromotionTrain GET or list route is published, so refresh-based Train UI read assertions are outside the scored scope."
+    }
+  ],
+  "cases": [
+    {
+      "id": "REV-01",
+      "title": "Parent CAS and canonical document digest",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "REV-02",
+      "title": "Recursive secret rejection and published immutability",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "REV-03",
+      "title": "Atomic publish generation Release and invalidation",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "REV-04",
+      "title": "Exact unsigned first-64-bit rollout assignment",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "REV-05",
+      "title": "ETag knownGeneration and monotonic invalidation",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "TRAIN-01",
+      "title": "Frozen Train stages across start and rollback",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "TRAIN-02",
+      "title": "Start and single current Stage authority",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "TRAIN-03",
+      "title": "Advance CAS rejection, atomicity and current snapshot refresh",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "TRAIN-04",
+      "title": "Current-environment compensating rollback",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "TRAIN-05",
+      "title": "Reachable terminal and stale Train errors",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "RACE-01",
+      "title": "Durable replay across publish rollout and Train rollback",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-02",
+      "title": "Generation CAS hotspot contention",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-03",
+      "title": "Claimed activation, invalidation and rollback recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "RACE-04",
+      "title": "Webhook unknown ACK and reordered invalidation",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "MIGRATE-01",
+      "title": "Current release generations and client assignment survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "MIGRATE-02",
+      "title": "Current leased invalidation, Events, audit and replay survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "MIGRATE-03",
+      "title": "V1 seed replay and FINAL snapshot union",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "MIGRATE-04",
+      "title": "Current release API, OpenAPI and production UI closure",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "LOAD-01",
+      "title": "Fixed 50000-client fetch mix",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "LOAD-02",
+      "title": "Fixed 10000 rollout rollback contention",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "LOAD-03",
+      "title": "Fixed 100000 invalidation recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "LOAD-04",
+      "title": "Three loads and current revision, generation and Event closure",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

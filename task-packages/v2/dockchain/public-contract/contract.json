@@ -1,0 +1,3304 @@
+{
+  "taskId": "dockchain",
+  "title": "DockChain",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "berths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Berth"
+          }
+        },
+        "tugPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TugPool"
+          }
+        },
+        "yardWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/YardWindow"
+          }
+        },
+        "vessels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Vessel"
+          }
+        },
+        "portCalls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyPortCall"
+          }
+        },
+        "standbyEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StandbyEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "berths",
+        "tugPools",
+        "yardWindows",
+        "vessels",
+        "portCalls",
+        "standbyEntries"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-dockchain-v2",
+      "berths": [
+        {
+          "berthId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public berth",
+          "priority": 1,
+          "maxLengthMeters": 300,
+          "availability": [
+            {
+              "startAt": "2020-01-01T00:00:00.000Z",
+              "endAt": "2040-01-01T00:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "tugPools": [
+        {
+          "tugPoolId": "00000000-0000-4000-8000-000000000002",
+          "name": "Public tugs",
+          "priority": 1,
+          "capacity": 4,
+          "availability": [
+            {
+              "startAt": "2020-01-01T00:00:00.000Z",
+              "endAt": "2040-01-01T00:00:00.000Z"
+            }
+          ]
+        }
+      ],
+      "yardWindows": [
+        {
+          "yardWindowId": "00000000-0000-4000-8000-000000000003",
+          "priority": 1,
+          "capacityUnits": 100,
+          "startAt": "2020-01-01T00:00:00.000Z",
+          "endAt": "2040-01-01T00:00:00.000Z"
+        }
+      ],
+      "vessels": [
+        {
+          "vesselId": "00000000-0000-4000-8000-000000000004",
+          "name": "Public vessel",
+          "lengthMeters": 100
+        }
+      ],
+      "portCalls": [],
+      "standbyEntries": []
+    },
+    "command": [
+      "npm",
+      "run",
+      "db:seed",
+      "--",
+      "--file",
+      "${SEED_PATH}"
+    ],
+    "replay": true
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "PORT_CALL_EXPIRY",
+            "CLEARANCE",
+            "STANDBY_PROMOTION"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "port-call.held",
+            "port-call.cleared",
+            "port-call.started",
+            "port-call.completed",
+            "port-call.cancelled",
+            "port-call.expired",
+            "standby.created",
+            "standby.promoted"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Interval": {
+      "type": "object",
+      "properties": {
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "startAt",
+        "endAt"
+      ],
+      "additionalProperties": false
+    },
+    "Berth": {
+      "type": "object",
+      "properties": {
+        "berthId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maxLengthMeters": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "endAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            },
+            "required": [
+              "startAt",
+              "endAt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "berthId",
+        "name",
+        "priority",
+        "maxLengthMeters",
+        "availability"
+      ],
+      "additionalProperties": false
+    },
+    "TugPool": {
+      "type": "object",
+      "properties": {
+        "tugPoolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "endAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            },
+            "required": [
+              "startAt",
+              "endAt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "tugPoolId",
+        "name",
+        "priority",
+        "capacity",
+        "availability"
+      ],
+      "additionalProperties": false
+    },
+    "YardWindow": {
+      "type": "object",
+      "properties": {
+        "yardWindowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "capacityUnits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "yardWindowId",
+        "priority",
+        "capacityUnits",
+        "startAt",
+        "endAt"
+      ],
+      "additionalProperties": false
+    },
+    "Vessel": {
+      "type": "object",
+      "properties": {
+        "vesselId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "lengthMeters": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "vesselId",
+        "name",
+        "lengthMeters"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyPortCall": {
+      "type": "object",
+      "properties": {
+        "portCallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "vesselId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "arrivalAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "departureAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "requiredTugs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "containerUnits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "berthId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tugPoolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "yardWindowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "HELD",
+            "CLEARED",
+            "IN_SERVICE",
+            "COMPLETED",
+            "CANCELLED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "portCallId",
+        "vesselId",
+        "arrivalAt",
+        "departureAt",
+        "requiredTugs",
+        "containerUnits",
+        "berthId",
+        "tugPoolId",
+        "yardWindowId",
+        "state",
+        "expiresAt",
+        "startedAt",
+        "completedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "PortCall": {
+      "type": "object",
+      "properties": {
+        "portCallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "vesselId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "arrivalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "departureAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requiredTugs": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "containerUnits": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "berthId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tugPoolId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "yardWindowId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "HELD",
+            "CLEARED",
+            "IN_SERVICE",
+            "ARRIVED",
+            "COMPLETED",
+            "CANCELLED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "movements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PortMovement"
+          },
+          "minItems": 1,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "portCallId",
+        "vesselId",
+        "arrivalAt",
+        "departureAt",
+        "requiredTugs",
+        "containerUnits",
+        "berthId",
+        "tugPoolId",
+        "yardWindowId",
+        "state",
+        "expiresAt",
+        "startedAt",
+        "completedAt",
+        "sequence",
+        "movements"
+      ],
+      "additionalProperties": false
+    },
+    "PortCallReply": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/LegacyPortCall"
+        },
+        {
+          "$ref": "#/$defs/PortCall"
+        }
+      ]
+    },
+    "PortMovement": {
+      "type": "object",
+      "properties": {
+        "movementId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "portCallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "type": {
+          "enum": [
+            "ARRIVAL",
+            "DEPARTURE"
+          ]
+        },
+        "berthId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tugPoolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "yardWindowId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "requiredTugs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "containerUnits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "HELD",
+            "CLEARED",
+            "IN_SERVICE",
+            "COMPLETED",
+            "CANCELLED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "clearanceTaskId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "movementId",
+        "portCallId",
+        "type",
+        "berthId",
+        "tugPoolId",
+        "yardWindowId",
+        "startAt",
+        "endAt",
+        "requiredTugs",
+        "containerUnits",
+        "state",
+        "expiresAt",
+        "startedAt",
+        "completedAt",
+        "clearanceTaskId",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ResourceAllocation": {
+      "type": "object",
+      "properties": {
+        "resourceType": {
+          "enum": [
+            "BERTH",
+            "TUG_POOL",
+            "YARD_WINDOW"
+          ]
+        },
+        "resourceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "resourceType",
+        "resourceId",
+        "startAt",
+        "endAt",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "StandbyEntry": {
+      "type": "object",
+      "properties": {
+        "standbyEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "vesselId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "arrivalFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "arrivalTo": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "durationMinutes": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 1440,
+          "multipleOf": 15
+        },
+        "requiredTugs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "containerUnits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "WITHDRAWN"
+          ]
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "portCallId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "standbyEntryId",
+        "vesselId",
+        "arrivalFrom",
+        "arrivalTo",
+        "durationMinutes",
+        "requiredTugs",
+        "containerUnits",
+        "priority",
+        "state",
+        "requestedAt",
+        "portCallId"
+      ],
+      "additionalProperties": false
+    },
+    "Clearance": {
+      "type": "object",
+      "properties": {
+        "portCallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "taskId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "PASSED",
+            "FAILED"
+          ]
+        },
+        "checkedRules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "portCallId",
+        "taskId",
+        "attempt",
+        "state",
+        "checkedRules",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "FeasibleWindowPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "arrivalAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "departureAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "berthId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "tugPoolId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "yardWindowId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            },
+            "required": [
+              "arrivalAt",
+              "departureAt",
+              "berthId",
+              "tugPoolId",
+              "yardWindowId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    "ScheduleBucket": {
+      "type": "object",
+      "properties": {
+        "resourceType": {
+          "enum": [
+            "BERTH",
+            "TUG_POOL",
+            "YARD_WINDOW"
+          ]
+        },
+        "resourceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "allocatedQuantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "resourceType",
+        "resourceId",
+        "startAt",
+        "endAt",
+        "capacity",
+        "allocatedQuantity"
+      ],
+      "additionalProperties": false
+    },
+    "ResourceSchedule": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScheduleBucket"
+          }
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "berths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Berth"
+          }
+        },
+        "tugPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TugPool"
+          }
+        },
+        "yardWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/YardWindow"
+          }
+        },
+        "vessels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Vessel"
+          }
+        },
+        "portCalls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyPortCall"
+          }
+        },
+        "standbyEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StandbyEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "berths",
+        "tugPools",
+        "yardWindows",
+        "vessels",
+        "portCalls",
+        "standbyEntries"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "berths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Berth"
+          }
+        },
+        "tugPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TugPool"
+          }
+        },
+        "yardWindows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/YardWindow"
+          }
+        },
+        "vessels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Vessel"
+          }
+        },
+        "portCalls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PortCall"
+          }
+        },
+        "standbyEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StandbyEntry"
+          }
+        },
+        "resourceAllocations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResourceAllocation"
+          }
+        },
+        "clearances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Clearance"
+          }
+        },
+        "portMovements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PortMovement"
+          }
+        }
+      },
+      "required": [
+        "berths",
+        "tugPools",
+        "yardWindows",
+        "vessels",
+        "portCalls",
+        "standbyEntries",
+        "resourceAllocations",
+        "clearances",
+        "portMovements"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": [],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": [],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": [],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "list-port-calls",
+      "method": "GET",
+      "path": "/api/v1/port-calls",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/PortCall"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "get-port-call",
+      "method": "GET",
+      "path": "/api/v1/port-calls/:portCallId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/PortCall"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-port-call",
+      "method": "POST",
+      "path": "/api/v1/port-calls",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "vesselId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "arrivalAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "departureAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "requiredTugs": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "containerUnits": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "vesselId",
+              "arrivalAt",
+              "departureAt",
+              "requiredTugs",
+              "containerUnits"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "vesselId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "arrival": {
+                "type": "object",
+                "properties": {
+                  "startAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "endAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "requiredTugs": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "containerUnits": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "startAt",
+                  "endAt",
+                  "requiredTugs",
+                  "containerUnits"
+                ],
+                "additionalProperties": false
+              },
+              "departure": {
+                "type": "object",
+                "properties": {
+                  "startAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "endAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                  },
+                  "requiredTugs": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "containerUnits": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "startAt",
+                  "endAt",
+                  "requiredTugs",
+                  "containerUnits"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "vesselId",
+              "arrival",
+              "departure"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$ref": "#/$defs/PortCallReply"
+      },
+      "example": {
+        "body": {
+          "vesselId": "00000000-0000-4000-8000-000000000004",
+          "arrival": {
+            "startAt": "2030-01-01T00:00:00.000Z",
+            "endAt": "2030-01-01T01:00:00.000Z",
+            "requiredTugs": 1,
+            "containerUnits": 1
+          },
+          "departure": {
+            "startAt": "2030-01-01T03:00:00.000Z",
+            "endAt": "2030-01-01T04:00:00.000Z",
+            "requiredTugs": 1,
+            "containerUnits": 1
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-port-call"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "bodyTransportErrors": [
+        {
+          "path": "/requiredTugs",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        },
+        {
+          "path": "/containerUnits",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        },
+        {
+          "path": "/arrival/requiredTugs",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        },
+        {
+          "path": "/arrival/containerUnits",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        },
+        {
+          "path": "/departure/requiredTugs",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        },
+        {
+          "path": "/departure/containerUnits",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        }
+      ]
+    },
+    {
+      "id": "confirm-port-call",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/confirm",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortCallReply"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-confirm-port-call"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "start-service-port-call",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/start-service",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortCallReply"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-start-service-port-call"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "cancel-port-call",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortCallReply"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010"
+        },
+        "body": {
+          "reason": "Public cancellation"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-cancel-port-call"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "complete-port-call",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/complete",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortCallReply"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-complete-port-call"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-standby-entry",
+      "method": "POST",
+      "path": "/api/v1/standby-entries",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "vesselId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "arrivalFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "arrivalTo": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 1440,
+            "multipleOf": 15
+          },
+          "requiredTugs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "containerUnits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "vesselId",
+          "arrivalFrom",
+          "arrivalTo",
+          "durationMinutes",
+          "requiredTugs",
+          "containerUnits",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/StandbyEntry"
+      },
+      "example": {
+        "body": {
+          "vesselId": "00000000-0000-4000-8000-000000000004",
+          "arrivalFrom": "2030-01-02T00:00:00.000Z",
+          "arrivalTo": "2030-01-03T00:00:00.000Z",
+          "durationMinutes": 60,
+          "requiredTugs": 1,
+          "containerUnits": 1,
+          "priority": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-standby-entry"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "bodyTransportErrors": [
+        {
+          "path": "/requiredTugs",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        },
+        {
+          "path": "/containerUnits",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        },
+        {
+          "path": "/durationMinutes",
+          "when": "number",
+          "status": 400,
+          "code": "INVALID_PORT_CALL_INTERVAL"
+        }
+      ]
+    },
+    {
+      "id": "feasible-windows",
+      "method": "GET",
+      "path": "/api/v1/port-resources/feasible-windows",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/FeasibleWindowPage"
+      },
+      "example": {
+        "query": {
+          "vesselId": "00000000-0000-4000-8000-000000000004",
+          "arrivalFrom": "2030-01-01T00:00:00.000Z",
+          "arrivalTo": "2030-01-02T00:00:00.000Z",
+          "durationMinutes": 60,
+          "requiredTugs": 1,
+          "containerUnits": 1,
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "vesselId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "arrivalFrom",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "arrivalTo",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "durationMinutes",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 1440,
+            "multipleOf": 15
+          }
+        },
+        {
+          "name": "requiredTugs",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "containerUnits",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "resource-schedule",
+      "method": "GET",
+      "path": "/api/v1/port-resources/schedule",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/ResourceSchedule"
+      },
+      "example": {
+        "query": {
+          "from": "2030-01-01T00:00:00.000Z",
+          "to": "2030-01-01T01:00:00.000Z"
+        }
+      },
+      "parameters": [
+        {
+          "name": "from",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "to",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "aggregateId": "00000000-0000-4000-8000-000000000010",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "confirm-movement",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/movements/:movementId/confirm",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortMovement"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010",
+          "movementId": "00000000-0000-4000-8000-000000000011"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-confirm-movement"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "movementId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "start-service-movement",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/movements/:movementId/start-service",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortMovement"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010",
+          "movementId": "00000000-0000-4000-8000-000000000011"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-start-service-movement"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "movementId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "cancel-movement",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/movements/:movementId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortMovement"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010",
+          "movementId": "00000000-0000-4000-8000-000000000011"
+        },
+        "body": {
+          "reason": "Public cancellation"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-cancel-movement"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "movementId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "complete-movement",
+      "method": "POST",
+      "path": "/api/v1/port-calls/:portCallId/movements/:movementId/complete",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/PortMovement"
+      },
+      "example": {
+        "params": {
+          "portCallId": "00000000-0000-4000-8000-000000000010",
+          "movementId": "00000000-0000-4000-8000-000000000011"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-complete-movement"
+        }
+      },
+      "parameters": [
+        {
+          "name": "portCallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "movementId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "berths"
+          ],
+          "match": {
+            "berthId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public berth",
+            "priority": 1,
+            "maxLengthMeters": 300,
+            "availability": [
+              {
+                "startAt": "2020-01-01T00:00:00.000Z",
+                "endAt": "2040-01-01T00:00:00.000Z"
+              }
+            ]
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "tugPools"
+          ],
+          "match": {
+            "tugPoolId": "00000000-0000-4000-8000-000000000002",
+            "name": "Public tugs",
+            "priority": 1,
+            "capacity": 4,
+            "availability": [
+              {
+                "startAt": "2020-01-01T00:00:00.000Z",
+                "endAt": "2040-01-01T00:00:00.000Z"
+              }
+            ]
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "yardWindows"
+          ],
+          "match": {
+            "yardWindowId": "00000000-0000-4000-8000-000000000003",
+            "priority": 1,
+            "capacityUnits": 100,
+            "startAt": "2020-01-01T00:00:00.000Z",
+            "endAt": "2040-01-01T00:00:00.000Z"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "vessels"
+          ],
+          "match": {
+            "vesselId": "00000000-0000-4000-8000-000000000004",
+            "name": "Public vessel",
+            "lengthMeters": 100
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-port-call",
+      "body": {
+        "vesselId": "00000000-0000-4000-8000-000000000004",
+        "arrival": {
+          "startAt": "2030-01-01T00:00:00.000Z",
+          "endAt": "2030-01-01T01:00:00.000Z",
+          "requiredTugs": 1,
+          "containerUnits": 1
+        },
+        "departure": {
+          "startAt": "2030-01-01T03:00:00.000Z",
+          "endAt": "2030-01-01T04:00:00.000Z",
+          "requiredTugs": 1,
+          "containerUnits": 1
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "public-dock-create"
+      },
+      "expectStatus": 201,
+      "capture": {
+        "portCallId": [
+          "portCallId"
+        ]
+      }
+    },
+    {
+      "operationId": "get-port-call",
+      "params": {
+        "portCallId": "${portCallId}"
+      },
+      "expectStatus": 200,
+      "capture": {
+        "arrivalId": [
+          "movements",
+          0,
+          "movementId"
+        ],
+        "departureId": [
+          "movements",
+          1,
+          "movementId"
+        ]
+      },
+      "expectBody": {
+        "portCallId": "${portCallId}",
+        "vesselId": "00000000-0000-4000-8000-000000000004",
+        "state": "HELD",
+        "arrivalAt": null
+      },
+      "expectContains": [
+        {
+          "path": [
+            "movements"
+          ],
+          "match": {
+            "type": "ARRIVAL",
+            "startAt": "2030-01-01T00:00:00.000Z",
+            "endAt": "2030-01-01T01:00:00.000Z",
+            "requiredTugs": 1,
+            "containerUnits": 1
+          }
+        },
+        {
+          "path": [
+            "movements"
+          ],
+          "match": {
+            "type": "DEPARTURE",
+            "startAt": "2030-01-01T03:00:00.000Z",
+            "endAt": "2030-01-01T04:00:00.000Z",
+            "requiredTugs": 1,
+            "containerUnits": 1
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "portCalls"
+          ],
+          "match": {
+            "portCallId": "${portCallId}",
+            "vesselId": "00000000-0000-4000-8000-000000000004",
+            "state": "HELD"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "portMovements"
+          ],
+          "match": {
+            "movementId": "${arrivalId}",
+            "portCallId": "${portCallId}"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 compatibility clarification: create accepts either the exact V1 flat body or the exact Manager linked body, never a mixture. V1 flat requests remain necessary for the unchanged published performance workload. Both create forms retain status 201. Current resources include movements; saved V1 mutation replay responses remain exact legacy PortCall JSON, hence the narrowly scoped mutation response union. The seed remains exactly V1 (no importedAt, work or movements).",
+    "V2 representation clarification: schedule returns {items:[ScheduleBucket]}. Each bucket names resourceType, resourceId, startAt, endAt, capacity and allocatedQuantity; BERTH capacity is one and its allocatedQuantity is occupancy (zero or one). Tug and yard buckets report integer capacity and reserved quantity. Buckets are 15 minutes, cover [from,to), and are ordered by startAt, resourceType, resourceId. The complete public resource allocation and point-in-time conservation rules still apply.",
+    "Port-call collection order is portCallId. Feasible-window filter parameters and schedule from/to are required; feasible-window cursor encodes exactly the full published tuple. Domain-event afterSequence defaults to zero; nextCursor is null and continuation uses last sequence with aggregateId. Without aggregateId, events use snapshot event order.",
+    "All linked movement business conditions, 120-minute turnaround, 180-second database-clock expiry, aggregate state precedence, immutable completed arrival, deterministic standby head blocking and atomic capacity ownership remain implementation responsibilities. These schemas do not supply their algorithms.",
+    "Stable errors: WINDOW_UNAVAILABLE, PORT_CALL_EXPIRED, CLEARANCE_REQUIRED, PORT_CALL_NOT_CANCELLABLE, PORT_CALL_STATE_CONFLICT, TURNAROUND_GAP_TOO_SHORT, MOVEMENT_STATE_CONFLICT (409), INVALID_PORT_CALL_INTERVAL (400). New Manager transitions introduce no extra event type or payload field. Snapshot arrays use the exact README/Manager tuples, including resourceAllocations resourceType/resourceId/startAt/endAt and portMovements portCallId/movementId."
+  ],
+  "httpHost": "127.0.0.1",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    }
+  },
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1"
+}

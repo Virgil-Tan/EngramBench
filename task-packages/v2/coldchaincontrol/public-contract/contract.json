@@ -1,0 +1,4815 @@
+{
+  "taskId": "coldchaincontrol",
+  "title": "ColdChainControl",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:perf",
+    "npm run test:all"
+  ],
+  "seed": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string"
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "sites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Site"
+          }
+        },
+        "carriers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Carrier"
+          }
+        },
+        "deviceCredentials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedDeviceCredential"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SensorDevice"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "configAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigAssignment"
+          }
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "shipmentLegs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentLeg"
+          }
+        },
+        "telemetryReadings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TelemetryReading"
+          }
+        },
+        "shipmentProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentProjection"
+          }
+        },
+        "excursions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "notificationPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationPolicy"
+          }
+        },
+        "notificationDeliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationDelivery"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "sites",
+        "carriers",
+        "deviceCredentials",
+        "devices",
+        "configRevisions",
+        "configAssignments",
+        "shipments",
+        "shipmentLegs",
+        "telemetryReadings",
+        "shipmentProjections",
+        "excursions",
+        "notificationPolicies",
+        "notificationDeliveries",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "replay": true,
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-linked-device-v2",
+      "importedAt": "2026-01-01T00:00:00Z",
+      "tenants": [
+        {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "name": "Public cold-chain tenant"
+        }
+      ],
+      "sites": [],
+      "carriers": [
+        {
+          "carrierId": "31000000-0000-4000-8000-000000000002",
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "code": "PUBLIC-CARRIER",
+          "name": "Public carrier",
+          "state": "ACTIVE"
+        }
+      ],
+      "deviceCredentials": [
+        {
+          "deviceCredentialId": "31000000-0000-4000-8000-000000000004",
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "deviceId": "31000000-0000-4000-8000-000000000003",
+          "keyVersion": 1,
+          "state": "ACTIVE",
+          "validFrom": "2026-01-01T00:00:00Z",
+          "revokedAt": null,
+          "secret": "public-example-device-secret-not-production"
+        }
+      ],
+      "devices": [
+        {
+          "deviceId": "31000000-0000-4000-8000-000000000003",
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "carrierId": "31000000-0000-4000-8000-000000000002",
+          "serialNumber": "PUBLIC-SENSOR-001",
+          "state": "ACTIVE",
+          "currentKeyVersion": 1,
+          "currentConfigVersion": 1,
+          "lastSequence": 0,
+          "lastSeenAt": null
+        }
+      ],
+      "configRevisions": [
+        {
+          "configRevisionId": "31000000-0000-4000-8000-000000000005",
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "version": 1,
+          "state": "PUBLISHED",
+          "minTemperatureMilliC": 2000,
+          "maxTemperatureMilliC": 8000,
+          "sampleIntervalSeconds": 30,
+          "offlineAfterSeconds": 180,
+          "createdAt": "2026-01-01T00:00:00Z",
+          "publishedAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "configAssignments": [
+        {
+          "configAssignmentId": "31000000-0000-4000-8000-000000000006",
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "deviceId": "31000000-0000-4000-8000-000000000003",
+          "configRevisionId": "31000000-0000-4000-8000-000000000005",
+          "state": "CONFIRMED",
+          "expiresAt": "2099-01-01T00:00:00Z",
+          "confirmedAt": "2026-01-01T00:00:00Z",
+          "createdAt": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "shipments": [],
+      "shipmentLegs": [],
+      "telemetryReadings": [],
+      "shipmentProjections": [],
+      "excursions": [],
+      "notificationPolicies": [],
+      "notificationDeliveries": [],
+      "auditEntries": []
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "examples": [
+                "INVALID_REQUEST",
+                "NOT_FOUND",
+                "TENANT_SCOPE_MISMATCH",
+                "STATE_CONFLICT",
+                "CONFIG_VERSION_CONFLICT",
+                "CONFIG_ASSIGNMENT_STALE",
+                "DEVICE_TERMINAL",
+                "DEVICE_CREDENTIAL_CONFLICT",
+                "INVALID_DEVICE_SIGNATURE",
+                "TELEMETRY_CONFLICT",
+                "SHIPMENT_ROUTE_INVALID",
+                "SHIPMENT_DEVICE_BUSY",
+                "SHIPMENT_TERMINAL",
+                "EXCURSION_TERMINAL",
+                "RATE_LIMITED",
+                "CUSTODY_CHAIN_INVALID",
+                "RECALL_INVALID",
+                "INVALID_HANDOFF_ATTESTATION",
+                "CUSTODY_CHAIN_CONFLICT",
+                "CUSTODY_HANDOFF_NOT_CURRENT",
+                "CUSTODY_HANDOFF_EXPIRED",
+                "CUSTODY_REVISION_CONFLICT",
+                "RECALL_ALREADY_ACTIVE",
+                "RECALL_REVISION_CONFLICT",
+                "SHIPMENT_QUARANTINED",
+                "RECALL_TERMINAL",
+                "IDEMPOTENCY_CONFLICT",
+                "MALFORMED_JSON"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Explicit free JSON metadata; recursively secret-free."
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Site": {
+      "type": "object",
+      "properties": {
+        "siteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "radiusMeters": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "timeZone": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "siteId",
+        "tenantId",
+        "code",
+        "name",
+        "latitudeE6",
+        "longitudeE6",
+        "radiusMeters",
+        "timeZone"
+      ],
+      "additionalProperties": false
+    },
+    "Carrier": {
+      "type": "object",
+      "properties": {
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED"
+          ]
+        }
+      },
+      "required": [
+        "carrierId",
+        "tenantId",
+        "code",
+        "name",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceCredential": {
+      "type": "object",
+      "properties": {
+        "deviceCredentialId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REVOKED"
+          ]
+        },
+        "validFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "deviceCredentialId",
+        "tenantId",
+        "deviceId",
+        "keyVersion",
+        "state",
+        "validFrom",
+        "revokedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SensorDevice": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "serialNumber": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        },
+        "currentKeyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "currentConfigVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastSeenAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "deviceId",
+        "tenantId",
+        "carrierId",
+        "serialNumber",
+        "state",
+        "currentKeyVersion",
+        "currentConfigVersion",
+        "lastSequence",
+        "lastSeenAt"
+      ],
+      "additionalProperties": false
+    },
+    "ConfigRevision": {
+      "type": "object",
+      "properties": {
+        "configRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "PUBLISHED"
+          ]
+        },
+        "minTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maxTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "sampleIntervalSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "offlineAfterSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "configRevisionId",
+        "tenantId",
+        "version",
+        "state",
+        "minTemperatureMilliC",
+        "maxTemperatureMilliC",
+        "sampleIntervalSeconds",
+        "offlineAfterSeconds",
+        "createdAt",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ConfigAssignment": {
+      "type": "object",
+      "properties": {
+        "configAssignmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "configRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERED",
+            "CONFIRMED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "confirmedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "configAssignmentId",
+        "tenantId",
+        "deviceId",
+        "configRevisionId",
+        "state",
+        "expiresAt",
+        "confirmedAt",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ColdShipment": {
+      "type": "object",
+      "properties": {
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string"
+        },
+        "productLotCode": {
+          "type": "string"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "originSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "destinationSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "DELIVERED",
+            "CANCELLED"
+          ]
+        },
+        "minimumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maximumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "expectedStartAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "expectedEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "shipmentId",
+        "tenantId",
+        "externalRef",
+        "productLotCode",
+        "carrierId",
+        "originSiteId",
+        "destinationSiteId",
+        "deviceId",
+        "state",
+        "minimumTemperatureMilliC",
+        "maximumTemperatureMilliC",
+        "expectedStartAt",
+        "expectedEndAt",
+        "activatedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "ShipmentLeg": {
+      "type": "object",
+      "properties": {
+        "shipmentLegId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fromSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "toSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plannedDepartureAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "plannedArrivalAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "shipmentLegId",
+        "shipmentId",
+        "ordinal",
+        "fromSiteId",
+        "toSiteId",
+        "plannedDepartureAt",
+        "plannedArrivalAt"
+      ],
+      "additionalProperties": false
+    },
+    "TelemetryReading": {
+      "type": "object",
+      "properties": {
+        "telemetryReadingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "readingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "temperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "configVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "telemetryReadingId",
+        "tenantId",
+        "deviceId",
+        "readingId",
+        "sequence",
+        "observedAt",
+        "receivedAt",
+        "latitudeE6",
+        "longitudeE6",
+        "temperatureMilliC",
+        "configVersion",
+        "keyVersion",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "ShipmentProjection": {
+      "type": "object",
+      "properties": {
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lastSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastObservedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastLatitudeE6": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastLongitudeE6": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastTemperatureMilliC": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currentSiteId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currentLegOrdinal": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "IN_TRANSIT",
+            "AT_SITE",
+            "DELIVERED",
+            "CANCELLED"
+          ]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "shipmentId",
+        "tenantId",
+        "lastSequence",
+        "lastObservedAt",
+        "lastLatitudeE6",
+        "lastLongitudeE6",
+        "lastTemperatureMilliC",
+        "currentSiteId",
+        "currentLegOrdinal",
+        "state",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Excursion": {
+      "type": "object",
+      "properties": {
+        "excursionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "TEMPERATURE",
+            "OFFLINE"
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "ACKNOWLEDGED",
+            "RESOLVED"
+          ]
+        },
+        "openedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "acknowledgedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "firstSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "minimumObservedMilliC": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maximumObservedMilliC": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "excursionId",
+        "tenantId",
+        "shipmentId",
+        "kind",
+        "state",
+        "openedAt",
+        "acknowledgedAt",
+        "resolvedAt",
+        "firstSequence",
+        "lastSequence",
+        "minimumObservedMilliC",
+        "maximumObservedMilliC"
+      ],
+      "additionalProperties": false
+    },
+    "NotificationPolicy": {
+      "type": "object",
+      "properties": {
+        "notificationPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "destination": {
+          "type": "string"
+        },
+        "rateLimitPerMinute": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "DISABLED"
+          ]
+        }
+      },
+      "required": [
+        "notificationPolicyId",
+        "tenantId",
+        "eventKinds",
+        "destination",
+        "rateLimitPerMinute",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "NotificationDelivery": {
+      "type": "object",
+      "properties": {
+        "notificationDeliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "notificationPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERED",
+            "DEAD_LETTER"
+          ]
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "nextAttemptAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deliveredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "notificationDeliveryId",
+        "tenantId",
+        "notificationPolicyId",
+        "eventId",
+        "state",
+        "attempts",
+        "nextAttemptAt",
+        "deliveredAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "actorType": {
+          "type": "string",
+          "enum": [
+            "USER",
+            "DEVICE",
+            "SYSTEM"
+          ]
+        },
+        "actorRef": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Explicit free JSON metadata; recursively secret-free."
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "actorType",
+        "actorRef",
+        "action",
+        "resourceType",
+        "resourceId",
+        "occurredAt",
+        "details"
+      ],
+      "additionalProperties": false
+    },
+    "CustodyChain": {
+      "type": "object",
+      "properties": {
+        "custodyChainId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PLANNED",
+            "ACTIVE",
+            "COMPLETED",
+            "CANCELLED"
+          ]
+        },
+        "currentOrdinal": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "custodyChainId",
+        "tenantId",
+        "shipmentId",
+        "revision",
+        "state",
+        "currentOrdinal",
+        "createdAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "CustodyHandoff": {
+      "type": "object",
+      "properties": {
+        "custodyHandoffId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "custodyChainId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "fromCarrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "toCarrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "siteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "windowStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "windowEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "OFFERED",
+            "ACCEPTED",
+            "EXPIRED",
+            "CANCELLED"
+          ]
+        },
+        "offeredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "custodyHandoffId",
+        "custodyChainId",
+        "ordinal",
+        "fromCarrierId",
+        "toCarrierId",
+        "siteId",
+        "windowStart",
+        "windowEnd",
+        "state",
+        "offeredAt",
+        "acceptedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "RecallOrder": {
+      "type": "object",
+      "properties": {
+        "recallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "productLotCode": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ISSUED",
+            "QUARANTINING",
+            "CONTAINED",
+            "CANCELLED"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "recallId",
+        "tenantId",
+        "productLotCode",
+        "reason",
+        "state",
+        "revision",
+        "issuedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "QuarantineAction": {
+      "type": "object",
+      "properties": {
+        "quarantineActionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "recallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "APPLIED",
+            "RELEASED"
+          ]
+        },
+        "expectedShipmentState": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "DELIVERED",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "appliedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "releasedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "quarantineActionId",
+        "recallId",
+        "shipmentId",
+        "state",
+        "expectedShipmentState",
+        "createdAt",
+        "appliedAt",
+        "releasedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "examples": [
+            "CONFIG_DELIVER",
+            "TELEMETRY_PROJECT",
+            "DEVICE_OFFLINE_CHECK",
+            "CUSTODY_HANDOFF_EXPIRY",
+            "RECALL_PROPAGATE",
+            "QUARANTINE_ENFORCE"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "availableAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseToken": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastError": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "workId",
+        "tenantId",
+        "kind",
+        "aggregateId",
+        "state",
+        "attempt",
+        "availableAt",
+        "leaseOwner",
+        "leaseToken",
+        "leaseExpiresAt",
+        "lastError",
+        "terminal",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Event": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateType": {
+          "type": "string"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "kind": {
+          "type": "string"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Explicit free JSON metadata; recursively secret-free."
+        },
+        "outboxState": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERED",
+            "DEAD_LETTER"
+          ]
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "aggregateType",
+        "aggregateId",
+        "sequence",
+        "kind",
+        "occurredAt",
+        "payload",
+        "outboxState"
+      ],
+      "additionalProperties": false
+    },
+    "ShipmentTimeline": {
+      "type": "object",
+      "properties": {
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "readings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotTelemetryReading"
+          }
+        },
+        "excursions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Event"
+          }
+        }
+      },
+      "required": [
+        "shipmentId",
+        "readings",
+        "excursions",
+        "events"
+      ],
+      "additionalProperties": false
+    },
+    "SeedDeviceCredential": {
+      "type": "object",
+      "properties": {
+        "deviceCredentialId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REVOKED"
+          ]
+        },
+        "validFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "secret": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "deviceCredentialId",
+        "tenantId",
+        "deviceId",
+        "keyVersion",
+        "state",
+        "validFrom",
+        "revokedAt",
+        "secret"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotTelemetryReading": {
+      "type": "object",
+      "properties": {
+        "telemetryReadingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "readingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "temperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "configVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "signature": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "telemetryReadingId",
+        "tenantId",
+        "deviceId",
+        "readingId",
+        "sequence",
+        "observedAt",
+        "receivedAt",
+        "latitudeE6",
+        "longitudeE6",
+        "temperatureMilliC",
+        "configVersion",
+        "keyVersion",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "CreateTenant": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "CreateSite": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "radiusMeters": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "timeZone": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "code",
+        "name",
+        "latitudeE6",
+        "longitudeE6",
+        "radiusMeters",
+        "timeZone"
+      ],
+      "additionalProperties": false
+    },
+    "CreateCarrier": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED"
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "code",
+        "name",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "CreateDevice": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "serialNumber": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "carrierId",
+        "serialNumber",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "CreateConfigRevision": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "minTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maxTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "sampleIntervalSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "offlineAfterSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "tenantId",
+        "minTemperatureMilliC",
+        "maxTemperatureMilliC",
+        "sampleIntervalSeconds",
+        "offlineAfterSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "IngestTelemetry": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "readingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "temperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "configVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "deviceId",
+        "readingId",
+        "sequence",
+        "observedAt",
+        "latitudeE6",
+        "longitudeE6",
+        "temperatureMilliC",
+        "configVersion",
+        "keyVersion",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "CreateShipmentLeg": {
+      "type": "object",
+      "properties": {
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fromSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "toSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plannedDepartureAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "plannedArrivalAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "ordinal",
+        "fromSiteId",
+        "toSiteId",
+        "plannedDepartureAt",
+        "plannedArrivalAt"
+      ],
+      "additionalProperties": false
+    },
+    "CreateShipment": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string"
+        },
+        "productLotCode": {
+          "type": "string"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "originSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "destinationSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "minimumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maximumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "expectedStartAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "expectedEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CreateShipmentLeg"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "tenantId",
+        "externalRef",
+        "productLotCode",
+        "carrierId",
+        "originSiteId",
+        "destinationSiteId",
+        "deviceId",
+        "minimumTemperatureMilliC",
+        "maximumTemperatureMilliC",
+        "expectedStartAt",
+        "expectedEndAt",
+        "legs"
+      ],
+      "additionalProperties": false
+    },
+    "CreateNotificationPolicy": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "destination": {
+          "type": "string"
+        },
+        "rateLimitPerMinute": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "DISABLED"
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "eventKinds",
+        "destination",
+        "rateLimitPerMinute",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "ExcursionPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string"
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "sites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Site"
+          }
+        },
+        "carriers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Carrier"
+          }
+        },
+        "deviceCredentials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedDeviceCredential"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SensorDevice"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "configAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigAssignment"
+          }
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "shipmentLegs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentLeg"
+          }
+        },
+        "telemetryReadings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TelemetryReading"
+          }
+        },
+        "shipmentProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentProjection"
+          }
+        },
+        "excursions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "notificationPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationPolicy"
+          }
+        },
+        "notificationDeliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationDelivery"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "sites",
+        "carriers",
+        "deviceCredentials",
+        "devices",
+        "configRevisions",
+        "configAssignments",
+        "shipments",
+        "shipmentLegs",
+        "telemetryReadings",
+        "shipmentProjections",
+        "excursions",
+        "notificationPolicies",
+        "notificationDeliveries",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "sites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Site"
+          }
+        },
+        "carriers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Carrier"
+          }
+        },
+        "deviceCredentials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceCredential"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SensorDevice"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "configAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigAssignment"
+          }
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "shipmentLegs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentLeg"
+          }
+        },
+        "telemetryReadings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotTelemetryReading"
+          }
+        },
+        "shipmentProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentProjection"
+          }
+        },
+        "excursions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "notificationPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationPolicy"
+          }
+        },
+        "notificationDeliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationDelivery"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "tenants",
+        "sites",
+        "carriers",
+        "deviceCredentials",
+        "devices",
+        "configRevisions",
+        "configAssignments",
+        "shipments",
+        "shipmentLegs",
+        "telemetryReadings",
+        "shipmentProjections",
+        "excursions",
+        "notificationPolicies",
+        "notificationDeliveries",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "ManagerResources": {
+      "type": "object",
+      "properties": {
+        "custodyChains": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CustodyChain"
+          }
+        },
+        "custodyHandoffs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CustodyHandoff"
+          }
+        },
+        "recallOrders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RecallOrder"
+          }
+        },
+        "quarantineActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QuarantineAction"
+          }
+        }
+      },
+      "required": [
+        "custodyChains",
+        "custodyHandoffs",
+        "recallOrders",
+        "quarantineActions"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Event"
+          }
+        },
+        "managerResources": {
+          "$ref": "#/$defs/ManagerResources"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "resources",
+        "work",
+        "events",
+        "managerResources"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "source": "docs/frontal-legacy/README.md:14",
+      "status": 200,
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "source": "docs/frontal-legacy/README.md:14",
+      "status": 200,
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          }
+        }
+      },
+      "parameters": [],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "source": "docs/frontal-legacy/README.md:14",
+      "status": 200,
+      "response": {
+        "type": "string",
+        "minLength": 1,
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "create-tenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateTenant"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-tenant"
+        },
+        "body": {
+          "name": "Public tenant"
+        }
+      }
+    },
+    {
+      "id": "create-site",
+      "method": "POST",
+      "path": "/api/v1/sites",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Site"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateSite"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-site"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "code": "PUBLIC-DEPOT",
+          "name": "Public depot",
+          "latitudeE6": 0,
+          "longitudeE6": 0,
+          "radiusMeters": 100,
+          "timeZone": "UTC"
+        }
+      }
+    },
+    {
+      "id": "create-carrier",
+      "method": "POST",
+      "path": "/api/v1/carriers",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Carrier"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateCarrier"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-carrier"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "code": "PUBLIC-SECOND",
+          "name": "Public carrier",
+          "state": "ACTIVE"
+        }
+      }
+    },
+    {
+      "id": "create-device",
+      "method": "POST",
+      "path": "/api/v1/devices",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/SensorDevice"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateDevice"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-device"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "carrierId": "31000000-0000-4000-8000-000000000002",
+          "serialNumber": "PUBLIC-SENSOR-002",
+          "state": "ACTIVE"
+        }
+      }
+    },
+    {
+      "id": "create-config-revision",
+      "method": "POST",
+      "path": "/api/v1/config-revisions",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateConfigRevision"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-config-revision"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "minTemperatureMilliC": 2000,
+          "maxTemperatureMilliC": 8000,
+          "sampleIntervalSeconds": 30,
+          "offlineAfterSeconds": 180
+        }
+      }
+    },
+    {
+      "id": "publish-config-revision",
+      "method": "POST",
+      "path": "/api/v1/config-revisions/:configRevisionId/publish",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "configRevisionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "configRevisionId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-publish-config-revision"
+        },
+        "body": {
+          "expectedVersion": 1
+        }
+      }
+    },
+    {
+      "id": "create-config-assignment",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/config-assignments",
+      "source": "docs/frontal-legacy/README.md:57",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ConfigAssignment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "configRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "configRevisionId",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-config-assignment"
+        },
+        "body": {
+          "configRevisionId": "31000000-0000-4000-8000-000000000005",
+          "expiresAt": "2099-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "read-device-config",
+      "method": "GET",
+      "path": "/api/v1/devices/:deviceId/config",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "X-Device-Id",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Key-Version",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Timestamp",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Signature",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "X-Device-Id": "31000000-0000-4000-8000-000000000003",
+          "X-Device-Key-Version": "1",
+          "X-Device-Timestamp": "2026-01-01T00:00:00Z",
+          "X-Device-Signature": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "id": "acknowledge-config",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/config-acknowledgements",
+      "source": "docs/frontal-legacy/README.md:58",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ConfigAssignment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "configAssignmentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "configVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "configAssignmentId",
+          "configVersion",
+          "appliedAt"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "X-Device-Id",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Key-Version",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Timestamp",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Signature",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-acknowledge-config",
+          "X-Device-Id": "31000000-0000-4000-8000-000000000003",
+          "X-Device-Key-Version": "1",
+          "X-Device-Timestamp": "2026-01-01T00:00:00Z",
+          "X-Device-Signature": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "body": {
+          "configAssignmentId": "31000000-0000-4000-8000-000000000006",
+          "configVersion": 1,
+          "appliedAt": "2026-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "rotate-device-credential",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/credentials/rotate",
+      "source": "docs/frontal-legacy/README.md:63",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/DeviceCredential"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedKeyVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "secret": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "expectedKeyVersion",
+          "secret",
+          "validFrom"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-rotate-device-credential"
+        },
+        "body": {
+          "expectedKeyVersion": 1,
+          "secret": "public-rotation-secret-not-production",
+          "validFrom": "2026-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "revoke-device-credential",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/credentials/:keyVersion/revoke",
+      "source": "docs/frontal-legacy/README.md:63",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/DeviceCredential"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "keyVersion",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "deviceId": "31000000-0000-4000-8000-000000000003",
+          "keyVersion": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revoke-device-credential"
+        },
+        "body": {
+          "reason": "Public rotation example"
+        }
+      }
+    },
+    {
+      "id": "ingest-telemetry",
+      "method": "POST",
+      "path": "/api/v1/telemetry-readings",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/TelemetryReading"
+      },
+      "request": {
+        "$ref": "#/$defs/IngestTelemetry"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "X-Device-Id",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Key-Version",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Timestamp",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        },
+        {
+          "name": "X-Device-Signature",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "INVALID_DEVICE_SIGNATURE"
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-ingest-telemetry",
+          "X-Device-Id": "31000000-0000-4000-8000-000000000003",
+          "X-Device-Key-Version": "1",
+          "X-Device-Timestamp": "2026-01-01T00:00:00Z",
+          "X-Device-Signature": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "body": {
+          "deviceId": "31000000-0000-4000-8000-000000000003",
+          "readingId": "31000000-0000-4000-8000-000000000007",
+          "sequence": 1,
+          "observedAt": "2026-01-01T00:00:00Z",
+          "latitudeE6": 0,
+          "longitudeE6": 0,
+          "temperatureMilliC": 5000,
+          "configVersion": 1,
+          "keyVersion": 1,
+          "signature": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "id": "create-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateShipment"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-shipment"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "externalRef": "PUBLIC-SHIPMENT",
+          "productLotCode": "PUBLIC-LOT",
+          "carrierId": "31000000-0000-4000-8000-000000000002",
+          "originSiteId": "31000000-0000-4000-8000-000000000008",
+          "destinationSiteId": "31000000-0000-4000-8000-000000000009",
+          "deviceId": "31000000-0000-4000-8000-000000000003",
+          "minimumTemperatureMilliC": 2000,
+          "maximumTemperatureMilliC": 8000,
+          "expectedStartAt": "2026-01-01T00:00:00Z",
+          "expectedEndAt": "2099-01-01T00:00:00Z",
+          "legs": [
+            {
+              "ordinal": 0,
+              "fromSiteId": "31000000-0000-4000-8000-000000000008",
+              "toSiteId": "31000000-0000-4000-8000-000000000009",
+              "plannedDepartureAt": "2026-01-01T00:00:00Z",
+              "plannedArrivalAt": "2099-01-01T00:00:00Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "activate-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments/:shipmentId/activate",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "shipmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "shipmentId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-activate-shipment"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "cancel-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments/:shipmentId/cancel",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "shipmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "shipmentId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-cancel-shipment"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "read-shipment",
+      "method": "GET",
+      "path": "/api/v1/shipments/:shipmentId",
+      "source": "docs/frontal-legacy/README.md:73",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "parameters": [
+        {
+          "name": "shipmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "shipmentId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "read-shipment-timeline",
+      "method": "GET",
+      "path": "/api/v1/shipments/:shipmentId/timeline",
+      "source": "docs/frontal-legacy/README.md:73",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ShipmentTimeline"
+      },
+      "parameters": [
+        {
+          "name": "shipmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "shipmentId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "deliver-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments/:shipmentId/deliver",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "shipmentId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "shipmentId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-deliver-shipment"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "acknowledge-excursion",
+      "method": "POST",
+      "path": "/api/v1/excursions/:excursionId/acknowledge",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Excursion"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "excursionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "excursionId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-acknowledge-excursion"
+        },
+        "body": {}
+      }
+    },
+    {
+      "id": "create-notification-policy",
+      "method": "POST",
+      "path": "/api/v1/notification-policies",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/NotificationPolicy"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateNotificationPolicy"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-notification-policy"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "eventKinds": [
+            "EXCURSION_OPENED"
+          ],
+          "destination": "https://example.invalid/cold-chain",
+          "rateLimitPerMinute": 60,
+          "state": "ACTIVE"
+        }
+      }
+    },
+    {
+      "id": "list-excursions",
+      "method": "GET",
+      "path": "/api/v1/excursions",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ExcursionPage"
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "shipmentId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "kind",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "TEMPERATURE",
+              "OFFLINE"
+            ]
+          }
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "ACKNOWLEDGED",
+              "RESOLVED"
+            ]
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {}
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "source": "docs/frontal-legacy/README.md:84",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "create-custody-chain",
+      "method": "POST",
+      "path": "/api/v1/custody-chains",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/CustodyChain"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expectedShipmentState": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fromCarrierId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "toCarrierId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "siteId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "windowStart": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "(?:[Zz]|\\+00:00)$"
+                },
+                "windowEnd": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "(?:[Zz]|\\+00:00)$"
+                }
+              },
+              "required": [
+                "fromCarrierId",
+                "toCarrierId",
+                "siteId",
+                "windowStart",
+                "windowEnd"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "shipmentId",
+          "expectedShipmentState",
+          "steps"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-custody-chain"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "shipmentId": "31000000-0000-4000-8000-000000000010",
+          "expectedShipmentState": "ACTIVE",
+          "steps": [
+            {
+              "fromCarrierId": "31000000-0000-4000-8000-000000000002",
+              "toCarrierId": "31000000-0000-4000-8000-000000000011",
+              "siteId": "31000000-0000-4000-8000-000000000009",
+              "windowStart": "2026-01-01T00:00:00Z",
+              "windowEnd": "2099-01-01T00:00:00Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "read-custody-chain",
+      "method": "GET",
+      "path": "/api/v1/custody-chains/:chainId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "$ref": "#/$defs/CustodyChain"
+          },
+          "handoffs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CustodyHandoff"
+            }
+          }
+        },
+        "required": [
+          "chain",
+          "handoffs"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "chainId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "chainId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "offer-custody-handoff",
+      "method": "POST",
+      "path": "/api/v1/custody-chains/:chainId/handoffs",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/CustodyHandoff"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedChainRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedChainRevision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "chainId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "chainId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-offer-custody-handoff"
+        },
+        "body": {
+          "expectedChainRevision": 1
+        }
+      }
+    },
+    {
+      "id": "accept-custody-handoff",
+      "method": "POST",
+      "path": "/api/v1/custody-handoffs/:handoffId/accept",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "$ref": "#/$defs/CustodyChain"
+          },
+          "handoff": {
+            "$ref": "#/$defs/CustodyHandoff"
+          },
+          "shipment": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "required": [
+          "chain",
+          "handoff",
+          "shipment"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "carrierId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "keyVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "attestation": {
+            "type": "string"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "expectedChainRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "carrierId",
+          "deviceId",
+          "keyVersion",
+          "attestation",
+          "acceptedAt",
+          "expectedChainRevision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "handoffId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "handoffId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-accept-custody-handoff"
+        },
+        "body": {
+          "carrierId": "31000000-0000-4000-8000-000000000011",
+          "deviceId": "31000000-0000-4000-8000-000000000012",
+          "keyVersion": 1,
+          "attestation": "0000000000000000000000000000000000000000000000000000000000000000",
+          "acceptedAt": "2026-01-01T00:00:00Z",
+          "expectedChainRevision": 1
+        }
+      }
+    },
+    {
+      "id": "create-recall",
+      "method": "POST",
+      "path": "/api/v1/recalls",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/RecallOrder"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "productLotCode": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "productLotCode",
+          "reason",
+          "issuedAt"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {},
+        "headers": {
+          "Idempotency-Key": "public-example-create-recall"
+        },
+        "body": {
+          "tenantId": "31000000-0000-4000-8000-000000000001",
+          "productLotCode": "PUBLIC-LOT",
+          "reason": "Public recall example",
+          "issuedAt": "2026-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "id": "read-recall",
+      "method": "GET",
+      "path": "/api/v1/recalls/:recallId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "type": "object",
+        "properties": {
+          "recall": {
+            "$ref": "#/$defs/RecallOrder"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/QuarantineAction"
+            }
+          }
+        },
+        "required": [
+          "recall",
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "recallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "recallId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "quarantine-recall",
+      "method": "POST",
+      "path": "/api/v1/recalls/:recallId/quarantine",
+      "status": 202,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/RecallOrder"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "recallId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "recallId": "31000000-0000-4000-8000-000000000003"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-quarantine-recall"
+        },
+        "body": {
+          "expectedRevision": 1
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "devices"
+          ],
+          "match": {
+            "deviceId": "31000000-0000-4000-8000-000000000003",
+            "carrierId": "31000000-0000-4000-8000-000000000002",
+            "currentConfigVersion": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "configAssignments"
+          ],
+          "match": {
+            "configAssignmentId": "31000000-0000-4000-8000-000000000006",
+            "deviceId": "31000000-0000-4000-8000-000000000003",
+            "configRevisionId": "31000000-0000-4000-8000-000000000005",
+            "state": "CONFIRMED"
+          }
+        }
+      ],
+      "capture": {
+        "publicDeviceTime": [
+          "asOf"
+        ]
+      }
+    },
+    {
+      "operationId": "read-device-config",
+      "params": {
+        "deviceId": "31000000-0000-4000-8000-000000000003"
+      },
+      "headers": {
+        "X-Device-Id": "31000000-0000-4000-8000-000000000003",
+        "X-Device-Key-Version": "1",
+        "X-Device-Timestamp": "${publicDeviceTime}",
+        "X-Device-Signature": ""
+      },
+      "signatures": [
+        {
+          "target": [
+            "headers",
+            "X-Device-Signature"
+          ],
+          "key": "public-example-device-secret-not-production",
+          "message": "GET|/api/v1/devices/31000000-0000-4000-8000-000000000003/config|${publicDeviceTime}|1"
+        }
+      ],
+      "expectBody": {
+        "configRevisionId": "31000000-0000-4000-8000-000000000005",
+        "tenantId": "31000000-0000-4000-8000-000000000001",
+        "version": 1,
+        "state": "PUBLISHED"
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "capture": {
+        "publicReadingTime": [
+          "asOf"
+        ]
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "ingest-telemetry",
+      "headers": {
+        "Idempotency-Key": "public-signed-reading-v2",
+        "X-Device-Id": "31000000-0000-4000-8000-000000000003",
+        "X-Device-Key-Version": "1",
+        "X-Device-Timestamp": "${publicReadingTime}",
+        "X-Device-Signature": ""
+      },
+      "body": {
+        "deviceId": "31000000-0000-4000-8000-000000000003",
+        "readingId": "31000000-0000-4000-8000-000000000007",
+        "sequence": 1,
+        "observedAt": "${publicReadingTime}",
+        "latitudeE6": 0,
+        "longitudeE6": 0,
+        "temperatureMilliC": 5000,
+        "configVersion": 1,
+        "keyVersion": 1,
+        "signature": ""
+      },
+      "signatures": [
+        {
+          "target": [
+            "headers",
+            "X-Device-Signature"
+          ],
+          "key": "public-example-device-secret-not-production",
+          "message": "POST|/api/v1/telemetry-readings|${publicReadingTime}|1"
+        },
+        {
+          "target": [
+            "body",
+            "signature"
+          ],
+          "key": "public-example-device-secret-not-production",
+          "message": "31000000-0000-4000-8000-000000000003|31000000-0000-4000-8000-000000000007|1|${publicReadingTime}|0|0|5000|1|1"
+        }
+      ],
+      "expectBody": {
+        "deviceId": "31000000-0000-4000-8000-000000000003",
+        "readingId": "31000000-0000-4000-8000-000000000007",
+        "sequence": 1,
+        "temperatureMilliC": 5000
+      },
+      "capture": {
+        "publicTelemetryId": [
+          "telemetryReadingId"
+        ]
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "telemetryReadings"
+          ],
+          "match": {
+            "telemetryReadingId": "${publicTelemetryId}",
+            "tenantId": "31000000-0000-4000-8000-000000000001",
+            "deviceId": "31000000-0000-4000-8000-000000000003",
+            "readingId": "31000000-0000-4000-8000-000000000007",
+            "sequence": 1,
+            "temperatureMilliC": 5000,
+            "signature": null
+          }
+        }
+      ],
+      "expectStatus": 200
+    },
+    {
+      "operationId": "create-tenant",
+      "body": {
+        "name": "Public Contract Tenant"
+      },
+      "headers": {
+        "Idempotency-Key": "public-create-tenant-v2"
+      },
+      "expectStatus": 200,
+      "capture": {
+        "publicTenantId": [
+          "tenantId"
+        ]
+      }
+    },
+    {
+      "operationId": "create-config-revision",
+      "body": {
+        "tenantId": "${publicTenantId}",
+        "minTemperatureMilliC": 1000,
+        "maxTemperatureMilliC": 7000,
+        "sampleIntervalSeconds": 15,
+        "offlineAfterSeconds": 300
+      },
+      "headers": {
+        "Idempotency-Key": "public-create-config-v2"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "state": "DRAFT"
+      },
+      "capture": {
+        "publicConfigId": [
+          "configRevisionId"
+        ],
+        "publicConfigVersion": [
+          "version"
+        ]
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "configRevisions"
+          ],
+          "match": {
+            "configRevisionId": "${publicConfigId}",
+            "tenantId": "${publicTenantId}",
+            "version": "${publicConfigVersion}",
+            "state": "DRAFT"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "publish-config-revision",
+      "params": {
+        "configRevisionId": "${publicConfigId}"
+      },
+      "body": {
+        "expectedVersion": 0
+      },
+      "headers": {
+        "Idempotency-Key": "public-publish-config-v2"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "configRevisionId": "${publicConfigId}",
+        "version": "${publicConfigVersion}",
+        "state": "PUBLISHED"
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "configRevisions"
+          ],
+          "match": {
+            "configRevisionId": "${publicConfigId}",
+            "tenantId": "${publicTenantId}",
+            "state": "PUBLISHED",
+            "minTemperatureMilliC": 1000,
+            "maxTemperatureMilliC": 7000
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-recall",
+      "body": {
+        "tenantId": "31000000-0000-4000-8000-000000000001",
+        "productLotCode": "PUBLIC",
+        "reason": "transport check",
+        "issuedAt": "2026-01-01T00:00:00Z",
+        "unknown": true
+      },
+      "headers": {
+        "Idempotency-Key": "public-invalid-v2"
+      },
+      "expectStatus": 400,
+      "expectBody": {
+        "error": {
+          "code": "INVALID_REQUEST"
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Public smoke imports the published credential, signs real config and telemetry requests using database snapshot time, and verifies the accepted reading in the persisted snapshot. Its HMAC helper is client-side request construction only: storage, lookup, verification and business effects remain implementation work.",
+    "Authority is the complete original README and Manager requirements. The following V2 clarifications fix wire representation only; every original business, UI, recovery and performance obligation remains required.",
+    "Health is GET /healthz with {status:\"ok\"}; production / returns nonempty text/html. OpenAPI is 3.1 and generated from this same contract.",
+    "All mutations require a nonempty Idempotency-Key. Device config, acknowledgement and ingest require the four X-Device authentication headers. Signature and database-time authentication remain business validation. Wire-invalid device-authentication headers return 401 INVALID_DEVICE_SIGNATURE.",
+    "Request schemas publish only input fields. New ConfigRevision is the next tenant version; publish expectedVersion is the previous published version (0 before first publication), and publication preserves the created identity/version.",
+    "GET device config returns the referenced ConfigRevision at top level; its selected ConfigAssignment remains in the snapshot. Shipment transitions and excursion acknowledgement take an empty JSON object.",
+    "GET excursions returns {items,nextCursor}; query tenantId/shipmentId/kind/state filter, limit is a positive safe integer (default 50), cursor is opaque. Stable ordering and continuity must survive restart.",
+    "Shipment timeline returns {shipmentId,readings,excursions,events}; readings sort by sequence/readingId and redact signature to null; excursions sort by firstSequence/excursionId; events sort by aggregate sequence/eventId. All records come from the shipment tenant and point-in-time committed history.",
+    "Work and Event use the explicitly closed schemas published here. Work leaseOwner/leaseToken/leaseExpiresAt are null unless leased; lastError is string|null. Event payload and Audit details are explicitly free JSON metadata, recursively secret-free. outboxState reports PENDING/DELIVERED/DEAD_LETTER.",
+    "Unobserved projection timestamp/coordinates/temperature and nullable lifecycle timestamps are null. Excursion observed bounds are nullable for OFFLINE. Snapshot telemetry signature is always null, while ingest/seed carries the signed value.",
+    "Seed header is schemaVersion:1, string seedVersion and UTC importedAt. The nonempty public graph links a tenant, carrier, active device, credential, published config and confirmed assignment. Identical seed replay is a no-op; changed bytes under one version reject atomically. Manager collections remain snapshot.managerResources, outside the V1 seed whitelist.",
+    "UUID path parameters are lowercase canonical UUIDs, keyVersion is a positive safe integer. Query/path integers are normalized from HTTP strings; JSON numbers are never coerced. Unknown query/JSON keys and other malformed shapes use 400 INVALID_REQUEST; malformed JSON uses 400 MALFORMED_JSON; unsupported media uses 415 UNSUPPORTED_MEDIA_TYPE; missing snapshot auth uses 401 UNAUTHORIZED. Original named business errors retain their original status.",
+    "Recall cancellation has no published endpoint; no new business route is invented. All canonical payloads, sortedness, foreign keys, state transitions and cross-field consistency remain implementation work.",
+    "The smoke verifies the linked seed, independently creates a tenant/config, reads it, publishes it and reads the committed published identity. Public smoke does not certify hidden, concurrent, recovery, Chromium or performance behavior.",
+    "# ColdChainControl public policy and execution protocol\n\nPolicy revision: `coldchaincontrol-2026-09-08.1`.\n\nThese are new author-approved choices, not rules retroactively inferred from old\nsubmissions. All arms receive this supplement. Original business requirements,\nsecurity invariants, workload sizes and performance thresholds remain unchanged.\n\n## Site radius\n\nCoordinates are integer degrees times 1,000,000. Use spherical Haversine distance\nwith Earth radius exactly 6,371,008.8 metres, clamping its intermediate to [0,1].\nQuantize once to integer millimetres: floor(distanceMetres * 1000 + 0.5).\nMembership is inclusive: distanceMillimetres <= radiusMeters * 1000.\nOnly Sites in the Shipment Tenant and frozen route are eligible. Select minimum\nquantized distance, breaking ties by lexicographically smallest lowercase siteId.\nSite membership never permits route regression, skipped custody or delivery with\nunresolved temperature excursions.\n\n## Notifications\n\nMandatory notification kinds for matching ACTIVE policies are EXCURSION_OPENED,\nEXCURSION_RESOLVED, SHIPMENT_DELIVERED, SHIPMENT_CANCELLED, RECALL_ISSUED and\nRECALL_CONTAINED. Their exact payload is {resourceType,resourceId,shipmentId,state}.\nresourceType is Excursion, ColdShipment or RecallOrder, resourceId is its UUID and\nstate is the committed public state. shipmentId is the parent Shipment UUID for\nExcursion, the Shipment UUID itself for ColdShipment, and null for RecallOrder.\nExcursion/Shipment events use aggregateType ColdShipment and aggregateId shipmentId;\nRecall events use aggregateType RecallOrder and aggregateId resourceId.\nOther original mandatory Events remain required and may retain their public types.\n\nCreate exactly one logical Delivery per matching (notificationPolicyId,eventId)\natomically with the effect/Event. Normally use the frozen policy destination.\nWEBHOOK_URL, when configured, overrides the transport destination for local tests;\nit does not bypass policy matching or logical recipient identity.\n\nPOST the immutable Event without outboxState:\n{eventId,tenantId,aggregateType,aggregateId,sequence,kind,occurredAt,payload}.\nUse Content-Type application/json and X-ColdChain-Event-Id equal to eventId.\nCanonical JSON sorts object keys recursively by JavaScript UTF-16 order, preserves\narrays, uses JSON.stringify without whitespace, then UTF-8. Freeze complete bytes\nonce; retries preserve eventId and exact bytes. Mutable delivery status/attempts\nnever enter the payload. Original secret/HMAC/attestation exclusions apply.\n\n## Durable rate, retry and dead letter\n\nAt admission time the Tenant budget is the minimum positive rateLimitPerMinute\namong its ACTIVE policies. No ACTIVE policies means no admission. A shared durable\nsliding window counts ALL HTTP send admissions across policies/processes/retries\nin (databaseNow-60 seconds,databaseNow]. Reserve admission before sending. A crash\nafter reservation may consume a slot. Quota deferral sends nothing and does not\nincrement attempts; retry no earlier than the oldest counted admission +60s.\n\nHTTP 2xx acknowledges. Unknown ACK, connection failures and other statuses retry\nthe same Delivery, at most six admitted attempts. After failures 1..5, earliest\ndelays are 1,2,4,8,16 seconds from database attempt completion, subject also to\nthe shared quota. Failure six commits DEAD_LETTER with null nextAttemptAt and\ndeliveredAt. Success commits DELIVERED and database deliveredAt. Crashes cannot\nfabricate ACK, allocate replacement event identities or forget reserved attempts.\nCancellation suppresses only unsent excursion notifications made inapplicable;\nits own SHIPMENT_CANCELLED event and already-observed unknown ACK retries are not\ndiscarded. Suppression is durable DEAD_LETTER with no extra HTTP attempt.\n\n## Recovery barrier protocol\n\nEnable only when TEST_BARRIER_URL and TEST_BARRIER_TOKEN are both nonempty. POST\nto that exact URL with Content-Type application/json and X-Test-Barrier-Token\nequal to TEST_BARRIER_TOKEN. Do not log/persist this token.\n\nWorker body is closed: {role:\"worker\",point,kind,workId,aggregateId,attempt,leaseToken}.\nIDs are UUIDs, attempt is the positive persisted claim ordinal, and leaseToken is\nthe nonempty opaque token for that claim. kind is the actual published Work kind.\n- worker.claimed: after durable claim, before effect preparation.\n- worker.before-commit: after preparation, immediately before the transaction\n  that writes effects and completes/cancels Work.\n- worker.after-attempt: after the guarded transaction has completed or rejected\n  the attempt. This body additionally requires outcome, either committed or stale.\n  A stale outcome means no business or Work write from that attempt. This receipt\n  makes release of an obsolete owner observable without relying on arbitrary sleeps.\n\nAll three apply to CONFIG_DELIVER, TELEMETRY_PROJECT, DEVICE_OFFLINE_CHECK,\nCUSTODY_HANDOFF_EXPIRY, RECALL_PROPAGATE and QUARANTINE_ENFORCE. A paused barrier\nmust not retain locks preventing reclaim, cancellation or supersession. Release\ndoes not grant authority: revalidate database lease/token and domain authority in\nthe effect transaction. A stale released owner cannot write effects or Work state.\n\nDispatcher body is closed:\n{role:\"dispatcher\",point:\"dispatcher.response-received\",notificationDeliveryId,eventId,attempt,responseStatus}.\nIDs are UUIDs, attempt is positive, responseStatus is an integer 100..599. Call\nafter receiving the webhook response, before persisting ACK. Do not invent Work\nfor Delivery. Controller may hold, kill or release after a replacement completes.\nAny 2xx releases; ignore body. Failure/non-2xx is not permission to proceed with\neffects/ACK: leave recoverable durable state. When disabled, do not call barriers\nor use an alternate business implementation. Controllers provide no business code.\n"
+  ],
+  "policyRevision": "coldchaincontrol-2026-09-08.1",
+  "publicPolicy": {
+    "siteRadius": {
+      "earthRadiusMeters": 6371008.8,
+      "quantization": "nearest-millimetre-half-up",
+      "boundary": "inclusive",
+      "tieBreak": "distance-then-siteId"
+    },
+    "notification": {
+      "windowSeconds": 60,
+      "tenantBudget": "minimum-active-policy",
+      "maxAttempts": 6,
+      "retryDelaysSeconds": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ]
+    },
+    "barrierPoints": [
+      "worker.claimed",
+      "worker.before-commit",
+      "worker.after-attempt",
+      "dispatcher.response-received"
+    ]
+  },
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1",
+  "transportErrors": {}
+}

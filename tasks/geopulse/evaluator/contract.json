@@ -1,0 +1,42 @@
+{
+  "seedKeys": ["tenants","devices","regions","regionVersions","locationEvents","memberships","transitions"],
+  "v1PublicPaths": [
+    "/api/v1/tenants","/api/v1/devices","/api/v1/regions","/api/v1/regions/:regionId/versions",
+    "/api/v1/regions/:regionId","/api/v1/location-events","/api/v1/location-events/batch",
+    "/api/v1/devices/:deviceId/memberships","/api/v1/devices/:deviceId/transitions",
+    "/api/v1/regions/query","/api/v1/verification-snapshot"
+  ],
+  "managerPublicPaths": [
+    "/api/v1/region-bundles","/api/v1/region-bundles/:bundleId/publish",
+    "/api/v1/region-bundles/:bundleId/rollback","/api/v1/region-bundles/:bundleId"
+  ],
+  "publicPaths": [
+    "/api/v1/tenants","/api/v1/devices","/api/v1/regions","/api/v1/regions/:regionId/versions",
+    "/api/v1/regions/:regionId","/api/v1/location-events","/api/v1/location-events/batch",
+    "/api/v1/devices/:deviceId/memberships","/api/v1/devices/:deviceId/transitions",
+    "/api/v1/regions/query","/api/v1/verification-snapshot",
+    "/api/v1/region-bundles","/api/v1/region-bundles/:bundleId/publish",
+    "/api/v1/region-bundles/:bundleId/rollback","/api/v1/region-bundles/:bundleId"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"devices","shape":"Device","sort":["deviceId"]},
+      {"key":"regions","shape":"Region","sort":["regionId"]},
+      {"key":"regionVersions","shape":"RegionVersion","sort":["regionId","revision"]},
+      {"key":"locationEvents","shape":"LocationEvent","sort":["deviceId","deviceSequence"]},
+      {"key":"memberships","shape":"Membership","sort":["deviceId","regionId"]},
+      {"key":"transitions","shape":"Transition","sort":["deviceId","regionId","sequence"]}
+    ],
+    "managerResources": [
+      {"key":"regionBundles","shape":"RegionBundle","sort":["bundleId"]},
+      {"key":"regionBundleRevisions","shape":"RegionBundleRevision","sort":["bundleId","revision"]}
+    ]
+  },
+  "workKinds": {"v1":["LOCATION_EVALUATION","LATE_REPLAY"],"manager":["BUNDLE_REEVALUATION"]},
+  "perfScenarios": [
+    {"id":"ordered-location-ingest"},
+    {"id":"boundary-jitter-convergence"},
+    {"id":"bulk-spatial-query"}
+  ]
+}

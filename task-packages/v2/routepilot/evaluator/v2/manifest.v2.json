@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 2,
+  "taskId": "routepilot",
+  "profile": "learning-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Routing and authority contracts",
+      "weight": 30
+    },
+    "B": {
+      "title": "Concurrency and durable replay",
+      "weight": 25
+    },
+    "C": {
+      "title": "Crash recovery and outbox",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI UI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration and fixed performance",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "ROUTE_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Route precedence, canary identity, rate and circuit decisions use the one frozen release observed by each request."
+    },
+    {
+      "id": "RELEASE_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "Activation and rollback expose one complete immutable release and never a mixed route set."
+    },
+    {
+      "id": "RATE_CIRCUIT_CONSERVATION",
+      "cap": 35,
+      "publicInvariant": "Database-authoritative rate and circuit windows never overspend tokens or probes across processes."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Concurrent and unknown-response replay returns one saved response and creates one logical upstream and release effect."
+    },
+    {
+      "id": "STALE_WORK_OR_LOST_WORK",
+      "cap": 40,
+      "publicInvariant": "Expired owners cannot commit stale release or rollout authority and every committed Work item remains recoverable."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "Migration preserves every V1 identity and replay while creating one deterministic GLOBAL rollout per tenant."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-RP-01",
+      "summary": "Non-scoring scope note: The Manager publishes rollout readiness thresholds but no public region health observation input or counting window."
+    },
+    {
+      "id": "SPEC-GAP-RP-02",
+      "summary": "Non-scoring scope note: The Manager publishes no rollout-specific Domain Event type names; the evaluator invents none."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Path pattern priority specificity and routeId order",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Exact canary hash and frozen revision",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Exact tenant rate windows",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Circuit state windows and probes",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Frozen regional stages prior release and order",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "B-01",
+      "title": "Atomic ConfigRelease activation and rollback",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Durable gateway and release replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Hot tenant rate authority across APIs",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Breaker result and release reload isolation",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Rollout controls and claimed Work serialization",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Gateway unknown response replay",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Config release crash recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "First RegionalStage claimed Work recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "C-04",
+      "title": "Route and rollout Event unknown ACK",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Route Release Rollout wire and errors",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Browser route release and gateway evidence",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Browser explicit RegionalRollout controls",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "D-04",
+      "title": "FINAL snapshot route authority",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current release, gateway replay and leased activation survive FINAL restart",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Fixed route-match-steady load",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Fixed hot-tenant-limit load",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Fixed breaker-reload-recovery load",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

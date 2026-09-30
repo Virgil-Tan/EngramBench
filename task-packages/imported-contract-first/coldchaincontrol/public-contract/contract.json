@@ -1,0 +1,3288 @@
+{
+  "taskId": "coldchaincontrol",
+  "title": "ColdChainControl",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:perf",
+    "npm run test:all"
+  ],
+  "seed": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "seedVersion": {
+          "type": "string"
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "sites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Site"
+          }
+        },
+        "carriers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Carrier"
+          }
+        },
+        "deviceCredentials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedDeviceCredential"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SensorDevice"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "configAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigAssignment"
+          }
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "shipmentLegs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentLeg"
+          }
+        },
+        "telemetryReadings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TelemetryReading"
+          }
+        },
+        "shipmentProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentProjection"
+          }
+        },
+        "excursions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "notificationPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationPolicy"
+          }
+        },
+        "notificationDeliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationDelivery"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "sites",
+        "carriers",
+        "deviceCredentials",
+        "devices",
+        "configRevisions",
+        "configAssignments",
+        "shipments",
+        "shipmentLegs",
+        "telemetryReadings",
+        "shipmentProjections",
+        "excursions",
+        "notificationPolicies",
+        "notificationDeliveries",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-contract-empty-v1",
+      "importedAt": "2026-01-01T00:00:00Z",
+      "tenants": [],
+      "sites": [],
+      "carriers": [],
+      "deviceCredentials": [],
+      "devices": [],
+      "configRevisions": [],
+      "configAssignments": [],
+      "shipments": [],
+      "shipmentLegs": [],
+      "telemetryReadings": [],
+      "shipmentProjections": [],
+      "excursions": [],
+      "notificationPolicies": [],
+      "notificationDeliveries": [],
+      "auditEntries": []
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Site": {
+      "type": "object",
+      "properties": {
+        "siteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "radiusMeters": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "timeZone": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "siteId",
+        "tenantId",
+        "code",
+        "name",
+        "latitudeE6",
+        "longitudeE6",
+        "radiusMeters",
+        "timeZone"
+      ],
+      "additionalProperties": false
+    },
+    "Carrier": {
+      "type": "object",
+      "properties": {
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED"
+          ]
+        }
+      },
+      "required": [
+        "carrierId",
+        "tenantId",
+        "code",
+        "name",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceCredential": {
+      "type": "object",
+      "properties": {
+        "deviceCredentialId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REVOKED"
+          ]
+        },
+        "validFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "deviceCredentialId",
+        "tenantId",
+        "deviceId",
+        "keyVersion",
+        "state",
+        "validFrom",
+        "revokedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SensorDevice": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "serialNumber": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        },
+        "currentKeyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "currentConfigVersion": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastSeenAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "deviceId",
+        "tenantId",
+        "carrierId",
+        "serialNumber",
+        "state",
+        "currentKeyVersion",
+        "currentConfigVersion",
+        "lastSequence",
+        "lastSeenAt"
+      ],
+      "additionalProperties": false
+    },
+    "ConfigRevision": {
+      "type": "object",
+      "properties": {
+        "configRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "PUBLISHED"
+          ]
+        },
+        "minTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maxTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "sampleIntervalSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "offlineAfterSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "configRevisionId",
+        "tenantId",
+        "version",
+        "state",
+        "minTemperatureMilliC",
+        "maxTemperatureMilliC",
+        "sampleIntervalSeconds",
+        "offlineAfterSeconds",
+        "createdAt",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ConfigAssignment": {
+      "type": "object",
+      "properties": {
+        "configAssignmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "configRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERED",
+            "CONFIRMED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "confirmedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "configAssignmentId",
+        "tenantId",
+        "deviceId",
+        "configRevisionId",
+        "state",
+        "expiresAt",
+        "confirmedAt",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ColdShipment": {
+      "type": "object",
+      "properties": {
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string"
+        },
+        "productLotCode": {
+          "type": "string"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "originSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "destinationSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "DELIVERED",
+            "CANCELLED"
+          ]
+        },
+        "minimumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maximumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "expectedStartAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "expectedEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "activatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "shipmentId",
+        "tenantId",
+        "externalRef",
+        "productLotCode",
+        "carrierId",
+        "originSiteId",
+        "destinationSiteId",
+        "deviceId",
+        "state",
+        "minimumTemperatureMilliC",
+        "maximumTemperatureMilliC",
+        "expectedStartAt",
+        "expectedEndAt",
+        "activatedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "ShipmentLeg": {
+      "type": "object",
+      "properties": {
+        "shipmentLegId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fromSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "toSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plannedDepartureAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "plannedArrivalAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "shipmentLegId",
+        "shipmentId",
+        "ordinal",
+        "fromSiteId",
+        "toSiteId",
+        "plannedDepartureAt",
+        "plannedArrivalAt"
+      ],
+      "additionalProperties": false
+    },
+    "TelemetryReading": {
+      "type": "object",
+      "properties": {
+        "telemetryReadingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "readingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "temperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "configVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "telemetryReadingId",
+        "tenantId",
+        "deviceId",
+        "readingId",
+        "sequence",
+        "observedAt",
+        "receivedAt",
+        "latitudeE6",
+        "longitudeE6",
+        "temperatureMilliC",
+        "configVersion",
+        "keyVersion",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "ShipmentProjection": {
+      "type": "object",
+      "properties": {
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lastSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastObservedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "lastLatitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastLongitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "currentSiteId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currentLegOrdinal": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "IN_TRANSIT",
+            "AT_SITE",
+            "DELIVERED",
+            "CANCELLED"
+          ]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "shipmentId",
+        "tenantId",
+        "lastSequence",
+        "lastObservedAt",
+        "lastLatitudeE6",
+        "lastLongitudeE6",
+        "lastTemperatureMilliC",
+        "currentSiteId",
+        "currentLegOrdinal",
+        "state",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Excursion": {
+      "type": "object",
+      "properties": {
+        "excursionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "TEMPERATURE",
+            "OFFLINE"
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "ACKNOWLEDGED",
+            "RESOLVED"
+          ]
+        },
+        "openedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "acknowledgedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "firstSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "lastSequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "minimumObservedMilliC": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maximumObservedMilliC": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "excursionId",
+        "tenantId",
+        "shipmentId",
+        "kind",
+        "state",
+        "openedAt",
+        "acknowledgedAt",
+        "resolvedAt",
+        "firstSequence",
+        "lastSequence",
+        "minimumObservedMilliC",
+        "maximumObservedMilliC"
+      ],
+      "additionalProperties": false
+    },
+    "NotificationPolicy": {
+      "type": "object",
+      "properties": {
+        "notificationPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "destination": {
+          "type": "string"
+        },
+        "rateLimitPerMinute": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "DISABLED"
+          ]
+        }
+      },
+      "required": [
+        "notificationPolicyId",
+        "tenantId",
+        "eventKinds",
+        "destination",
+        "rateLimitPerMinute",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "NotificationDelivery": {
+      "type": "object",
+      "properties": {
+        "notificationDeliveryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "notificationPolicyId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERED",
+            "DEAD_LETTER"
+          ]
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "nextAttemptAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deliveredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "notificationDeliveryId",
+        "tenantId",
+        "notificationPolicyId",
+        "eventId",
+        "state",
+        "attempts",
+        "nextAttemptAt",
+        "deliveredAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "actorType": {
+          "type": "string",
+          "enum": [
+            "USER",
+            "DEVICE",
+            "SYSTEM"
+          ]
+        },
+        "actorRef": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "details": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "actorType",
+        "actorRef",
+        "action",
+        "resourceType",
+        "resourceId",
+        "occurredAt",
+        "details"
+      ],
+      "additionalProperties": false
+    },
+    "CustodyChain": {
+      "type": "object",
+      "properties": {
+        "custodyChainId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PLANNED",
+            "ACTIVE",
+            "COMPLETED",
+            "CANCELLED"
+          ]
+        },
+        "currentOrdinal": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "custodyChainId",
+        "tenantId",
+        "shipmentId",
+        "revision",
+        "state",
+        "currentOrdinal",
+        "createdAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "CustodyHandoff": {
+      "type": "object",
+      "properties": {
+        "custodyHandoffId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "custodyChainId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "fromCarrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "toCarrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "siteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "windowStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "windowEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "OFFERED",
+            "ACCEPTED",
+            "EXPIRED",
+            "CANCELLED"
+          ]
+        },
+        "offeredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "acceptedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "custodyHandoffId",
+        "custodyChainId",
+        "ordinal",
+        "fromCarrierId",
+        "toCarrierId",
+        "siteId",
+        "windowStart",
+        "windowEnd",
+        "state",
+        "offeredAt",
+        "acceptedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "RecallOrder": {
+      "type": "object",
+      "properties": {
+        "recallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "productLotCode": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ISSUED",
+            "QUARANTINING",
+            "CONTAINED",
+            "CANCELLED"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "recallId",
+        "tenantId",
+        "productLotCode",
+        "reason",
+        "state",
+        "revision",
+        "issuedAt",
+        "terminalAt"
+      ],
+      "additionalProperties": false
+    },
+    "QuarantineAction": {
+      "type": "object",
+      "properties": {
+        "quarantineActionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "recallId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shipmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "APPLIED",
+            "RELEASED"
+          ]
+        },
+        "expectedShipmentState": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "DELIVERED",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "appliedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "releasedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "quarantineActionId",
+        "recallId",
+        "shipmentId",
+        "state",
+        "expectedShipmentState",
+        "createdAt",
+        "appliedAt",
+        "releasedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeedDeviceCredential": {
+      "type": "object",
+      "properties": {
+        "deviceCredentialId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REVOKED"
+          ]
+        },
+        "validFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(?:[Zz]|\\+00:00)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "secret": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "deviceCredentialId",
+        "tenantId",
+        "deviceId",
+        "keyVersion",
+        "state",
+        "validFrom",
+        "revokedAt",
+        "secret"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotTelemetryReading": {
+      "type": "object",
+      "properties": {
+        "telemetryReadingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "readingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "temperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "configVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "signature": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "telemetryReadingId",
+        "tenantId",
+        "deviceId",
+        "readingId",
+        "sequence",
+        "observedAt",
+        "receivedAt",
+        "latitudeE6",
+        "longitudeE6",
+        "temperatureMilliC",
+        "configVersion",
+        "keyVersion",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "CreateTenant": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "CreateSite": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "radiusMeters": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "timeZone": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "code",
+        "name",
+        "latitudeE6",
+        "longitudeE6",
+        "radiusMeters",
+        "timeZone"
+      ],
+      "additionalProperties": false
+    },
+    "CreateCarrier": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED"
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "code",
+        "name",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "CreateDevice": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "serialNumber": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "carrierId",
+        "serialNumber",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "CreateConfigRevision": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "minTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maxTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "sampleIntervalSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "offlineAfterSeconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "tenantId",
+        "minTemperatureMilliC",
+        "maxTemperatureMilliC",
+        "sampleIntervalSeconds",
+        "offlineAfterSeconds"
+      ],
+      "additionalProperties": false
+    },
+    "IngestTelemetry": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "readingId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "latitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "longitudeE6": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "temperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "configVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "keyVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "deviceId",
+        "readingId",
+        "sequence",
+        "observedAt",
+        "latitudeE6",
+        "longitudeE6",
+        "temperatureMilliC",
+        "configVersion",
+        "keyVersion",
+        "signature"
+      ],
+      "additionalProperties": false
+    },
+    "CreateShipmentLeg": {
+      "type": "object",
+      "properties": {
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fromSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "toSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plannedDepartureAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "plannedArrivalAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        }
+      },
+      "required": [
+        "ordinal",
+        "fromSiteId",
+        "toSiteId",
+        "plannedDepartureAt",
+        "plannedArrivalAt"
+      ],
+      "additionalProperties": false
+    },
+    "CreateShipment": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "externalRef": {
+          "type": "string"
+        },
+        "productLotCode": {
+          "type": "string"
+        },
+        "carrierId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "originSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "destinationSiteId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "minimumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "maximumTemperatureMilliC": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "expectedStartAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "expectedEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "legs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CreateShipmentLeg"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "tenantId",
+        "externalRef",
+        "productLotCode",
+        "carrierId",
+        "originSiteId",
+        "destinationSiteId",
+        "deviceId",
+        "minimumTemperatureMilliC",
+        "maximumTemperatureMilliC",
+        "expectedStartAt",
+        "expectedEndAt",
+        "legs"
+      ],
+      "additionalProperties": false
+    },
+    "CreateNotificationPolicy": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventKinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "destination": {
+          "type": "string"
+        },
+        "rateLimitPerMinute": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "DISABLED"
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "eventKinds",
+        "destination",
+        "rateLimitPerMinute",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "ExcursionPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "seedVersion": {
+          "type": "string"
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "sites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Site"
+          }
+        },
+        "carriers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Carrier"
+          }
+        },
+        "deviceCredentials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedDeviceCredential"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SensorDevice"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "configAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigAssignment"
+          }
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "shipmentLegs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentLeg"
+          }
+        },
+        "telemetryReadings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TelemetryReading"
+          }
+        },
+        "shipmentProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentProjection"
+          }
+        },
+        "excursions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "notificationPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationPolicy"
+          }
+        },
+        "notificationDeliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationDelivery"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "sites",
+        "carriers",
+        "deviceCredentials",
+        "devices",
+        "configRevisions",
+        "configAssignments",
+        "shipments",
+        "shipmentLegs",
+        "telemetryReadings",
+        "shipmentProjections",
+        "excursions",
+        "notificationPolicies",
+        "notificationDeliveries",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "sites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Site"
+          }
+        },
+        "carriers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Carrier"
+          }
+        },
+        "deviceCredentials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceCredential"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SensorDevice"
+          }
+        },
+        "configRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigRevision"
+          }
+        },
+        "configAssignments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConfigAssignment"
+          }
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "shipmentLegs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentLeg"
+          }
+        },
+        "telemetryReadings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotTelemetryReading"
+          }
+        },
+        "shipmentProjections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShipmentProjection"
+          }
+        },
+        "excursions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Excursion"
+          }
+        },
+        "notificationPolicies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationPolicy"
+          }
+        },
+        "notificationDeliveries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NotificationDelivery"
+          }
+        },
+        "auditEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AuditEntry"
+          }
+        }
+      },
+      "required": [
+        "tenants",
+        "sites",
+        "carriers",
+        "deviceCredentials",
+        "devices",
+        "configRevisions",
+        "configAssignments",
+        "shipments",
+        "shipmentLegs",
+        "telemetryReadings",
+        "shipmentProjections",
+        "excursions",
+        "notificationPolicies",
+        "notificationDeliveries",
+        "auditEntries"
+      ],
+      "additionalProperties": false
+    },
+    "ManagerResources": {
+      "type": "object",
+      "properties": {
+        "custodyChains": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CustodyChain"
+          }
+        },
+        "custodyHandoffs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CustodyHandoff"
+          }
+        },
+        "recallOrders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RecallOrder"
+          }
+        },
+        "quarantineActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/QuarantineAction"
+          }
+        }
+      },
+      "required": [
+        "custodyChains",
+        "custodyHandoffs",
+        "recallOrders",
+        "quarantineActions"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|\\+00:00)$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "managerResources": {
+          "$ref": "#/$defs/ManagerResources"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "resources",
+        "work",
+        "events",
+        "managerResources"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "source": "docs/frontal-legacy/README.md:14",
+      "status": 200
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "source": "docs/frontal-legacy/README.md:14",
+      "status": 200,
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "source": "docs/frontal-legacy/README.md:14",
+      "status": 200
+    },
+    {
+      "id": "create-tenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateTenant"
+      }
+    },
+    {
+      "id": "create-site",
+      "method": "POST",
+      "path": "/api/v1/sites",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Site"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateSite"
+      }
+    },
+    {
+      "id": "create-carrier",
+      "method": "POST",
+      "path": "/api/v1/carriers",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Carrier"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateCarrier"
+      }
+    },
+    {
+      "id": "create-device",
+      "method": "POST",
+      "path": "/api/v1/devices",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/SensorDevice"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateDevice"
+      }
+    },
+    {
+      "id": "create-config-revision",
+      "method": "POST",
+      "path": "/api/v1/config-revisions",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateConfigRevision"
+      }
+    },
+    {
+      "id": "publish-config-revision",
+      "method": "POST",
+      "path": "/api/v1/config-revisions/:configRevisionId/publish",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "create-config-assignment",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/config-assignments",
+      "source": "docs/frontal-legacy/README.md:57",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ConfigAssignment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "configRevisionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "configRevisionId",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "read-device-config",
+      "method": "GET",
+      "path": "/api/v1/devices/:deviceId/config",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ConfigRevision"
+      }
+    },
+    {
+      "id": "acknowledge-config",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/config-acknowledgements",
+      "source": "docs/frontal-legacy/README.md:58",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ConfigAssignment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "configAssignmentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "configVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "configAssignmentId",
+          "configVersion",
+          "appliedAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "rotate-device-credential",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/credentials/rotate",
+      "source": "docs/frontal-legacy/README.md:63",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/DeviceCredential"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedKeyVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "secret": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "expectedKeyVersion",
+          "secret",
+          "validFrom"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "revoke-device-credential",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/credentials/:keyVersion/revoke",
+      "source": "docs/frontal-legacy/README.md:63",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/DeviceCredential"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "ingest-telemetry",
+      "method": "POST",
+      "path": "/api/v1/telemetry-readings",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/TelemetryReading"
+      },
+      "request": {
+        "$ref": "#/$defs/IngestTelemetry"
+      }
+    },
+    {
+      "id": "create-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateShipment"
+      }
+    },
+    {
+      "id": "activate-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments/:shipmentId/activate",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "cancel-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments/:shipmentId/cancel",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "read-shipment",
+      "method": "GET",
+      "path": "/api/v1/shipments/:shipmentId",
+      "source": "docs/frontal-legacy/README.md:73",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      }
+    },
+    {
+      "id": "read-shipment-timeline",
+      "method": "GET",
+      "path": "/api/v1/shipments/:shipmentId/timeline",
+      "source": "docs/frontal-legacy/README.md:73",
+      "status": 200
+    },
+    {
+      "id": "deliver-shipment",
+      "method": "POST",
+      "path": "/api/v1/shipments/:shipmentId/deliver",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/ColdShipment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "acknowledge-excursion",
+      "method": "POST",
+      "path": "/api/v1/excursions/:excursionId/acknowledge",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/Excursion"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "create-notification-policy",
+      "method": "POST",
+      "path": "/api/v1/notification-policies",
+      "status": 200,
+      "source": "contract/README.md (v4 wire clarification)",
+      "response": {
+        "$ref": "#/$defs/NotificationPolicy"
+      },
+      "request": {
+        "$ref": "#/$defs/CreateNotificationPolicy"
+      }
+    },
+    {
+      "id": "list-excursions",
+      "method": "GET",
+      "path": "/api/v1/excursions",
+      "source": "contract/README.md (v4 wire clarification)",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/ExcursionPage"
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "source": "docs/frontal-legacy/README.md:84",
+      "status": 200,
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      }
+    },
+    {
+      "id": "create-custody-chain",
+      "method": "POST",
+      "path": "/api/v1/custody-chains",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/CustodyChain"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "expectedShipmentState": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ACTIVE",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fromCarrierId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "toCarrierId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "siteId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "windowStart": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "(?:[Zz]|\\+00:00)$"
+                },
+                "windowEnd": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "(?:[Zz]|\\+00:00)$"
+                }
+              },
+              "required": [
+                "fromCarrierId",
+                "toCarrierId",
+                "siteId",
+                "windowStart",
+                "windowEnd"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "tenantId",
+          "shipmentId",
+          "expectedShipmentState",
+          "steps"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "read-custody-chain",
+      "method": "GET",
+      "path": "/api/v1/custody-chains/:chainId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "$ref": "#/$defs/CustodyChain"
+          },
+          "handoffs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/CustodyHandoff"
+            }
+          }
+        },
+        "required": [
+          "chain",
+          "handoffs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "offer-custody-handoff",
+      "method": "POST",
+      "path": "/api/v1/custody-chains/:chainId/handoffs",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/CustodyHandoff"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedChainRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedChainRevision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "accept-custody-handoff",
+      "method": "POST",
+      "path": "/api/v1/custody-handoffs/:handoffId/accept",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "$ref": "#/$defs/CustodyChain"
+          },
+          "handoff": {
+            "$ref": "#/$defs/CustodyHandoff"
+          },
+          "shipment": {
+            "$ref": "#/$defs/ColdShipment"
+          }
+        },
+        "required": [
+          "chain",
+          "handoff",
+          "shipment"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "carrierId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "deviceId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "keyVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "attestation": {
+            "type": "string"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          },
+          "expectedChainRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "carrierId",
+          "deviceId",
+          "keyVersion",
+          "attestation",
+          "acceptedAt",
+          "expectedChainRevision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "create-recall",
+      "method": "POST",
+      "path": "/api/v1/recalls",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/RecallOrder"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "productLotCode": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "(?:[Zz]|\\+00:00)$"
+          }
+        },
+        "required": [
+          "tenantId",
+          "productLotCode",
+          "reason",
+          "issuedAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "read-recall",
+      "method": "GET",
+      "path": "/api/v1/recalls/:recallId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "type": "object",
+        "properties": {
+          "recall": {
+            "$ref": "#/$defs/RecallOrder"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/QuarantineAction"
+            }
+          }
+        },
+        "required": [
+          "recall",
+          "actions"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "quarantine-recall",
+      "method": "POST",
+      "path": "/api/v1/recalls/:recallId/quarantine",
+      "status": 202,
+      "source": "docs/frontal-legacy/manager-requirements.md:9",
+      "response": {
+        "$ref": "#/$defs/RecallOrder"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "schemaVersion": 1,
+        "resources": {
+          "tenants": [],
+          "sites": [],
+          "carriers": [],
+          "deviceCredentials": [],
+          "devices": [],
+          "configRevisions": [],
+          "configAssignments": [],
+          "shipments": [],
+          "shipmentLegs": [],
+          "telemetryReadings": [],
+          "shipmentProjections": [],
+          "excursions": [],
+          "notificationPolicies": [],
+          "notificationDeliveries": [],
+          "auditEntries": []
+        },
+        "work": [],
+        "events": [],
+        "managerResources": {
+          "custodyChains": [],
+          "custodyHandoffs": [],
+          "recallOrders": [],
+          "quarantineActions": []
+        }
+      }
+    },
+    {
+      "operationId": "list-excursions",
+      "expectStatus": 200,
+      "expectBody": {
+        "items": [],
+        "nextCursor": null
+      }
+    },
+    {
+      "operationId": "create-tenant",
+      "body": {
+        "name": "Public Contract Tenant"
+      },
+      "headers": {
+        "Idempotency-Key": "public-contract-create-tenant-1"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "name": "Public Contract Tenant"
+      },
+      "capture": {
+        "publicTenantId": "/tenantId"
+      }
+    },
+    {
+      "operationId": "create-config-revision",
+      "body": {
+        "tenantId": "${publicTenantId}",
+        "minTemperatureMilliC": 1000,
+        "maxTemperatureMilliC": 7000,
+        "sampleIntervalSeconds": 15,
+        "offlineAfterSeconds": 300
+      },
+      "headers": {
+        "Idempotency-Key": "public-contract-create-config-1"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "tenantId": "${publicTenantId}",
+        "state": "DRAFT",
+        "minTemperatureMilliC": 1000,
+        "maxTemperatureMilliC": 7000
+      },
+      "capture": {
+        "publicConfigId": "/configRevisionId",
+        "publicConfigVersion": "/version"
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "resources": {
+          "tenants": [
+            {
+              "tenantId": "${publicTenantId}",
+              "name": "Public Contract Tenant"
+            }
+          ],
+          "configRevisions": [
+            {
+              "configRevisionId": "${publicConfigId}",
+              "tenantId": "${publicTenantId}",
+              "version": "${publicConfigVersion}",
+              "state": "DRAFT"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "operationId": "publish-config-revision",
+      "path": "/api/v1/config-revisions/${publicConfigId}/publish",
+      "body": {
+        "expectedVersion": 0
+      },
+      "headers": {
+        "Idempotency-Key": "public-contract-publish-config-1"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "configRevisionId": "${publicConfigId}",
+        "tenantId": "${publicTenantId}",
+        "version": "${publicConfigVersion}",
+        "state": "PUBLISHED"
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "resources": {
+          "tenants": [
+            {
+              "tenantId": "${publicTenantId}",
+              "name": "Public Contract Tenant"
+            }
+          ],
+          "configRevisions": [
+            {
+              "configRevisionId": "${publicConfigId}",
+              "tenantId": "${publicTenantId}",
+              "version": "${publicConfigVersion}",
+              "state": "PUBLISHED",
+              "minTemperatureMilliC": 1000,
+              "maxTemperatureMilliC": 7000,
+              "sampleIntervalSeconds": 15,
+              "offlineAfterSeconds": 300
+            }
+          ]
+        }
+      }
+    },
+    {
+      "operationId": "create-recall",
+      "body": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "productLotCode": "public-contract-only",
+        "reason": "transport validation",
+        "issuedAt": "2026-01-01T00:00:00Z",
+        "unknownPublicContractField": true
+      },
+      "headers": {
+        "Idempotency-Key": "public-contract-invalid-recall-1"
+      },
+      "expectStatus": 400
+    }
+  ],
+  "notes": [
+    "Source authority is the complete union of docs/frontal-legacy/README.md and manager-requirements.md. This document contains no hidden test data. Successful transport checks do not prove business correctness or completion.",
+    "The legacy README allows either /healthz or /api/health. This v4 author contract chooses /healthz; it does not require an additional health alias. Health JSON body and production UI HTML are not specified by the legacy README.",
+    "All mutation routes require a nonempty Idempotency-Key. Device config requests also require X-Device-Id, X-Device-Key-Version, X-Device-Timestamp and X-Device-Signature. Those authentication semantics require a live implementation, not only a JSON schema.",
+    "v4 wire clarification: create requests supply domain input only; stored IDs, state-machine timestamps, sequence bookkeeping and projections are server outputs. Exact CreateTenant/Site/Carrier/Device/ConfigRevision/Shipment/NotificationPolicy and IngestTelemetry shapes are published here. Config publication takes {expectedVersion}; shipment activate/cancel/deliver and excursion acknowledge take {}. This clarification standardizes transport, not business transitions.",
+    "v4 wire clarification: GET /devices/:deviceId/config selects the newest unexpired ConfigAssignment but returns its referenced ConfigRevision at the top level. ConfigAssignment remains observable in the snapshot. This supersedes only the ambiguous legacy success-body wording, not selection, authentication, expiry or fencing semantics. Config acknowledgement returns the changed ConfigAssignment.",
+    "v4 wire clarification: GET /excursions returns {items:Excursion[],nextCursor:string|null}; null means no continuation. Supported query names are tenantId, shipmentId, kind, state, limit and cursor. The order is stable and cursor opaque. No new filter semantics or arbitrary maximum page size is introduced.",
+    "The README describes shipment timeline as ordered public history without naming its response envelope. That route response remains explicitly unresolved; a JSON schema must not pretend the old prose already defined one.",
+    "Lifecycle timestamp and not-yet-observed value nullability is not fully published. Nullable timestamps and projection/temperature placeholders are accepted rather than requiring invented sentinel values. Cross-field validity remains business validation.",
+    "Seed schemaVersion and seedVersion types are not explicit in the legacy text; the public example chooses integer 1 and a string respectively. Manager resources are published under snapshot.managerResources, not invented as additional V1 seed keys.",
+    "Snapshot Work/Event records are described semantically without exact field names, so this transport contract only requires object arrays. v4 wire clarification: snapshot telemetry retains its published signature key with the value null, never raw signature material. Seed credentials alone accept secret; public credentials never do. Retaining a null redaction marker preserves the named public record keys without exposing credentials.",
+    "Recall cancellation is described semantically but no cancellation route is published. No route is invented here. RELEASED quarantine actions have no release endpoint in this version.",
+    "Smoke assumes a fresh migrated database and the public empty seed. It creates a Tenant and a DRAFT ConfigRevision through public HTTP, captures their actual IDs/version, reads the draft from the PostgreSQL snapshot, publishes it and reads the same identity as PUBLISHED. Empty reads or a create-response echo alone do not pass this chain. It also checks health/OpenAPI and unknown-field validation; it is not a complete business or hidden evaluation.",
+    "v4 wire clarification: config publish expectedVersion is the Tenant current published version before the transition; it is 0 before any configuration has been published. The public fresh-database chain publishes its first DRAFT using expectedVersion:0. A successful transition retains the created ConfigRevision identity and version; it does not create a second revision."
+  ],
+  "contractRevision": 2
+}

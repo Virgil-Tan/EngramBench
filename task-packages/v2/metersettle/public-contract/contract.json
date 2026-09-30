@@ -1,0 +1,2352 @@
+{
+  "taskId": "metersettle",
+  "title": "MeterSettle",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedTenant"
+          }
+        },
+        "meterDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MeterDefinition"
+          }
+        },
+        "ratePlans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RatePlan"
+          }
+        },
+        "usageEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedUsageEvent"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "meterDefinitions",
+        "ratePlans",
+        "usageEvents"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-metersettle-v2",
+      "importedAt": "2026-01-01T00:00:00.000Z",
+      "tenants": [
+        {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public tenant",
+          "watermarkThrough": null
+        }
+      ],
+      "meterDefinitions": [
+        {
+          "meterId": "00000000-0000-4000-8000-000000000002",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public meter"
+        }
+      ],
+      "ratePlans": [
+        {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "version": 1,
+          "effectiveFrom": "2020-01-01T00:00:00.000Z",
+          "effectiveTo": null,
+          "unitPriceMinor": 2
+        }
+      ],
+      "usageEvents": [
+        {
+          "eventId": "public-seeded-usage",
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "meterId": "00000000-0000-4000-8000-000000000002",
+          "occurredAt": "2025-12-15T12:00:00.000Z",
+          "quantity": 1
+        }
+      ]
+    },
+    "command": [
+      "npm",
+      "run",
+      "db:seed",
+      "--",
+      "--file",
+      "${SEED_PATH}"
+    ],
+    "replay": true
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "RATING"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "usage.batch-accepted",
+            "watermark.advanced",
+            "statement.finalized",
+            "statement.revision-finalized"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "SeedTenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "watermarkThrough": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "name",
+        "watermarkThrough"
+      ],
+      "additionalProperties": false
+    },
+    "TenantState": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "watermarkThrough": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "openPeriodStarts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "finalizedThrough": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "watermarkThrough",
+        "openPeriodStarts",
+        "finalizedThrough",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Watermark": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "watermarkThrough": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "openPeriodStarts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "finalizedThrough": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "tenantId",
+        "watermarkThrough",
+        "openPeriodStarts",
+        "finalizedThrough"
+      ],
+      "additionalProperties": false
+    },
+    "MeterDefinition": {
+      "type": "object",
+      "properties": {
+        "meterId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "meterId",
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "RatePlan": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "effectiveTo": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unitPriceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "tenantId",
+        "version",
+        "effectiveFrom",
+        "effectiveTo",
+        "unitPriceMinor"
+      ],
+      "additionalProperties": false
+    },
+    "UsageEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "meterId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "ingestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "eventId",
+        "meterId",
+        "tenantId",
+        "occurredAt",
+        "quantity",
+        "ingestedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeedUsageEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "meterId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "eventId",
+        "meterId",
+        "tenantId",
+        "occurredAt",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "UsageBatch": {
+      "type": "object",
+      "properties": {
+        "batchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "acceptedEventIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "duplicateEventIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "batchId",
+        "tenantId",
+        "acceptedEventIds",
+        "duplicateEventIds",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RatedLine": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "meterId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "ratePlanVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "unitPriceMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "chargeMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "eventId",
+        "meterId",
+        "quantity",
+        "ratePlanVersion",
+        "unitPriceMinor",
+        "chargeMinor"
+      ],
+      "additionalProperties": false
+    },
+    "Statement": {
+      "type": "object",
+      "properties": {
+        "statementId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "state": {
+          "enum": [
+            "OPEN",
+            "FINALIZING",
+            "FINALIZED"
+          ]
+        },
+        "revision": {
+          "const": 1
+        },
+        "totalQuantity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "totalMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "watermarkThrough": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ratePlanVersions": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RatedLine"
+          }
+        },
+        "finalizedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "statementId",
+        "tenantId",
+        "periodStart",
+        "periodEnd",
+        "state",
+        "revision",
+        "totalQuantity",
+        "totalMinor",
+        "watermarkThrough",
+        "ratePlanVersions",
+        "lines",
+        "finalizedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "CorrectionEvent": {
+      "type": "object",
+      "properties": {
+        "correctionId": {
+          "type": "string"
+        },
+        "sourceEventId": {
+          "type": "string"
+        },
+        "quantityDelta": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "not": {
+            "const": 0
+          }
+        },
+        "reason": {
+          "type": "string"
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ingestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "correctionId",
+        "sourceEventId",
+        "quantityDelta",
+        "reason",
+        "occurredAt",
+        "tenantId",
+        "ingestedAt"
+      ],
+      "additionalProperties": false
+    },
+    "CorrectionBatch": {
+      "type": "object",
+      "properties": {
+        "batchId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "acceptedCorrectionIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "duplicateCorrectionIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "batchId",
+        "acceptedCorrectionIds",
+        "duplicateCorrectionIds"
+      ],
+      "additionalProperties": false
+    },
+    "StatementRevision": {
+      "type": "object",
+      "properties": {
+        "statementRevisionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "statementId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 9007199254740991
+        },
+        "priorTotalMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "deltaMinor": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "effectiveTotalMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "correctionIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "state": {
+          "enum": [
+            "FINALIZING",
+            "FINALIZED"
+          ]
+        },
+        "finalizedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "statementRevisionId",
+        "statementId",
+        "revision",
+        "priorTotalMinor",
+        "deltaMinor",
+        "effectiveTotalMinor",
+        "correctionIds",
+        "state",
+        "finalizedAt"
+      ],
+      "additionalProperties": false
+    },
+    "StatementDetail": {
+      "type": "object",
+      "properties": {
+        "statement": {
+          "$ref": "#/$defs/Statement"
+        },
+        "revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StatementRevision"
+          }
+        },
+        "effectiveTotalMinor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "pendingRevision": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "statement",
+        "revisions",
+        "effectiveTotalMinor",
+        "pendingRevision"
+      ],
+      "additionalProperties": false
+    },
+    "RevisionDetail": {
+      "type": "object",
+      "properties": {
+        "statementRevision": {
+          "$ref": "#/$defs/StatementRevision"
+        },
+        "correctionEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CorrectionEvent"
+          }
+        }
+      },
+      "required": [
+        "statementRevision",
+        "correctionEvents"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedTenant"
+          }
+        },
+        "meterDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MeterDefinition"
+          }
+        },
+        "ratePlans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RatePlan"
+          }
+        },
+        "usageEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedUsageEvent"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "meterDefinitions",
+        "ratePlans",
+        "usageEvents"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "tenantStates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TenantState"
+          }
+        },
+        "meterDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MeterDefinition"
+          }
+        },
+        "ratePlans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RatePlan"
+          }
+        },
+        "usageEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UsageEvent"
+          }
+        },
+        "usageBatches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UsageBatch"
+          }
+        },
+        "statements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Statement"
+          }
+        },
+        "correctionEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CorrectionEvent"
+          }
+        },
+        "statementRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StatementRevision"
+          }
+        }
+      },
+      "required": [
+        "tenantStates",
+        "meterDefinitions",
+        "ratePlans",
+        "usageEvents",
+        "usageBatches",
+        "statements",
+        "correctionEvents",
+        "statementRevisions"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": [],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": [],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": [],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "list-statements",
+      "method": "GET",
+      "path": "/api/v1/statements",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Statement"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "get-statement",
+      "method": "GET",
+      "path": "/api/v1/statements/:statementId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/StatementDetail"
+      },
+      "example": {
+        "params": {
+          "statementId": "00000000-0000-4000-8000-000000000010"
+        }
+      },
+      "parameters": [
+        {
+          "name": "statementId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-usage-batch",
+      "method": "POST",
+      "path": "/api/v1/usage-batches",
+      "status": 202,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "eventId": {
+                  "type": "string"
+                },
+                "meterId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000000
+                }
+              },
+              "required": [
+                "eventId",
+                "meterId",
+                "occurredAt",
+                "quantity"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 1000
+          }
+        },
+        "required": [
+          "tenantId",
+          "events"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/UsageBatch"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "events": [
+            {
+              "eventId": "public-new-usage",
+              "meterId": "00000000-0000-4000-8000-000000000002",
+              "occurredAt": "2026-01-15T12:00:00.000Z",
+              "quantity": 2
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-usage-batch"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "transportErrors": {
+        "invalidRequest": {
+          "status": 400,
+          "code": "INVALID_USAGE_BATCH"
+        }
+      }
+    },
+    {
+      "id": "advance-watermark",
+      "method": "POST",
+      "path": "/api/v1/tenants/:tenantId/watermark",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "through": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        "required": [
+          "through"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Watermark"
+      },
+      "example": {
+        "params": {
+          "tenantId": "00000000-0000-4000-8000-000000000001"
+        },
+        "body": {
+          "through": "2026-02-01T00:00:00.000Z"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-advance-watermark"
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "get-watermark",
+      "method": "GET",
+      "path": "/api/v1/tenants/:tenantId/watermark",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/Watermark"
+      },
+      "example": {
+        "params": {
+          "tenantId": "00000000-0000-4000-8000-000000000001"
+        }
+      },
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "meter-usage",
+      "method": "GET",
+      "path": "/api/v1/meters/:meterId/usage",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/UsageEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "meterId": "00000000-0000-4000-8000-000000000002"
+        },
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "meterId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "from",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "to",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "aggregateId": "00000000-0000-4000-8000-000000000001",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "create-correction-batch",
+      "method": "POST",
+      "path": "/api/v1/correction-batches",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "corrections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "correctionId": {
+                  "type": "string"
+                },
+                "sourceEventId": {
+                  "type": "string"
+                },
+                "quantityDelta": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "not": {
+                    "const": 0
+                  }
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+                }
+              },
+              "required": [
+                "correctionId",
+                "sourceEventId",
+                "quantityDelta",
+                "reason",
+                "occurredAt"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 1000
+          }
+        },
+        "required": [
+          "tenantId",
+          "corrections"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/CorrectionBatch"
+      },
+      "example": {
+        "body": {
+          "tenantId": "00000000-0000-4000-8000-000000000001",
+          "corrections": [
+            {
+              "correctionId": "public-correction",
+              "sourceEventId": "public-new-usage",
+              "quantityDelta": 1,
+              "reason": "Public correction",
+              "occurredAt": "2026-01-16T12:00:00.000Z"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-correction-batch"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "transportErrors": {
+        "invalidRequest": {
+          "status": 400,
+          "code": "INVALID_CORRECTION_BATCH"
+        }
+      }
+    },
+    {
+      "id": "get-statement-revision",
+      "method": "GET",
+      "path": "/api/v1/statements/:statementId/revisions/:revision",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/RevisionDetail"
+      },
+      "example": {
+        "params": {
+          "statementId": "00000000-0000-4000-8000-000000000010",
+          "revision": 2
+        }
+      },
+      "parameters": [
+        {
+          "name": "statementId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "revision",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 9007199254740991
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "meterDefinitions"
+          ],
+          "match": {
+            "meterId": "00000000-0000-4000-8000-000000000002",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public meter"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "ratePlans"
+          ],
+          "match": {
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "version": 1,
+            "effectiveFrom": "2020-01-01T00:00:00.000Z",
+            "effectiveTo": null,
+            "unitPriceMinor": 2
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "usageEvents"
+          ],
+          "match": {
+            "eventId": "public-seeded-usage",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "meterId": "00000000-0000-4000-8000-000000000002",
+            "occurredAt": "2025-12-15T12:00:00.000Z",
+            "quantity": 1
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-usage-batch",
+      "body": {
+        "tenantId": "00000000-0000-4000-8000-000000000001",
+        "events": [
+          {
+            "eventId": "public-new-usage",
+            "meterId": "00000000-0000-4000-8000-000000000002",
+            "occurredAt": "2026-01-15T12:00:00.000Z",
+            "quantity": 2
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "public-meter-ingest"
+      },
+      "expectStatus": 202,
+      "capture": {
+        "batchId": [
+          "batchId"
+        ]
+      }
+    },
+    {
+      "operationId": "meter-usage",
+      "params": {
+        "meterId": "00000000-0000-4000-8000-000000000002"
+      },
+      "query": {
+        "from": "2026-01-01T00:00:00.000Z",
+        "to": "2026-02-01T00:00:00.000Z"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "eventId": "public-new-usage",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "meterId": "00000000-0000-4000-8000-000000000002",
+            "quantity": 2
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "usageBatches"
+          ],
+          "match": {
+            "batchId": "${batchId}",
+            "tenantId": "00000000-0000-4000-8000-000000000001",
+            "acceptedEventIds": [
+              "public-new-usage"
+            ],
+            "duplicateEventIds": []
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 representation clarification: a watermark mutation returns the same closed Watermark view as its GET (without tenant name). A revision detail returns {statementRevision,correctionEvents}; the Manager StatementDetail is used for current statement detail reads. Revision is an integer >=2, not a UUID. Base Statement revision remains exactly 1.",
+    "Usage filters from/to are optional UTC bounds on occurredAt and use [from,to); omitted bounds are unbounded. Usage collection order is occurredAt then eventId; statement list order is statementId. Domain-event afterSequence defaults to zero and its nextCursor is null: continuation uses the last returned sequence together with aggregateId. Without aggregateId, order is aggregateId then sequence then eventId.",
+    "The SeedUsageEvent deliberately omits ingestedAt; the importer derives it from importedAt. Seed is exactly the four published V1 arrays. Snapshot adds the Manager arrays, and tenantStates differs from the seed tenants view. Resource ordering remains the precise README/Manager tuple, including ratePlans tenantId/version, usageEvents tenantId/eventId, correctionEvents tenantId/correctionId and statementRevisions statementId/revision.",
+    "The minimally sufficient rate-plan wire encoding is the published immutable flat unitPriceMinor. No tiers, private billing policy or new financial rounding rule is introduced. All integer arithmetic, corrections, month assignment, finalized-watermark rules and overflow detection remain implementation responsibilities.",
+    "V2 representation clarification: acceptedEventIds/duplicateEventIds and acceptedCorrectionIds/duplicateCorrectionIds each preserve relative request-member order. Correction reason is the published unrestricted string, including empty text; no private reason-length limit is added. Correction ingestion itself emits no DomainEvent: the sole additional Manager type is statement.revision-finalized after finalization.",
+    "Stable business errors remain INVALID_USAGE_BATCH (400), RATE_PLAN_UNAVAILABLE, EVENT_ID_CONFLICT, LATE_USAGE_EVENT, WATERMARK_NOT_ADVANCING (409), INVALID_CORRECTION_BATCH and CORRECTION_TOTAL_OVERFLOW (400), CORRECTION_ID_CONFLICT, NEGATIVE_EFFECTIVE_USAGE and STATEMENT_REVISION_PENDING (409). Shape errors on batch requests use the corresponding published INVALID_*_BATCH, unknown keys still UNKNOWN_FIELD."
+  ],
+  "httpHost": "127.0.0.1",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    }
+  },
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1"
+}

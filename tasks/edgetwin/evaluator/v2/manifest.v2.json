@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 2,
+  "taskId": "edgetwin",
+  "profile": "learning-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Public device-control contract", "weight": 30 },
+    "B": { "title": "Data authority and concurrency", "weight": 25 },
+    "C": { "title": "Durable recovery and fencing", "weight": 20 },
+    "D": { "title": "OpenAPI, UI and snapshot closure", "weight": 15 },
+    "E": { "title": "Fixed load and migration", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "VERSION_REGRESSION", "cap": 35, "publicInvariant": "Desired and reported versions never regress, skip or apply the same authority transition twice." },
+    { "id": "EXPIRED_DELIVERY", "cap": 35, "publicInvariant": "A committed expiry or cancellation fences every poll and stale worker from later delivery." },
+    { "id": "RECEIPT_DUPLICATE_EFFECT", "cap": 35, "publicInvariant": "Receipt identities are immutable and one reported base advances at most once." },
+    { "id": "FALSE_FIRMWARE_SUCCESS", "cap": 35, "publicInvariant": "Only an acknowledgement proving the frozen target firmware digest may make an upgrade target successful." },
+    { "id": "WAVE_AUTHORITY_OR_ROLLBACK_DRIFT", "cap": 35, "publicInvariant": "Wave membership, one-running authority and frozen prior-firmware compensation do not drift." },
+    { "id": "DURABLE_IDEMPOTENCY", "cap": 30, "publicInvariant": "Unknown outcomes and concurrent replay cannot create a second device-control effect." },
+    { "id": "STALE_WORK_COMMIT", "cap": 40, "publicInvariant": "A stale Work owner cannot commit and recoverable Work is never stranded." },
+    { "id": "MIGRATION_IDENTITY_REWRITE", "cap": 35, "publicInvariant": "Migration preserves V1 identities, receipt history, events, Work and replay responses." }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-ET-01", "summary": "Wave failure denominator, rounding, missing-device treatment and automatic advance algorithm are unpublished." },
+    { "id": "SPEC-GAP-ET-02", "summary": "Legacy DeploymentWave ID derivation is unpublished; only repeat stability and one-to-one mapping are testable." },
+    { "id": "SPEC-GAP-ET-03", "summary": "CommandReceipt public shape omits projectionStatus, so stale evidence is tested by visibility and zero projection effect." },
+    { "id": "SPEC-GAP-ET-04", "summary": "Device authentication, credential rotation and firmware signing are explicitly out of scope." }
+  ],
+  "cases": [
+    { "id": "CONTRACT-01", "title": "Shadow Merge Patch wire, limits and errors", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-02", "title": "Offline command creation, poll and stable delivery", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-03", "title": "Receipt identities and reported observation", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-04", "title": "Campaign targets, controls and firmware success", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CONTRACT-05", "title": "DeploymentWave contract and legacy wire boundary", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+
+    { "id": "DATA-01", "title": "Dual-version CAS and out-of-order receipt projection", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-02", "title": "Durable replay across edge mutations", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    {
+      "id": "DATA-03", "title": "Frozen wave partition and single-running health adjudication", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"],
+      "blockedAssertions": [{ "id": "wave-health-adjudication", "blockedBy": "SPEC-GAP-ET-01", "policy": "fail-closed-diagnostic" }]
+    },
+    { "id": "DATA-04", "title": "Wave controls and terminal member closure", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "DATA-05", "title": "Prior-firmware rollback affected set and compensation", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+
+    { "id": "RECOVERY-01", "title": "Command dispatch and expiry lease recovery", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RECOVERY-02", "title": "Receipt projection crash recovery and version fence", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    {
+      "id": "RECOVERY-03", "title": "Campaign fanout, wave work and compensation recovery", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"],
+      "blockedAssertions": [{ "id": "automatic-health-gated-wave-advance", "blockedBy": "SPEC-GAP-ET-01", "policy": "fail-closed-diagnostic" }]
+    },
+    { "id": "RECOVERY-04", "title": "Outbox unknown acknowledgement and tenant isolation", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+
+    { "id": "LAYER-01", "title": "V1 and Wave OpenAPI/runtime exact wire", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "LAYER-02", "title": "Browser V1 shadow, command and Campaign flow", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "LAYER-03", "title": "Browser Wave controls and rollback lineage", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "chromium"] },
+    { "id": "LAYER-04", "title": "Point-in-time edge snapshot closure", "dimension": "D", "weight": 3, "prerequisites": ["FINAL"] },
+
+    { "id": "OPERATE-01", "title": "100000-device shadow patch ingest", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-02", "title": "50000-command offline expiry barrier", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-03", "title": "10000-device fleet upgrade recovery", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "OPERATE-04", "title": "V1 legacy wave, in-flight and seed compatibility", "dimension": "E", "weight": 2.5, "prerequisites": ["V1", "FINAL"] }
+  ]
+}

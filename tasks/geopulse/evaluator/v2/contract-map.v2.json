@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "taskId": "geopulse",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": { "id": "GP-GEOMETRY-VERSION", "source": "workspace/README.md#domain-and-invariants", "summary": "Polygon validity, exact boundary classification and observedAt select one immutable active RegionVersion." },
+      "privateFailureCodePrefix": "GP_A01_",
+      "publicFeedbackCategory": "geometry-version-selection"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": { "id": "GP-LOCATION-IDENTITY-BATCH", "source": "workspace/README.md#domain-and-invariants", "summary": "LocationEvent dual identities are immutable and a batch rejects atomically without dependent effects." },
+      "privateFailureCodePrefix": "GP_A02_",
+      "publicFeedbackCategory": "location-identity-batch"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": { "id": "GP-HYSTERESIS-DWELL", "source": "workspace/README.md#domain-and-invariants", "summary": "Membership applies boundary hysteresis and emits contiguous ENTER, EXIT and one DWELL per inside interval." },
+      "privateFailureCodePrefix": "GP_A03_",
+      "publicFeedbackCategory": "membership-hysteresis-dwell"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": { "id": "GP-LATE-REPLAY", "source": "workspace/README.md#domain-and-invariants", "summary": "Events inside the ten-minute window replay in canonical order while older events are LATE_IGNORED without rewriting history." },
+      "privateFailureCodePrefix": "GP_A04_",
+      "publicFeedbackCategory": "late-replay-frontier"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": { "id": "GP-BUNDLE-PINNING", "source": "orchestration/manager-prompt.zh-CN.md#regionbundle-atomic-publication", "summary": "RegionBundle revisions publish and roll back immutably while accepted work remains pinned to one revision." },
+      "privateFailureCodePrefix": "GP_A05_",
+      "publicFeedbackCategory": "bundle-revision-pinning"
+    },
+
+    {
+      "caseId": "B-01",
+      "requirement": { "id": "GP-PROJECTION-REFERENCE", "source": "workspace/README.md#domain-and-invariants", "summary": "Public query and projection results equal an evaluator-owned geometry, hysteresis and dwell reference model." },
+      "privateFailureCodePrefix": "GP_B01_",
+      "publicFeedbackCategory": "projection-reference-model"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": { "id": "GP-IDENTITY-PRECEDENCE", "source": "workspace/README.md#required-behavior-and-http-surface", "summary": "Durable request replay and the two LocationEvent identities retain distinct tenant-scoped precedence." },
+      "privateFailureCodePrefix": "GP_B02_",
+      "publicFeedbackCategory": "location-identity-precedence"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": { "id": "GP-HOTSPOT-CONVERGENCE", "source": "workspace/README.md#domain-and-invariants", "summary": "Concurrent submissions for one Device converge to one canonical event, one Membership and unique contiguous Transitions." },
+      "privateFailureCodePrefix": "GP_B03_",
+      "publicFeedbackCategory": "device-hotspot-convergence"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": { "id": "GP-BUNDLE-CAS-CACHE", "source": "orchestration/manager-prompt.zh-CN.md#regionbundle-atomic-publication", "summary": "Concurrent publish and rollback CAS choose one revision and invalidate observable caches across API processes." },
+      "privateFailureCodePrefix": "GP_B04_",
+      "publicFeedbackCategory": "bundle-cas-cache"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": { "id": "GP-FROZEN-WORK-RACE", "source": "orchestration/manager-prompt.zh-CN.md#regionbundle-atomic-publication", "summary": "Old evaluation, reevaluation and replay Work cannot switch to a subsequently published Bundle revision." },
+      "privateFailureCodePrefix": "GP_B05_",
+      "publicFeedbackCategory": "bundle-frozen-work-race"
+    },
+
+    {
+      "caseId": "C-01",
+      "requirement": { "id": "GP-EVALUATION-RECOVERY", "source": "workspace/README.md#required-behavior-and-http-surface", "summary": "A publicly LEASED LOCATION_EVALUATION survives Worker SIGKILL and commits one fenced result after reclamation." },
+      "privateFailureCodePrefix": "GP_C01_",
+      "publicFeedbackCategory": "evaluation-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": { "id": "GP-LATE-REBUILD-RECOVERY", "source": "workspace/README.md#domain-and-invariants", "summary": "A publicly LEASED LATE_REPLAY rebuilds from durable facts after Worker death without duplicate identities or sequence gaps." },
+      "privateFailureCodePrefix": "GP_C02_",
+      "publicFeedbackCategory": "late-rebuild-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": { "id": "GP-REEVALUATION-RECOVERY", "source": "orchestration/manager-prompt.zh-CN.md#regionbundle-atomic-publication", "summary": "BUNDLE_REEVALUATION Work recovers under its captured revision and reaches one bounded terminal state." },
+      "privateFailureCodePrefix": "GP_C03_",
+      "publicFeedbackCategory": "bundle-reevaluation-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": { "id": "GP-EVENT-DELIVERY", "source": "workspace/README.md#required-behavior-and-http-surface", "summary": "Transactional Location, Transition and Bundle Events retry unknown acknowledgements with stable identity, body and aggregate order." },
+      "privateFailureCodePrefix": "GP_C04_",
+      "publicFeedbackCategory": "event-delivery-privacy"
+    },
+
+    {
+      "caseId": "D-01",
+      "requirement": { "id": "GP-UI-TIMELINE", "source": "workspace/README.md#ui", "summary": "The production browser completes Region, Device, ingest, Membership, Transition, late status, Work and point-query flows." },
+      "privateFailureCodePrefix": "GP_D01_",
+      "publicFeedbackCategory": "ui-location-timeline"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": { "id": "GP-UI-BUNDLE", "source": "orchestration/manager-prompt.zh-CN.md#regionbundle-atomic-publication", "summary": "The production browser composes, publishes and rolls back immutable Bundle revisions with revision-consistent queries." },
+      "privateFailureCodePrefix": "GP_D02_",
+      "publicFeedbackCategory": "ui-bundle-revisions"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": { "id": "GP-CONTRACT-SNAPSHOT", "source": "workspace/README.md#seed-and-verification-snapshot", "summary": "Live OpenAPI and one point-in-time FINAL snapshot expose the exact V1 and Bundle resource contract without sensitive data." },
+      "privateFailureCodePrefix": "GP_D03_",
+      "publicFeedbackCategory": "contract-bundle-snapshot"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": { "id": "GP-CROSS-LAYER-LINEAGE", "source": "CONTEXT.md#regionbundle", "summary": "Accepted event, Work, Membership, Transition, Event, snapshot and query retain one tenant-scoped revision lineage." },
+      "privateFailureCodePrefix": "GP_D04_",
+      "publicFeedbackCategory": "cross-layer-revision-lineage"
+    },
+
+    {
+      "caseId": "E-01",
+      "requirement": { "id": "GP-V1-FINAL-MIGRATION", "source": "orchestration/manager-prompt.zh-CN.md#regionbundle-atomic-publication", "summary": "FINAL migration preserves populated V1 identity, watermark, transition sequence, leases, replay and event delivery state." },
+      "privateFailureCodePrefix": "GP_E01_",
+      "publicFeedbackCategory": "migration-bundle-compatibility"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": { "id": "GP-PERF-ORDERED-INGEST", "source": "workspace/README.md#performance-contract", "summary": "The exact 500,000-event ordered ingest workload meets throughput, latency and post-load invariants." },
+      "privateFailureCodePrefix": "GP_E02_",
+      "publicFeedbackCategory": "perf-ordered-ingest"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": { "id": "GP-PERF-BOUNDARY-JITTER", "source": "workspace/README.md#performance-contract", "summary": "The exact boundary jitter workload meets throughput and latency while suppressing spurious transition pairs." },
+      "privateFailureCodePrefix": "GP_E03_",
+      "publicFeedbackCategory": "perf-boundary-jitter"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": { "id": "GP-PERF-SPATIAL-QUERY", "source": "workspace/README.md#performance-contract", "summary": "The exact million-point query workload preserves input order and one Bundle revision per response at published performance." },
+      "privateFailureCodePrefix": "GP_E04_",
+      "publicFeedbackCategory": "perf-spatial-query"
+    }
+  ]
+}

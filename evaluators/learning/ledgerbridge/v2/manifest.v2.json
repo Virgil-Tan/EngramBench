@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 2,
+  "taskId": "ledgerbridge",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Transfer, Posting and Statement contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Ledger conservation, idempotency and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Settlement recovery and Domain Events",
+      "weight": 20
+    },
+    "D": {
+      "title": "Production UI, OpenAPI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Compatibility and published full-scale workloads",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "CORRECTNESS_INVARIANT",
+      "cap": 30,
+      "publicInvariant": "Currency totals are conserved; Posting and Reversal legs are atomic; balances, reservations and available funds never go negative; and migration never rewrites saved ledger identity."
+    }
+  ],
+  "specGaps": [],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Transfer creation, reservation and funds/currency boundaries",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Settlement, balanced Posting and Statement balanceAfter",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Cancellation, Reversal and immutable compensation",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "One to twenty destination legs, safe sum and legacy discriminator",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Multi-leg Posting, Statement linkage and atomic Reversal",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Global integer conservation, reservations and statement replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Durable idempotency and unknown-response replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Settlement and cancellation final-authority race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Concurrent Reversal and duplicate settlement effect",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Multi-leg funding and overlapping destination hotspot atomicity",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Settlement claimed-lease recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Posting effect-complete and before-commit crash windows",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Transfer Event outbox unknown acknowledgement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Claim order and multi-worker backlog recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Production browser one-leg ledger workflow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production browser multi-beneficiary atomic workflow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI and FINAL snapshot conditional wire contract",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Transfer to Posting, Statement and Event lineage",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current transfer postings, statements and replay survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Published statement-read workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Published transfer-mutation-mix workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Published two-thousand Settlement recovery workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "semanticRevisions": [
+    {
+      "caseIds": [
+        "A-05",
+        "D-03"
+      ],
+      "summary": "All current Statement items, including one-leg transfers, use the already public required legId. One-leg Posting remains the published two-leg shape."
+    }
+  ]
+}

@@ -1,0 +1,2826 @@
+{
+  "taskId": "quotamesh",
+  "title": "QuotaMesh",
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dimension"
+          }
+        },
+        "quotaPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedPool"
+          }
+        },
+        "commitments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyCommitment"
+          }
+        },
+        "reservations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyReservation"
+          }
+        },
+        "admissionQueue": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAdmissionEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "dimensions",
+        "quotaPools",
+        "commitments",
+        "reservations",
+        "admissionQueue"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "v2-public-quotamesh-1",
+      "dimensions": [
+        {
+          "name": "cpuMillis",
+          "unit": "millisecond"
+        },
+        {
+          "name": "memoryMiB",
+          "unit": "MiB"
+        }
+      ],
+      "quotaPools": [
+        {
+          "poolId": "70000000-0000-4000-8000-000000000051",
+          "tenantId": "70000000-0000-4000-8000-000000000052",
+          "name": "Public Seed Pool",
+          "capacity": {
+            "cpuMillis": 100,
+            "memoryMiB": 200
+          }
+        }
+      ],
+      "reservations": [
+        {
+          "reservationId": "70000000-0000-4000-8000-000000000054",
+          "poolId": "70000000-0000-4000-8000-000000000051",
+          "ownerId": "70000000-0000-4000-8000-000000000053",
+          "quantities": {
+            "cpuMillis": 2,
+            "memoryMiB": 4
+          },
+          "state": "COMMITTED",
+          "expiresAt": "2026-09-07T00:05:00.000Z",
+          "createdAt": "2026-09-07T00:00:00.000Z",
+          "terminalAt": "2026-09-07T00:00:00.000Z",
+          "sequence": 2
+        }
+      ],
+      "commitments": [
+        {
+          "commitmentId": "70000000-0000-4000-8000-000000000055",
+          "reservationId": "70000000-0000-4000-8000-000000000054",
+          "poolId": "70000000-0000-4000-8000-000000000051",
+          "ownerId": "70000000-0000-4000-8000-000000000053",
+          "quantities": {
+            "cpuMillis": 2,
+            "memoryMiB": 4
+          },
+          "committedAt": "2026-09-07T00:00:00.000Z",
+          "releasedAt": null
+        }
+      ],
+      "admissionQueue": []
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "minimum": -1.7976931348623157e+308,
+          "maximum": 1.7976931348623157e+308
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "RESERVATION_EXPIRY",
+            "ADMISSION_PROMOTION"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "reservation.held",
+            "reservation.committed",
+            "reservation.released",
+            "reservation.expired",
+            "admission.promoted"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Dimension": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "name",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
+    "QuotaPool": {
+      "type": "object",
+      "properties": {
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "capacity": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "held": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "committed": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "poolId",
+        "tenantId",
+        "name",
+        "capacity",
+        "held",
+        "committed",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyReservation": {
+      "type": "object",
+      "properties": {
+        "reservationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantities": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 20,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "HELD",
+            "COMMITTED",
+            "RELEASED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "reservationId",
+        "poolId",
+        "ownerId",
+        "quantities",
+        "state",
+        "expiresAt",
+        "createdAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyCommitment": {
+      "type": "object",
+      "properties": {
+        "commitmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "reservationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantities": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 20,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "releasedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "commitmentId",
+        "reservationId",
+        "poolId",
+        "ownerId",
+        "quantities",
+        "committedAt",
+        "releasedAt"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyAdmissionEntry": {
+      "type": "object",
+      "properties": {
+        "admissionEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantities": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 20,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "WITHDRAWN"
+          ]
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "reservationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "position": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "admissionEntryId",
+        "poolId",
+        "ownerId",
+        "quantities",
+        "priority",
+        "state",
+        "requestedAt",
+        "reservationId",
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "QuotaOrganization": {
+      "type": "object",
+      "properties": {
+        "organizationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "capacity": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "allocated": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "held": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "committed": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "organizationId",
+        "tenantId",
+        "name",
+        "capacity",
+        "allocated",
+        "held",
+        "committed",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "QuotaProject": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "allocation": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "held": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "committed": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "projectId",
+        "organizationId",
+        "name",
+        "allocation",
+        "held",
+        "committed",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "Reservation": {
+      "type": "object",
+      "properties": {
+        "reservationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantities": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 20,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "HELD",
+            "COMMITTED",
+            "RELEASED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "reservationId",
+        "poolId",
+        "ownerId",
+        "quantities",
+        "state",
+        "expiresAt",
+        "createdAt",
+        "terminalAt",
+        "sequence",
+        "organizationId",
+        "projectId"
+      ],
+      "additionalProperties": false
+    },
+    "Commitment": {
+      "type": "object",
+      "properties": {
+        "commitmentId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "reservationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantities": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 20,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "releasedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "commitmentId",
+        "reservationId",
+        "poolId",
+        "ownerId",
+        "quantities",
+        "committedAt",
+        "releasedAt",
+        "organizationId",
+        "projectId"
+      ],
+      "additionalProperties": false
+    },
+    "AdmissionEntry": {
+      "type": "object",
+      "properties": {
+        "admissionEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantities": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 20,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "WITHDRAWN"
+          ]
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "reservationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "position": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "projectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "admissionEntryId",
+        "poolId",
+        "ownerId",
+        "quantities",
+        "priority",
+        "state",
+        "requestedAt",
+        "reservationId",
+        "position",
+        "organizationId",
+        "projectId"
+      ],
+      "additionalProperties": false
+    },
+    "SeedPool": {
+      "type": "object",
+      "properties": {
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "capacity": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      },
+      "required": [
+        "poolId",
+        "tenantId",
+        "name",
+        "capacity"
+      ],
+      "additionalProperties": false
+    },
+    "SeedAdmissionEntry": {
+      "type": "object",
+      "properties": {
+        "admissionEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "poolId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantities": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 20,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "WITHDRAWN"
+          ]
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "reservationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "admissionEntryId",
+        "poolId",
+        "ownerId",
+        "quantities",
+        "priority",
+        "state",
+        "requestedAt",
+        "reservationId"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dimension"
+          }
+        },
+        "quotaPools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedPool"
+          }
+        },
+        "commitments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyCommitment"
+          }
+        },
+        "reservations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyReservation"
+          }
+        },
+        "admissionQueue": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedAdmissionEntry"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "dimensions",
+        "quotaPools",
+        "commitments",
+        "reservations",
+        "admissionQueue"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "dimensions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Dimension"
+              }
+            },
+            "quotaPools": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/QuotaPool"
+              }
+            },
+            "reservations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Reservation"
+              }
+            },
+            "commitments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Commitment"
+              }
+            },
+            "admissionEntries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AdmissionEntry"
+              }
+            },
+            "quotaOrganizations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/QuotaOrganization"
+              }
+            },
+            "quotaProjects": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/QuotaProject"
+              }
+            }
+          },
+          "required": [
+            "dimensions",
+            "quotaPools",
+            "reservations",
+            "commitments",
+            "admissionEntries",
+            "quotaOrganizations",
+            "quotaProjects"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#real-ui",
+      "response": {
+        "type": "string",
+        "minLength": 1
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "list-reservations",
+      "method": "GET",
+      "path": "/api/v1/reservations",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Reservation"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "read-reservation",
+      "method": "GET",
+      "path": "/api/v1/reservations/:reservationId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Reservation"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "reservationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "reservationId": "70000000-0000-4000-8000-000000000054"
+        }
+      }
+    },
+    {
+      "id": "create-pool-reservation",
+      "method": "POST",
+      "path": "/api/v1/quota-pools/:poolId/reservations",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/LegacyReservation"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantities": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 20,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "ttlSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3600
+          }
+        },
+        "required": [
+          "ownerId",
+          "quantities",
+          "ttlSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "poolId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "poolId": "70000000-0000-4000-8000-000000000051"
+        },
+        "body": {
+          "ownerId": "70000000-0000-4000-8000-000000000053",
+          "quantities": {
+            "cpuMillis": 2,
+            "memoryMiB": 4
+          },
+          "ttlSeconds": 300
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-pool-reservation"
+        }
+      }
+    },
+    {
+      "id": "create-quota-pool",
+      "method": "POST",
+      "path": "/api/v1/quota-pools",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/QuotaPool"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "capacity": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "required": [
+          "tenantId",
+          "name",
+          "capacity"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "70000000-0000-4000-8000-000000000052",
+          "name": "Independent Public Pool",
+          "capacity": {
+            "cpuMillis": 100,
+            "memoryMiB": 200
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-quota-pool"
+        }
+      }
+    },
+    {
+      "id": "commit-reservation",
+      "method": "POST",
+      "path": "/api/v1/reservations/:reservationId/commit",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Commitment"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "reservationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "reservationId": "70000000-0000-4000-8000-000000000054"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "v2-public-commit-reservation"
+        }
+      }
+    },
+    {
+      "id": "release-reservation",
+      "method": "POST",
+      "path": "/api/v1/reservations/:reservationId/release",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Reservation"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "reservationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "reservationId": "70000000-0000-4000-8000-000000000054"
+        },
+        "body": {
+          "reason": "Release unused capacity"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-release-reservation"
+        }
+      }
+    },
+    {
+      "id": "join-admission-queue",
+      "method": "POST",
+      "path": "/api/v1/admission-queue",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/AdmissionEntry"
+      },
+      "request": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "poolId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "ownerId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "quantities": {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 20,
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "poolId",
+              "ownerId",
+              "quantities",
+              "priority"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "organizationId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "projectId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "ownerId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "quantities": {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 20,
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "organizationId",
+              "projectId",
+              "ownerId",
+              "quantities",
+              "priority"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "organizationId": "70000000-0000-4000-8000-000000000056",
+          "projectId": "70000000-0000-4000-8000-000000000057",
+          "ownerId": "70000000-0000-4000-8000-000000000053",
+          "quantities": {
+            "cpuMillis": 2,
+            "memoryMiB": 4
+          },
+          "priority": 5
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-join-admission-queue"
+        }
+      }
+    },
+    {
+      "id": "read-quota-pool",
+      "method": "GET",
+      "path": "/api/v1/quota-pools/:poolId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/QuotaPool"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "poolId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "poolId": "70000000-0000-4000-8000-000000000051"
+        }
+      }
+    },
+    {
+      "id": "pool-admission-queue",
+      "method": "GET",
+      "path": "/api/v1/quota-pools/:poolId/admission-queue",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LegacyAdmissionEntry"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "poolId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "poolId": "70000000-0000-4000-8000-000000000051"
+        }
+      }
+    },
+    {
+      "id": "create-quota-organization",
+      "method": "POST",
+      "path": "/api/v1/quota-organizations",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/QuotaOrganization"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "capacity": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "required": [
+          "tenantId",
+          "name",
+          "capacity"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "70000000-0000-4000-8000-000000000052",
+          "name": "Independent Public Organization",
+          "capacity": {
+            "cpuMillis": 100,
+            "memoryMiB": 200
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-quota-organization"
+        }
+      }
+    },
+    {
+      "id": "create-quota-project",
+      "method": "POST",
+      "path": "/api/v1/quota-organizations/:organizationId/projects",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/QuotaProject"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "allocation": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "required": [
+          "name",
+          "allocation"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "organizationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "organizationId": "70000000-0000-4000-8000-000000000056"
+        },
+        "body": {
+          "name": "Public Project",
+          "allocation": {
+            "cpuMillis": 50,
+            "memoryMiB": 100
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-quota-project"
+        }
+      }
+    },
+    {
+      "id": "create-project-reservation",
+      "method": "POST",
+      "path": "/api/v1/quota-organizations/:organizationId/projects/:projectId/reservations",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/Reservation"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantities": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 20,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "ttlSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3600
+          }
+        },
+        "required": [
+          "ownerId",
+          "quantities",
+          "ttlSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "organizationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "organizationId": "70000000-0000-4000-8000-000000000056",
+          "projectId": "70000000-0000-4000-8000-000000000057"
+        },
+        "body": {
+          "ownerId": "70000000-0000-4000-8000-000000000053",
+          "quantities": {
+            "cpuMillis": 2,
+            "memoryMiB": 4
+          },
+          "ttlSeconds": 300
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-project-reservation"
+        }
+      }
+    },
+    {
+      "id": "change-organization-capacity",
+      "method": "PUT",
+      "path": "/api/v1/quota-organizations/:organizationId/capacity",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/QuotaOrganization"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "capacity": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "capacity",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "organizationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "organizationId": "70000000-0000-4000-8000-000000000056"
+        },
+        "body": {
+          "capacity": {
+            "cpuMillis": 200,
+            "memoryMiB": 400
+          },
+          "expectedRevision": 1
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-change-organization-capacity"
+        }
+      }
+    },
+    {
+      "id": "change-project-allocation",
+      "method": "PUT",
+      "path": "/api/v1/quota-organizations/:organizationId/projects/:projectId/allocation",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/QuotaProject"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "allocation": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-zA-Z0-9]{0,31}$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "expectedOrganizationRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expectedProjectRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "allocation",
+          "expectedOrganizationRevision",
+          "expectedProjectRevision"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "organizationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "organizationId": "70000000-0000-4000-8000-000000000056",
+          "projectId": "70000000-0000-4000-8000-000000000057"
+        },
+        "body": {
+          "allocation": {
+            "cpuMillis": 60,
+            "memoryMiB": 120
+          },
+          "expectedOrganizationRevision": 1,
+          "expectedProjectRevision": 1
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-change-project-allocation"
+        }
+      }
+    },
+    {
+      "id": "read-quota-organization",
+      "method": "GET",
+      "path": "/api/v1/quota-organizations/:organizationId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/QuotaOrganization"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "organizationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "organizationId": "70000000-0000-4000-8000-000000000056"
+        }
+      }
+    },
+    {
+      "id": "read-quota-project",
+      "method": "GET",
+      "path": "/api/v1/quota-organizations/:organizationId/projects/:projectId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/QuotaProject"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "organizationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "organizationId": "70000000-0000-4000-8000-000000000056",
+          "projectId": "70000000-0000-4000-8000-000000000057"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "70000000-0000-4000-8000-000000000001",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "ok"
+      }
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "dimensions"
+          ],
+          "match": {
+            "name": "cpuMillis"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "dimensions"
+          ],
+          "match": {
+            "name": "memoryMiB"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "quotaPools"
+          ],
+          "match": {
+            "poolId": "70000000-0000-4000-8000-000000000051",
+            "capacity": {
+              "cpuMillis": 100,
+              "memoryMiB": 200
+            },
+            "held": {
+              "cpuMillis": 0,
+              "memoryMiB": 0
+            },
+            "committed": {
+              "cpuMillis": 2,
+              "memoryMiB": 4
+            }
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "reservations"
+          ],
+          "match": {
+            "reservationId": "70000000-0000-4000-8000-000000000054",
+            "poolId": "70000000-0000-4000-8000-000000000051",
+            "state": "COMMITTED"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "commitments"
+          ],
+          "match": {
+            "commitmentId": "70000000-0000-4000-8000-000000000055",
+            "reservationId": "70000000-0000-4000-8000-000000000054",
+            "poolId": "70000000-0000-4000-8000-000000000051",
+            "quantities": {
+              "cpuMillis": 2,
+              "memoryMiB": 4
+            }
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-quota-organization",
+      "body": {
+        "tenantId": "70000000-0000-4000-8000-000000000052",
+        "name": "Independent Public Organization",
+        "capacity": {
+          "cpuMillis": 100,
+          "memoryMiB": 200
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "v2-public-create-quota-organization"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "tenantId": "70000000-0000-4000-8000-000000000052",
+        "name": "Independent Public Organization",
+        "capacity": {
+          "cpuMillis": 100,
+          "memoryMiB": 200
+        },
+        "allocated": {
+          "cpuMillis": 0,
+          "memoryMiB": 0
+        },
+        "held": {
+          "cpuMillis": 0,
+          "memoryMiB": 0
+        },
+        "committed": {
+          "cpuMillis": 0,
+          "memoryMiB": 0
+        }
+      },
+      "capture": {
+        "createdOrganization": [
+          "organizationId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-quota-organization",
+      "params": {
+        "organizationId": "${createdOrganization}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "organizationId": "${createdOrganization}",
+        "tenantId": "70000000-0000-4000-8000-000000000052",
+        "name": "Independent Public Organization",
+        "capacity": {
+          "cpuMillis": 100,
+          "memoryMiB": 200
+        },
+        "allocated": {
+          "cpuMillis": 0,
+          "memoryMiB": 0
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Authority: the complete original public README and Manager requirements. This contract uses no private evaluator cases or submitted implementation. Wire validation does not establish workflow, recovery or performance correctness.",
+    "V2 wire clarification: unspecified health body is exactly {status:\"ok\"}; production UI is HTML at /. GET domain-events returns {items:[DomainEvent]} with aggregateId required and optional afterSequence (default 0), limit (default 50, range 1..100), ordered by sequence. No other query keys are accepted.",
+    "Original error details is an exact empty object. Every mutation requires its published Idempotency-Key. Only documented admin routes require ADMIN_TOKEN. Output timestamps retain the original UTC millisecond precision.",
+    "The FINAL snapshot has exactly its published resource keys and explicitly typed Work/DomainEvent records. It is one database snapshot; recursive *Token omission, stable ordering, retained terminal Work and event identity remain business requirements. Manager-only data is created by public APIs, never inserted through the V1 seed.",
+    "Examples are independent public transport examples, not a required stateful sequence. A success requires the state/time/lease/revision prerequisites in the original public documents. Smoke checks identity and a separate write/read path, not every operation or concurrency invariant.",
+    "V2 wire clarification: direct Reservation detail/list, commit/release and admission creation expose the Manager fields. Routes under /quota-pools retain their explicitly promised V1 projection; their create returns LegacyReservation and admission list returns {items:[LegacyAdmissionEntry]}. Saved pre-upgrade replay bodies are unchanged.",
+    "V2 wire clarification: unpaginated pool admission reads use {items:[AdmissionEntry]} without a cursor because the original publishes no query parameters. Every entry has its derived position; hierarchy identities are omitted from this legacy pool projection only.",
+    "V2 wire clarification: new project-reservation creation uses 200 under the Manager default-status rule, while the original flat reservation route remains 201. Organization capacity changes return QuotaOrganization; Project allocation changes return QuotaProject; use separate GET Organization for its updated totals.",
+    "The V1 seed imports two Dimensions, one flat Pool and a linked COMMITTED Reservation/Commitment. Manager migration adds a stable Organization/default Project without changing original IDs or balances. Their generated IDs are not prescribed by the original text and the smoke does not guess them.",
+    "Capacity maps use declared dimension names and nonnegative safe integers; reservation quantities have 1..20 strictly positive entries. The contract does not silently clamp priority, which was only specified as a safe integer. Revision initial values and migration UUID algorithms must be documented; no hidden initialization is assumed.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

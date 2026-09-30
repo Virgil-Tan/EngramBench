@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "domain-events" | "verification-snapshot" | "list-incidents" | "get-incident" | "create-incident" | "acknowledge-incident" | "resolve-incident" | "create-policy" | "get-policy" | "incident-timeline" | "record-acknowledgement";

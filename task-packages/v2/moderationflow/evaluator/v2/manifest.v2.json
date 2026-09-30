@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 2,
+  "taskId": "moderationflow",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Moderation and recall public contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Frozen authority, idempotency, and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Lease recovery, cancellation, and events",
+      "weight": 20
+    },
+    "D": {
+      "title": "HTTP, Chromium, snapshot, and audit closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Compatibility and fixed production load",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "DOMAIN_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Evidence, policy, stage, decision, appeal, recall membership, and reconsideration authority remain immutable and unique."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Exact replay and unknown response recovery cannot create a second public effect."
+    },
+    {
+      "id": "WORK_RECOVERY_CORRECTNESS",
+      "cap": 40,
+      "publicInvariant": "Persisted work remains recoverable and stale lease owners cannot commit review, recall, or delivery effects."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "FINAL migration preserves V1 identity, saved responses, pending work, events, and audit history."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-MF-01",
+      "summary": "Non-scoring scope note: Reconsideration list order is unpublished, so comparisons use the frozen ID set."
+    },
+    {
+      "id": "SPEC-GAP-MF-02",
+      "summary": "Non-scoring scope note: No Recall or Reconsideration event type is published, so no new event name is required."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Content ingest and initial evidence freeze",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Contiguous immutable evidence versions",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Two-level review with frozen policy and evidence",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Appeal uniqueness window and frozen baseline",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Policy recall frozen cohort and compatibility",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Concurrent evidence append linearization",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Decision and late evidence preserve stage snapshot",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Concurrent appeal creates one authority",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Recall durable replay and frozen cohort",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Reconsideration classification and conservation",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Review lease recovery and stale-owner fencing",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Recall crash recovery exactly once per case",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Recall cancellation and final commit linearization",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Review outbox unknown acknowledgement",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Moderation wire errors and history queries",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Chromium completes the V1 moderation flow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Chromium completes recall review and confirmation",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Point-in-time snapshot and audit digest chain",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current review evidence, replay and pending Work survive FINAL restart",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Moderation ingest fixed load",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Evidence appeal contention fixed load",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Policy boundary recall recovery load",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

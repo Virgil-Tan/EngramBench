@@ -1,0 +1,39 @@
+{
+  "kind": "frontal-public-contract-lock",
+  "schemaVersion": 1,
+  "taskId": "geopulse",
+  "files": {
+    "README.md": "c244292c7c92985fce41ef555e5baa1f61ca8b0f35101f80de28eb8f00b5ec4c",
+    "AGENTS.md": "ec1e81dc1f7510d1f06f7bdf6e338a24cf6c2e26591a826a097732c7ed4f4a53",
+    "tsconfig.json": "d7ceb20289b7644cf6b0eb11ca0e1af72e676f0105afd170d7ec315d73e7c80d",
+    "contract/README.md": "81b042d6760e70e5446314035fa70812b3b5cef65c4c30bca323cf3beab015c7",
+    "contract/check.mjs": "fb2e8b8eda322163ea6d38500f31334532b8d78d7c91a3caca0128d098be4acd",
+    "contract/contract.json": "ad15976945e774408a9bf15d5b5a87d1da04b2ecba1708958448c566eed4ff86",
+    "contract/openapi.json": "df9e23b52025ca24930925d7e5f57fce0842b2e8123e6c2b88d6326e08d8471a",
+    "contract/runtime.mjs": "70316445c25ac6dc801a302d357342d4d1cd1dfdbb6b9f407ae9322be58a3294",
+    "contract/seed.example.json": "57e5ebfccce48fe5d1ec05a5afabe6c72096db770bae297945dd55fdd74a2efb",
+    "contract/seed.mjs": "b515998e938c45dff9bdffa256def5a62129d70d51413eb44802160e86ed0fdc",
+    "contract/server.mjs": "4e5644db780e8fce822042e0a49aea31435e72caec0dd35ecac2bc55e8eee0c8",
+    "docs/frontal-legacy/README.md": "a4f60f0b3d4ea8cffe52796922c5a10d792939305d35a93c3a9068d64a265921",
+    "docs/frontal-legacy/manager-requirements.md": "6661b7acb95a0d688ca6d6b280133b6fb39e9c573abd53e475d5737df10897ba",
+    "docs/frontal-legacy/public-task.txt": "8a1cf63b48b3aa726866a503fb4778fa54a2546b000cd0181117fb5df993b28d"
+  },
+  "scripts": {
+    "build": "tsc && node dist/lifecycle.js build",
+    "db:migrate": "node dist/lifecycle.js db:migrate",
+    "db:seed": "node contract/seed.mjs",
+    "start:api": "node contract/server.mjs",
+    "start:worker": "node dist/lifecycle.js start:worker",
+    "start:dispatcher": "node dist/lifecycle.js start:dispatcher",
+    "test:public-contract": "node contract/check.mjs --live",
+    "check:contract-source": "node contract/check.mjs",
+    "test:unit": "node dist/lifecycle.js test:unit",
+    "test:integration": "node dist/lifecycle.js test:integration",
+    "test:e2e": "node dist/lifecycle.js test:e2e",
+    "test:concurrency": "node dist/lifecycle.js test:concurrency",
+    "test:recovery": "node dist/lifecycle.js test:recovery",
+    "test:perf": "node dist/lifecycle.js test:perf",
+    "test:all": "node dist/lifecycle.js test:all",
+    "dev": "node dist/lifecycle.js dev"
+  }
+}

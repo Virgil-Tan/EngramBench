@@ -1,0 +1,155 @@
+{
+  "seedKeys": [
+    "tenants",
+    "hubs",
+    "carriers",
+    "shipments",
+    "routePlans",
+    "transportLegs",
+    "scanEvents",
+    "journeyProjections",
+    "lossCases",
+    "reassignments"
+  ],
+  "publicPaths": [
+    "/api/v1/tenants",
+    "/api/v1/hubs",
+    "/api/v1/carriers",
+    "/api/v1/shipments",
+    "/api/v1/shipments/:shipmentId",
+    "/api/v1/shipments/:shipmentId/timeline",
+    "/api/v1/scan-events",
+    "/api/v1/shipments/:shipmentId/loss",
+    "/api/v1/shipments/:shipmentId/found",
+    "/api/v1/shipments/:shipmentId/reassign",
+    "/api/v1/shipments/:shipmentId/cancel",
+    "/api/v1/consignments",
+    "/api/v1/consignments/:consignmentId",
+    "/api/v1/consignments/:consignmentId/reassign",
+    "/api/v1/consignments/:consignmentId/cancel",
+    "/api/v1/parcel-pieces/:pieceId/scan-events",
+    "/api/v1/parcel-pieces/:pieceId/loss",
+    "/api/v1/parcel-pieces/:pieceId/found",
+    "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {
+        "key": "tenants",
+        "shape": "Tenant",
+        "sort": [
+          "tenantId"
+        ]
+      },
+      {
+        "key": "hubs",
+        "shape": "Hub",
+        "sort": [
+          "hubId"
+        ]
+      },
+      {
+        "key": "carriers",
+        "shape": "Carrier",
+        "sort": [
+          "carrierId"
+        ]
+      },
+      {
+        "key": "shipments",
+        "shape": "Shipment",
+        "sort": [
+          "shipmentId"
+        ]
+      },
+      {
+        "key": "routePlans",
+        "shape": "RoutePlan",
+        "sort": [
+          "shipmentId",
+          "revision"
+        ]
+      },
+      {
+        "key": "transportLegs",
+        "shape": "TransportLeg",
+        "sort": [
+          "routePlanId",
+          "ordinal"
+        ]
+      },
+      {
+        "key": "scanEvents",
+        "shape": "ScanEvent",
+        "sort": [
+          "scanEventId"
+        ]
+      },
+      {
+        "key": "journeyProjections",
+        "shape": "JourneyProjection",
+        "sort": [
+          "shipmentId"
+        ]
+      },
+      {
+        "key": "lossCases",
+        "shape": "LossCase",
+        "sort": [
+          "lossCaseId"
+        ]
+      },
+      {
+        "key": "reassignments",
+        "shape": "Reassignment",
+        "sort": [
+          "reassignmentId"
+        ]
+      }
+    ],
+    "managerResources": [
+      {
+        "key": "consignments",
+        "shape": "Consignment",
+        "sort": [
+          "consignmentId"
+        ]
+      },
+      {
+        "key": "parcelPieces",
+        "shape": "ParcelPiece",
+        "sort": [
+          "consignmentId",
+          "pieceRef"
+        ]
+      },
+      {
+        "key": "pieceProjections",
+        "shape": "PieceProjection",
+        "sort": [
+          "pieceId"
+        ]
+      }
+    ]
+  },
+  "workKinds": {
+    "v1": [
+      "JOURNEY_PROJECT",
+      "LOSS_RECONCILE"
+    ],
+    "manager": [
+      "CONSIGNMENT_PROJECT"
+    ]
+  },
+  "perfScenarios": [
+    {
+      "id": "shipment-plan-ingest"
+    },
+    {
+      "id": "out-of-order-scan-storm"
+    },
+    {
+      "id": "loss-reroute-recovery"
+    }
+  ]
+}

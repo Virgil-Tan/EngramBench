@@ -1,0 +1,667 @@
+{
+  "schemaVersion": 2,
+  "taskId": "coldchaincontrol",
+  "profile": "transfer-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Public cold-chain contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Identity projection and concurrency correctness",
+      "weight": 25
+    },
+    "C": {
+      "title": "Worker dispatcher recovery and persistence",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI browser and cross-layer closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration performance and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "PRODUCTION_BOOT",
+      "cap": 25,
+      "publicInvariant": "Clean migration build production API Worker Dispatcher and UI boot through published commands."
+    },
+    {
+      "id": "TENANT_SECRET_AUTHORITY",
+      "cap": 25,
+      "publicInvariant": "Tenant boundaries and Device credential secrets never leak or authorize a foreign operation."
+    },
+    {
+      "id": "PROJECTION_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Reading identity ordered projection and route ownership remain deterministic and monotonic."
+    },
+    {
+      "id": "IDEMPOTENCY_AUTHORITY",
+      "cap": 30,
+      "publicInvariant": "Durable replay preserves one saved response and one business effect across processes and restarts."
+    },
+    {
+      "id": "STALE_WORK_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "A stale Worker cannot overwrite newer config projection terminal custody or quarantine state."
+    },
+    {
+      "id": "EVENT_DELIVERY_AUTHORITY",
+      "cap": 40,
+      "publicInvariant": "Committed Events and notifications survive unknown acknowledgements without identity or body drift."
+    },
+    {
+      "id": "CUSTODY_RECALL_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Custody has one Carrier authority and Recall freezes one complete quarantine set atomically."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "FINAL migration preserves every V1 identity replay Event Work delivery credential and audit record."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-01",
+      "summary": "V1 does not publish one exact success status response wrapper or list cursor wire shape."
+    },
+    {
+      "id": "SPEC-GAP-02",
+      "summary": "Site radius distance formula and boundary rounding are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-03",
+      "summary": "Notification payload rate-limit window and dead-letter trigger details are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-04",
+      "summary": "Barrier payload points and release protocol are unpublished; precise stale-owner injection remains unwired."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Clean lifecycle and independent roles",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Populated migration and seed replay",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Atomic seed rejection and secret protection",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "OpenAPI 3.1 route/error coverage",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-A04-WIRE-CONTRACT",
+          "blockedBy": "SPEC-GAP-01",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Strict input, error envelope and tenant isolation",
+      "weight": 1.5,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-06",
+      "title": "Device authentication and scalar boundaries",
+      "weight": 1.5,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-07",
+      "title": "Excursion list filters and stable cursor",
+      "weight": 1.5,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-A07-CURSOR-WIRE",
+          "blockedBy": "SPEC-GAP-01",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-08",
+      "title": "Tenant, Site, Carrier and Device catalog",
+      "weight": 2.5,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-09",
+      "title": "Gapless Config publication",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-10",
+      "title": "Assignment delivery and acknowledgement",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-11",
+      "title": "Credential rotation and revocation",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-12",
+      "title": "Signed telemetry acceptance",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-13",
+      "title": "Shipment creation and activation",
+      "weight": 2.5,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-14",
+      "title": "Projection, excursion, cancellation and delivery",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-A14-SITE-RADIUS-BOUNDARY",
+          "blockedBy": "SPEC-GAP-02",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-15",
+      "title": "Notification policies, deliveries and snapshot",
+      "weight": 1.5,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-A15-NOTIFICATION-PAYLOAD-WINDOW",
+          "blockedBy": "SPEC-GAP-03",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-16",
+      "title": "FINAL custody and recall public lifecycle",
+      "weight": 1,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Config version/CAS contention",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Credential rotation versus ingest",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Telemetry identity and durable idempotency",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Device auth anti-replay boundary",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Hot-device two-API ordering",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-06",
+      "title": "Late-reading historical correction",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-07",
+      "title": "Shipment activate/device/terminal races",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-08",
+      "title": "Excursion/offline race matrix",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-09",
+      "title": "Custody handoff authority contention",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-10",
+      "title": "Recall frozen-set atomicity",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Work schema/lifecycle/retention",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Config assignment Worker kill",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-C02-STALE-OWNER-BEFORE-COMMIT",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Telemetry projection Worker kill",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-C03-EFFECT-COMPLETE-BEFORE-COMMIT",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Offline-check recovery and fencing",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-C04-OLD-OWNER-BINDING",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "C-05",
+      "title": "Handoff expiry and replacement",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-C05-STALE-EXPIRY-OWNER",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "C-06",
+      "title": "Recall propagation/quarantine recovery",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-C06-STALE-QUARANTINE-OWNER",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "C-07",
+      "title": "Dispatcher unknown ACK",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-C07-PRIVATE-PAYLOAD-FIELDS",
+          "blockedBy": "SPEC-GAP-03",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "C-08",
+      "title": "Shared notification quota and ordering",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-C08-RATE-WINDOW-ALGORITHM",
+          "blockedBy": "SPEC-GAP-03",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "OpenAPI validates live traffic",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-D01-WIRE-STATUS-WRAPPER",
+          "blockedBy": "SPEC-GAP-01",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Browser configuration-to-live-shipment",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Browser excursions and notifications",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Browser FINAL custody and recall",
+      "weight": 2.5,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-05",
+      "title": "Loading/empty/conflict/stale/offline/retry/permission",
+      "weight": 1.5,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-06",
+      "title": "Keyboard, focus, labels and mobile",
+      "weight": 1.5,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-07",
+      "title": "Project-owned gates are real",
+      "weight": 1.5,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-08",
+      "title": "README-to-evidence closure",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1→FINAL migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved replay and credential/Event identity",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Work/delivery across migration",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-E03-STALE-TOKEN-COMPLETION",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Signed telemetry ingest performance",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-05",
+      "title": "Hot-device ordering performance",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-06",
+      "title": "Configuration rollout recovery performance",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-E06-STALE-COMMIT-BARRIER",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "E-07",
+      "title": "Excursion notification recovery performance",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-08",
+      "title": "Recall quarantine convergence performance",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "CCC-E08-STALE-RELEASE-BARRIER",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "E-09",
+      "title": "Cleanup, reproducibility and log hygiene",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ]
+}

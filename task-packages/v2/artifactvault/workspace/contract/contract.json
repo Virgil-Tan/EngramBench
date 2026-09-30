@@ -1,0 +1,2440 @@
+{
+  "taskId": "artifactvault",
+  "title": "ArtifactVault",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Package"
+          }
+        },
+        "artifactVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedArtifactVersion"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "packages",
+        "artifactVersions"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-artifactvault-v2",
+      "packages": [
+        {
+          "packageName": "public-package",
+          "displayName": "Public Package"
+        }
+      ],
+      "artifactVersions": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "ARTIFACT_VERIFICATION",
+            "UPLOAD_EXPIRY",
+            "BLOB_GC"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "upload.completed",
+            "artifact.committed",
+            "artifact.rejected",
+            "upload.abandoned",
+            "blob.collected"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Package": {
+      "type": "object",
+      "properties": {
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "packageName",
+        "displayName"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyUploadSession": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[!-~]+$"
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+        },
+        "expectedSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "nextOffset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "STAGING",
+            "VERIFYING",
+            "COMMITTED",
+            "REJECTED",
+            "ABANDONED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "artifactVersionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "uploadId",
+        "packageName",
+        "version",
+        "mediaType",
+        "expectedSize",
+        "expectedSha256",
+        "nextOffset",
+        "state",
+        "expiresAt",
+        "artifactVersionId",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ArtifactVersion": {
+      "type": "object",
+      "properties": {
+        "artifactVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[!-~]+$"
+        },
+        "blob": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483648
+            },
+            "mediaType": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+            }
+          },
+          "required": [
+            "sha256",
+            "size",
+            "mediaType"
+          ],
+          "additionalProperties": false
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "artifactVersionId",
+        "packageName",
+        "version",
+        "blob",
+        "committedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ChunkReceipt": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "endExclusive": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "nextOffset": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "replayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "uploadId",
+        "start",
+        "endExclusive",
+        "nextOffset",
+        "replayed"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationResult": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "actualSize": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "actualSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "outcome": {
+          "enum": [
+            "COMMITTED",
+            "SIZE_MISMATCH",
+            "DIGEST_MISMATCH",
+            "VERIFIED"
+          ]
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "uploadId",
+        "actualSize",
+        "actualSha256",
+        "outcome",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Blob": {
+      "type": "object",
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+        },
+        "state": {
+          "enum": [
+            "STAGED",
+            "VERIFIED",
+            "COMMITTED",
+            "ORPHANED"
+          ]
+        },
+        "referenceCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "sha256",
+        "size",
+        "mediaType",
+        "state",
+        "referenceCount"
+      ],
+      "additionalProperties": false
+    },
+    "BlobReference": {
+      "type": "object",
+      "properties": {
+        "artifactVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "blobSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "artifactVersionId",
+        "blobSha256",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ReleaseArtifact": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        },
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "artifactVersionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "STAGING",
+            "VERIFYING",
+            "VERIFIED",
+            "REJECTED",
+            "ABANDONED",
+            "COMMITTED"
+          ]
+        },
+        "blob": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483648
+                },
+                "mediaType": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+                }
+              },
+              "required": [
+                "sha256",
+                "size",
+                "mediaType"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "platform",
+        "uploadId",
+        "artifactVersionId",
+        "state",
+        "blob"
+      ],
+      "additionalProperties": false
+    },
+    "ReleaseManifest": {
+      "type": "object",
+      "properties": {
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[!-~]+$"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "platform": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2147483648
+              },
+              "mediaType": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+              }
+            },
+            "required": [
+              "platform",
+              "sha256",
+              "size",
+              "mediaType"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 20
+        },
+        "manifestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "packageName",
+        "version",
+        "artifacts",
+        "manifestSha256"
+      ],
+      "additionalProperties": false
+    },
+    "Release": {
+      "type": "object",
+      "properties": {
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[!-~]+$"
+        },
+        "state": {
+          "enum": [
+            "DRAFT",
+            "PUBLISHED"
+          ]
+        },
+        "manifestSha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReleaseArtifact"
+          },
+          "minItems": 1,
+          "maxItems": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "releaseId",
+        "packageName",
+        "version",
+        "state",
+        "manifestSha256",
+        "artifacts",
+        "createdAt",
+        "publishedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ReleaseDetail": {
+      "type": "object",
+      "properties": {
+        "release": {
+          "$ref": "#/$defs/Release"
+        },
+        "manifest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReleaseManifest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "release",
+        "manifest"
+      ],
+      "additionalProperties": false
+    },
+    "SeedArtifactVersion": {
+      "type": "object",
+      "properties": {
+        "artifactVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[!-~]+$"
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+        },
+        "assetPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\\\]+$"
+        },
+        "expectedSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "artifactVersionId",
+        "packageName",
+        "version",
+        "mediaType",
+        "assetPath",
+        "expectedSize",
+        "expectedSha256",
+        "committedAt"
+      ],
+      "additionalProperties": false
+    },
+    "MemberUploadSession": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[!-~]+$"
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+        },
+        "expectedSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "expectedSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "nextOffset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "STAGING",
+            "VERIFYING",
+            "VERIFIED",
+            "COMMITTED",
+            "REJECTED",
+            "ABANDONED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "artifactVersionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "releaseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        }
+      },
+      "required": [
+        "uploadId",
+        "packageName",
+        "version",
+        "mediaType",
+        "expectedSize",
+        "expectedSha256",
+        "nextOffset",
+        "state",
+        "expiresAt",
+        "artifactVersionId",
+        "createdAt",
+        "releaseId",
+        "platform"
+      ],
+      "additionalProperties": false
+    },
+    "UploadSession": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/LegacyUploadSession"
+        },
+        {
+          "$ref": "#/$defs/MemberUploadSession"
+        }
+      ]
+    },
+    "SnapshotArtifactVersion": {
+      "type": "object",
+      "properties": {
+        "artifactVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "packageName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[!-~]+$"
+        },
+        "blob": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483648
+            },
+            "mediaType": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+            }
+          },
+          "required": [
+            "sha256",
+            "size",
+            "mediaType"
+          ],
+          "additionalProperties": false
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        }
+      },
+      "required": [
+        "artifactVersionId",
+        "packageName",
+        "version",
+        "blob",
+        "committedAt",
+        "sequence",
+        "platform"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Package"
+          }
+        },
+        "artifactVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedArtifactVersion"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "packages",
+        "artifactVersions"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Package"
+          }
+        },
+        "uploadSessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UploadSession"
+          }
+        },
+        "artifactVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotArtifactVersion"
+          }
+        },
+        "verificationResults": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/VerificationResult"
+          }
+        },
+        "blobs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Blob"
+          }
+        },
+        "blobReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BlobReference"
+          }
+        },
+        "releases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Release"
+          }
+        }
+      },
+      "required": [
+        "packages",
+        "uploadSessions",
+        "artifactVersions",
+        "verificationResults",
+        "blobs",
+        "blobReferences",
+        "releases"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "list-artifact-versions",
+      "method": "GET",
+      "path": "/api/v1/artifact-versions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ArtifactVersion"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-artifact-version",
+      "method": "GET",
+      "path": "/api/v1/artifact-versions/:artifactVersionId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/ArtifactVersion"
+      },
+      "example": {
+        "params": {
+          "artifactVersionId": "00000000-0000-4000-8000-000000000001"
+        }
+      },
+      "parameters": [
+        {
+          "name": "artifactVersionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-upload-session",
+      "method": "POST",
+      "path": "/api/v1/upload-sessions",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "packageName": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[!-~]+$"
+          },
+          "mediaType": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+          },
+          "expectedSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483648
+          },
+          "expectedSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "packageName",
+          "version",
+          "mediaType",
+          "expectedSize",
+          "expectedSha256"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/LegacyUploadSession"
+      },
+      "example": {
+        "body": {
+          "packageName": "public-package",
+          "version": "1.0.0",
+          "mediaType": "text/plain",
+          "expectedSize": 5,
+          "expectedSha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-upload-session"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "upload-chunk",
+      "method": "PUT",
+      "path": "/api/v1/upload-sessions/:uploadId/chunks",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "string",
+        "contentMediaType": "application/octet-stream",
+        "minLength": 1,
+        "maxLength": 8388608
+      },
+      "response": {
+        "$ref": "#/$defs/ChunkReceipt"
+      },
+      "example": {
+        "params": {
+          "uploadId": "00000000-0000-4000-8000-000000000002"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-upload-chunk",
+          "Content-Range": "bytes 0-4/5",
+          "Content-Type": "application/octet-stream"
+        },
+        "body": "hello"
+      },
+      "parameters": [
+        {
+          "name": "uploadId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Content-Range",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^bytes [0-9]+-[0-9]+/[0-9]+$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "complete-upload",
+      "method": "POST",
+      "path": "/api/v1/upload-sessions/:uploadId/complete",
+      "status": 202,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/UploadSession"
+      },
+      "example": {
+        "params": {
+          "uploadId": "00000000-0000-4000-8000-000000000002"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-complete-upload"
+        }
+      },
+      "parameters": [
+        {
+          "name": "uploadId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-package-version",
+      "method": "GET",
+      "path": "/api/v1/packages/:packageName/versions/:version",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/ArtifactVersion"
+      },
+      "example": {
+        "params": {
+          "packageName": "public-package",
+          "version": "1.0.0"
+        }
+      },
+      "parameters": [
+        {
+          "name": "packageName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          }
+        },
+        {
+          "name": "version",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "download-package-version",
+      "method": "GET",
+      "path": "/api/v1/packages/:packageName/versions/:version/content",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "application/octet-stream"
+      },
+      "example": {
+        "params": {
+          "packageName": "public-package",
+          "version": "1.0.0"
+        }
+      },
+      "parameters": [
+        {
+          "name": "packageName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          }
+        },
+        {
+          "name": "version",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[!-~]+$"
+          }
+        },
+        {
+          "name": "Range",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^bytes=(?:[0-9]+-[0-9]*|-[0-9]+)$"
+          }
+        },
+        {
+          "name": "If-None-Match",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "successStatuses": [
+        200,
+        206,
+        304
+      ],
+      "successResponses": {
+        "206": {
+          "response": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream"
+          },
+          "description": "Exact requested range with Content-Range, Content-Length and digest ETag."
+        },
+        "304": {
+          "description": "Empty body when the conditional digest ETag matches."
+        }
+      }
+    },
+    {
+      "id": "read-upload-session",
+      "method": "GET",
+      "path": "/api/v1/upload-sessions/:uploadId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "uploadSession": {
+            "$ref": "#/$defs/UploadSession"
+          },
+          "verificationResult": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/VerificationResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "uploadSession",
+          "verificationResult"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "uploadId": "00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "parameters": [
+        {
+          "name": "uploadId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "aggregateId": "00000000-0000-4000-8000-000000000002",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-release",
+      "method": "POST",
+      "path": "/api/v1/releases",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "packageName": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[!-~]+$"
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "platform": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+                },
+                "expectedSize": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483648
+                },
+                "expectedSha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "mediaType": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$"
+                }
+              },
+              "required": [
+                "platform",
+                "expectedSize",
+                "expectedSha256",
+                "mediaType"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "packageName",
+          "version",
+          "artifacts"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Release"
+      },
+      "example": {
+        "body": {
+          "packageName": "public-package",
+          "version": "2.0.0",
+          "artifacts": [
+            {
+              "platform": "linux-arm64",
+              "expectedSize": 5,
+              "expectedSha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+              "mediaType": "text/plain"
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-release"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "retry-release-artifact",
+      "method": "POST",
+      "path": "/api/v1/releases/:releaseId/artifacts/:platform/retry",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/MemberUploadSession"
+      },
+      "example": {
+        "params": {
+          "releaseId": "00000000-0000-4000-8000-000000000003",
+          "platform": "linux-arm64"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-retry-release-artifact"
+        }
+      },
+      "parameters": [
+        {
+          "name": "releaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "platform",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "publish-release",
+      "method": "POST",
+      "path": "/api/v1/releases/:releaseId/publish",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Release"
+      },
+      "example": {
+        "params": {
+          "releaseId": "00000000-0000-4000-8000-000000000003"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "public-example-publish-release"
+        }
+      },
+      "parameters": [
+        {
+          "name": "releaseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-release",
+      "method": "GET",
+      "path": "/api/v1/packages/:packageName/releases/:version",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/ReleaseDetail"
+      },
+      "example": {
+        "params": {
+          "packageName": "public-package",
+          "version": "2.0.0"
+        }
+      },
+      "parameters": [
+        {
+          "name": "packageName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          }
+        },
+        {
+          "name": "version",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "download-release-artifact",
+      "method": "GET",
+      "path": "/api/v1/packages/:packageName/releases/:version/artifacts/:platform/content",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "application/octet-stream"
+      },
+      "example": {
+        "params": {
+          "packageName": "public-package",
+          "version": "2.0.0",
+          "platform": "linux-arm64"
+        }
+      },
+      "parameters": [
+        {
+          "name": "packageName",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+          }
+        },
+        {
+          "name": "version",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[!-~]+$"
+          }
+        },
+        {
+          "name": "platform",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          }
+        },
+        {
+          "name": "Range",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^bytes=(?:[0-9]+-[0-9]*|-[0-9]+)$"
+          }
+        },
+        {
+          "name": "If-None-Match",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "successStatuses": [
+        200,
+        206,
+        304
+      ],
+      "successResponses": {
+        "206": {
+          "response": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream"
+          },
+          "description": "Exact requested range with Content-Range, Content-Length and digest ETag."
+        },
+        "304": {
+          "description": "Empty body when the conditional digest ETag matches."
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "packages"
+          ],
+          "match": {
+            "packageName": "public-package",
+            "displayName": "Public Package"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-upload-session",
+      "body": {
+        "packageName": "public-package",
+        "version": "1.0.0",
+        "mediaType": "text/plain",
+        "expectedSize": 5,
+        "expectedSha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-create-upload"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "packageName": "public-package",
+        "version": "1.0.0",
+        "state": "STAGING",
+        "nextOffset": 0,
+        "expectedSize": 5
+      },
+      "capture": {
+        "newUploadId": [
+          "uploadId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-upload-session",
+      "params": {
+        "uploadId": "${newUploadId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "uploadSession": {
+          "uploadId": "${newUploadId}",
+          "packageName": "public-package",
+          "state": "STAGING",
+          "nextOffset": 0
+        },
+        "verificationResult": null
+      }
+    },
+    {
+      "operationId": "upload-chunk",
+      "params": {
+        "uploadId": "${newUploadId}"
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-upload-chunk",
+        "Content-Type": "application/octet-stream",
+        "Content-Range": "bytes 0-4/5"
+      },
+      "body": "hello",
+      "expectStatus": 200,
+      "expectBody": {
+        "uploadId": "${newUploadId}",
+        "start": 0,
+        "endExclusive": 5,
+        "nextOffset": 5,
+        "replayed": false
+      }
+    },
+    {
+      "operationId": "read-upload-session",
+      "params": {
+        "uploadId": "${newUploadId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "uploadSession": {
+          "uploadId": "${newUploadId}",
+          "nextOffset": 5,
+          "state": "STAGING"
+        },
+        "verificationResult": null
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "uploadSessions"
+          ],
+          "match": {
+            "uploadId": "${newUploadId}",
+            "packageName": "public-package",
+            "nextOffset": 5
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 wire clarification: upload-session detail is exactly {uploadSession,verificationResult}. Domain-event reads use {items:[DomainEvent]} with aggregateId required and default afterSequence=0; this sequence-based interface has no cursor. Chunk PUT consumes raw octets and reports endExclusive despite inclusive Content-Range end.",
+    "V2 wire clarification: legacy ArtifactVersion responses omit platform; FINAL snapshot artifactVersions always includes platform (default for legacy/standalone versions). Release-member sessions require releaseId/platform and may be VERIFIED. Release create/publish return Release; member retry returns the replacement MemberUploadSession.",
+    "Raw download success uses the exact Blob media type, Content-Length, quoted SHA-256 ETag, Accept-Ranges:bytes, and 206 Content-Range for one valid range; no JSON/base64 envelope or private path. Conditional match uses empty 304, unsatisfiable range uses 416 INVALID_RANGE. Stream bytes without whole-object buffering.",
+    "The package-only nonempty seed intentionally needs no asset files; artifactVersions may be empty. It is a complete legal namespace graph for the independent create/upload/read smoke. Nonempty seeded ArtifactVersions still require full relative-asset verification as published.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "importworks",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "IW-UPLOAD-RESUME",
+        "source": "workspace/README.md#upload-and-resume",
+        "summary": "An ImportJob freezes its import contract while immutable out-of-order chunks expose exact received and missing ranges."
+      },
+      "privateFailureCodePrefix": "IW_A01_",
+      "publicFeedbackCategory": "upload-resume-coverage"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "IW-UPLOAD-COMPLETE",
+        "source": "workspace/README.md#upload-and-resume",
+        "summary": "Completion requires contiguous coverage, exact bytes and assembled digest; cancellation is idempotent before commit."
+      },
+      "privateFailureCodePrefix": "IW_A02_",
+      "publicFeedbackCategory": "upload-complete-integrity"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "IW-VALIDATION-REPORT",
+        "source": "workspace/README.md#validation-commit-and-reports",
+        "summary": "Validation uses the frozen schema and produces deterministic redacted findings and stable ErrorReport metadata."
+      },
+      "privateFailureCodePrefix": "IW_A03_",
+      "publicFeedbackCategory": "validation-findings-report"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "IW-COMMIT-MODES",
+        "source": "workspace/README.md#validation-commit-and-reports",
+        "summary": "Commit modes and tenant-scoped external identity converge without duplicate or partial replacement."
+      },
+      "privateFailureCodePrefix": "IW_A04_",
+      "publicFeedbackCategory": "commit-mode-row-identity"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "IW-BUNDLE-PUBLISH",
+        "source": "orchestration/manager-prompt.zh-CN.md#importbundle-atomic-publication",
+        "summary": "A staged Bundle freezes one ordered cohort and publishes every allowed member atomically or rejects all."
+      },
+      "privateFailureCodePrefix": "IW_A05_",
+      "publicFeedbackCategory": "bundle-atomic-publish"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "IW-CHUNK-IDENTITY",
+        "source": "workspace/README.md#upload-and-resume",
+        "summary": "Durable idempotency replay and chunk number, range and byte conflicts follow the published precedence."
+      },
+      "privateFailureCodePrefix": "IW_B01_",
+      "publicFeedbackCategory": "chunk-identity-precedence"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "IW-INTERVAL-CONSERVATION",
+        "source": "workspace/README.md#upload-and-resume",
+        "summary": "Concurrent adjacent and overlapping ranges conserve one exact interval union and assembled file order."
+      },
+      "privateFailureCodePrefix": "IW_B02_",
+      "publicFeedbackCategory": "upload-concurrent-intervals"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "IW-COMMIT-CONTENTION",
+        "source": "workspace/README.md#validation-commit-and-reports",
+        "summary": "Concurrent completion and commit produce one terminal record set and one canonical external-row payload."
+      },
+      "privateFailureCodePrefix": "IW_B03_",
+      "publicFeedbackCategory": "commit-row-contention"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "IW-SCHEMA-FREEZE",
+        "source": "workspace/README.md#validation-commit-and-reports",
+        "summary": "Each job validates every row against the schema revision captured at creation despite concurrent publication."
+      },
+      "privateFailureCodePrefix": "IW_B04_",
+      "publicFeedbackCategory": "schema-freeze-race"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "IW-BUNDLE-CONTENTION",
+        "source": "orchestration/manager-prompt.zh-CN.md#importbundle-atomic-publication",
+        "summary": "Concurrent add, stage, publish and replay converge on one frozen Bundle cohort and saved response."
+      },
+      "privateFailureCodePrefix": "IW_B05_",
+      "publicFeedbackCategory": "bundle-concurrent-freeze"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "IW-VALIDATE-RECOVERY",
+        "source": "workspace/README.md#ui-and-project-owned-verification",
+        "summary": "A claimed IMPORT_VALIDATE Work recovers after SIGKILL and fences the stale worker."
+      },
+      "privateFailureCodePrefix": "IW_C01_",
+      "publicFeedbackCategory": "validation-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "IW-COMMIT-REPORT-RECOVERY",
+        "source": "workspace/README.md#work-events-seed-and-snapshot",
+        "summary": "Claimed IMPORT_COMMIT and ERROR_REPORT Work recover exactly once after lease expiry."
+      },
+      "privateFailureCodePrefix": "IW_C02_",
+      "publicFeedbackCategory": "commit-report-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "IW-BUNDLE-RECOVERY",
+        "source": "orchestration/manager-prompt.zh-CN.md#importbundle-atomic-publication",
+        "summary": "A claimed BUNDLE_PUBLISH Work recovers with all member records and events visible together or absent."
+      },
+      "privateFailureCodePrefix": "IW_C03_",
+      "publicFeedbackCategory": "bundle-publish-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "IW-EVENT-UNKNOWN-ACK",
+        "source": "workspace/README.md#validation-commit-and-reports",
+        "summary": "Unknown webhook acknowledgement retries preserve byte-identical event identity, headers and body."
+      },
+      "privateFailureCodePrefix": "IW_C04_",
+      "publicFeedbackCategory": "event-unknown-ack"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "IW-UI-UPLOAD",
+        "source": "workspace/README.md#ui-and-project-owned-verification",
+        "summary": "The production browser creates, resumes, completes and observes an out-of-order upload through the real API."
+      },
+      "privateFailureCodePrefix": "IW_D01_",
+      "publicFeedbackCategory": "ui-resumable-upload"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "IW-UI-COMMIT-BUNDLE",
+        "source": "orchestration/manager-prompt.zh-CN.md#importbundle-atomic-publication",
+        "summary": "The production UI exposes findings, commit, cancel, report metadata and Bundle mutation workflows without leaks."
+      },
+      "privateFailureCodePrefix": "IW_D02_",
+      "publicFeedbackCategory": "ui-commit-bundle"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "IW-CONTRACT-SNAPSHOT",
+        "source": "workspace/README.md#work-events-seed-and-snapshot",
+        "summary": "OpenAPI and FINAL snapshot publish the exact V1 and Bundle surfaces with deterministic sensitive-data isolation."
+      },
+      "privateFailureCodePrefix": "IW_D03_",
+      "publicFeedbackCategory": "contract-snapshot-isolation"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "IW-ROW-CONSERVATION",
+        "source": "workspace/README.md#validation-commit-and-reports",
+        "summary": "Harness-owned source rows conserve totals, findings, committed payload digests, report metadata and events across public surfaces."
+      },
+      "privateFailureCodePrefix": "IW_D04_",
+      "publicFeedbackCategory": "cross-layer-row-conservation"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "IW-V1-FINAL-COMPAT",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Import bytes, commit replay and pending validation survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "IW_E01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "IW-PERF-UPLOAD",
+        "source": "workspace/README.md#published-performance-gates",
+        "summary": "The exact 2,000-import resumable-upload workload meets throughput and latency while conserving every range and digest."
+      },
+      "privateFailureCodePrefix": "IW_E02_",
+      "publicFeedbackCategory": "perf-resumable-upload"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "IW-PERF-PARTIAL",
+        "source": "workspace/README.md#published-performance-gates",
+        "summary": "The exact 5,000-import VALID_ROWS workload produces 450,000 records and 50,000 findings within its gate."
+      },
+      "privateFailureCodePrefix": "IW_E03_",
+      "publicFeedbackCategory": "perf-partial-commit"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "IW-PERF-RECOVERY",
+        "source": "workspace/README.md#published-performance-gates",
+        "summary": "The exact 10,000-import two-SIGKILL workload drains with four replacements in 120 seconds and no duplicates."
+      },
+      "privateFailureCodePrefix": "IW_E04_",
+      "publicFeedbackCategory": "perf-validation-recovery"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

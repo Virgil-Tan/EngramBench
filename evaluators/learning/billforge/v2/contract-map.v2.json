@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "billforge",
+  "cases": [
+    {
+      "caseId": "BILL-01",
+      "requirement": {
+        "id": "BF-FROZEN-TERMS",
+        "source": "workspace/README.md#billing",
+        "summary": "Effective price selection and frozen published Invoice terms; no invented tax/discount configuration."
+      },
+      "privateFailureCodePrefix": "BF_BILL01_",
+      "publicFeedbackCategory": "frozen-terms"
+    },
+    {
+      "caseId": "BILL-02",
+      "requirement": {
+        "id": "BF-PRORATION",
+        "source": "workspace/README.md#billing",
+        "summary": "Subscription change and cancellation produce replay-stable non-negative proration lines; exact rounding is not prescribed."
+      },
+      "privateFailureCodePrefix": "BF_BILL02_",
+      "publicFeedbackCategory": "proration-conservation"
+    },
+    {
+      "caseId": "BILL-03",
+      "requirement": {
+        "id": "BF-FX-SNAPSHOT",
+        "source": "workspace/README.md#billing",
+        "summary": "Invoice, payment and settlement retain frozen exchange-rate identity and currency; no unpublished conversion formula."
+      },
+      "privateFailureCodePrefix": "BF_BILL03_",
+      "publicFeedbackCategory": "fx-snapshot"
+    },
+    {
+      "caseId": "BILL-04",
+      "requirement": {
+        "id": "BF-TAX-DISCOUNT",
+        "source": "workspace/README.md#billing",
+        "summary": "Finalized invoice line totals, safe non-negative amounts and frozen terms remain consistent."
+      },
+      "privateFailureCodePrefix": "BF_BILL04_",
+      "publicFeedbackCategory": "tax-discount-order"
+    },
+    {
+      "caseId": "BILL-05",
+      "requirement": {
+        "id": "BF-INVOICE-UNIQUE",
+        "source": "workspace/README.md#billing",
+        "summary": "Concurrent generation yields one Invoice and finalized facts remain immutable."
+      },
+      "privateFailureCodePrefix": "BF_BILL05_",
+      "publicFeedbackCategory": "invoice-uniqueness"
+    },
+    {
+      "caseId": "PAY-01",
+      "requirement": {
+        "id": "BF-PAYMENT-IDEMPOTENCY",
+        "source": "workspace/README.md#payments",
+        "summary": "PaymentIntent creation persists one exact replay across loss restart and contention."
+      },
+      "privateFailureCodePrefix": "BF_PAY01_",
+      "publicFeedbackCategory": "payment-idempotency"
+    },
+    {
+      "caseId": "PAY-02",
+      "requirement": {
+        "id": "BF-UNKNOWN",
+        "source": "workspace/README.md#payments",
+        "summary": "A publicly seeded UNKNOWN payment remains uncaptured and cannot be refunded without a successful provider fact."
+      },
+      "privateFailureCodePrefix": "BF_PAY02_",
+      "publicFeedbackCategory": "unknown-outcome"
+    },
+    {
+      "caseId": "PAY-03",
+      "requirement": {
+        "id": "BF-PROVIDER-IDENTITY",
+        "source": "workspace/README.md#payments",
+        "summary": "Concurrent duplicate provider facts preserve a single payment posting and globally unique provider transaction."
+      },
+      "privateFailureCodePrefix": "BF_PAY03_",
+      "publicFeedbackCategory": "provider-identity"
+    },
+    {
+      "caseId": "PAY-04",
+      "requirement": {
+        "id": "BF-REFUND-CONSERVATION",
+        "source": "workspace/README.md#refunds",
+        "summary": "Pending refunds reserve captured funds without changing successful refund balances or posting money."
+      },
+      "privateFailureCodePrefix": "BF_PAY04_",
+      "publicFeedbackCategory": "refund-conservation"
+    },
+    {
+      "caseId": "PAY-05",
+      "requirement": {
+        "id": "BF-DOUBLE-ENTRY",
+        "source": "workspace/README.md#money-and-accounting-contract",
+        "summary": "Each successful payment and refund owns one balanced immutable Posting."
+      },
+      "privateFailureCodePrefix": "BF_PAY05_",
+      "publicFeedbackCategory": "double-entry"
+    },
+    {
+      "caseId": "RACE-01",
+      "requirement": {
+        "id": "BF-ATOMIC-REPLAY",
+        "source": "workspace/README.md#payments",
+        "summary": "Lost mutation responses retain exact replay and one atomic business effect."
+      },
+      "privateFailureCodePrefix": "BF_RACE01_",
+      "publicFeedbackCategory": "atomic-response-replay"
+    },
+    {
+      "caseId": "RACE-02",
+      "requirement": {
+        "id": "BF-COMMUTATIVE-RESOLUTION",
+        "source": "workspace/README.md#payments",
+        "summary": "Reconcile after a successful public provider fact commutes with duplicate webhook processing without extra postings or events."
+      },
+      "privateFailureCodePrefix": "BF_RACE02_",
+      "publicFeedbackCategory": "replay-precedence"
+    },
+    {
+      "caseId": "RACE-03",
+      "requirement": {
+        "id": "BF-SHARED-RESERVE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Concurrent refund and dispute creation serialize on the same captured reserve."
+      },
+      "privateFailureCodePrefix": "BF_RACE03_",
+      "publicFeedbackCategory": "shared-reserve-race"
+    },
+    {
+      "caseId": "RACE-04",
+      "requirement": {
+        "id": "BF-SETTLEMENT-RECOVERY",
+        "source": "workspace/README.md#monthly-settlement",
+        "summary": "Durable queued settlement work survives process replacement and closes to an immutable snapshot."
+      },
+      "privateFailureCodePrefix": "BF_RACE04_",
+      "publicFeedbackCategory": "settlement-recovery"
+    },
+    {
+      "caseId": "ADJUST-01",
+      "requirement": {
+        "id": "BF-DISPUTE-CREATE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Dispute creation, replay, OpenAPI and verification snapshot expose one reserved resource."
+      },
+      "privateFailureCodePrefix": "BF_ADJUST01_",
+      "publicFeedbackCategory": "dispute-reserve"
+    },
+    {
+      "caseId": "ADJUST-02",
+      "requirement": {
+        "id": "BF-CHARGEBACK",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "WON releases reserve, LOST creates exactly one balanced chargeback, and the UI exposes durable identity."
+      },
+      "privateFailureCodePrefix": "BF_ADJUST02_",
+      "publicFeedbackCategory": "chargeback-correction"
+    },
+    {
+      "caseId": "ADJUST-03",
+      "requirement": {
+        "id": "BF-DISPUTE-REFUND-RACE",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Concurrent refund/dispute reserve results remain conserved across the API, snapshot and production UI."
+      },
+      "privateFailureCodePrefix": "BF_ADJUST03_",
+      "publicFeedbackCategory": "dispute-refund-serialization"
+    },
+    {
+      "caseId": "ADJUST-04",
+      "requirement": {
+        "id": "BF-APPEND-ONLY-ADJUSTMENT",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Only an append-only next-period Adjustment may correct original postings without altering CLOSED settlement history."
+      },
+      "privateFailureCodePrefix": "BF_ADJUST04_",
+      "publicFeedbackCategory": "append-only-adjustment"
+    },
+    {
+      "caseId": "COMPAT-01",
+      "requirement": {
+        "id": "BF-V1-MIGRATION",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "Populated billing resources, ledger, work, events and exact replay survive same-final-system restart and repeated initialization."
+      },
+      "privateFailureCodePrefix": "BF_COMPAT01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "COMPAT-02",
+      "requirement": {
+        "id": "BF-INFLIGHT-MIGRATION",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "UNKNOWN identity survives same-final-system process replacement and later resolves through a public provider fact."
+      },
+      "privateFailureCodePrefix": "BF_COMPAT02_",
+      "publicFeedbackCategory": "inflight-compatibility"
+    },
+    {
+      "caseId": "COMPAT-03",
+      "requirement": {
+        "id": "BF-SNAPSHOT",
+        "source": "workspace/README.md#seed-and-snapshot",
+        "summary": "Public seed replay and point-in-time snapshots remain atomic, sorted and accounting-consistent."
+      },
+      "privateFailureCodePrefix": "BF_COMPAT03_",
+      "publicFeedbackCategory": "snapshot-compatibility"
+    },
+    {
+      "caseId": "COMPAT-04",
+      "requirement": {
+        "id": "BF-CROSS-LAYER-COMPAT",
+        "source": "orchestration/manager-prompt.zh-CN.md",
+        "summary": "The final system exposes original billing and append-only next-period correction through public APIs, ledger and browser."
+      },
+      "privateFailureCodePrefix": "BF_COMPAT04_",
+      "publicFeedbackCategory": "cross-layer-compatibility"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

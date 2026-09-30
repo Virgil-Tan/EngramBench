@@ -1,0 +1,2585 @@
+{
+  "taskId": "firmwarefleet",
+  "title": "FirmwareFleet",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "deviceModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceModel"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Device"
+          }
+        },
+        "firmwareImages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedFirmwareImage"
+          }
+        },
+        "campaigns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FirmwareCampaign"
+          }
+        },
+        "deviceUpdates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyDeviceUpdate"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceCommand"
+          }
+        },
+        "reports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceReport"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "deviceModels",
+        "devices",
+        "firmwareImages",
+        "campaigns",
+        "deviceUpdates",
+        "commands",
+        "reports"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-firmwarefleet-v2",
+      "deviceModels": [
+        {
+          "modelId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Device Model"
+        }
+      ],
+      "devices": [
+        {
+          "deviceId": "00000000-0000-4000-8000-000000000002",
+          "modelId": "00000000-0000-4000-8000-000000000001",
+          "labels": {
+            "fleet": "public"
+          },
+          "installedVersion": "1.0.0",
+          "installedDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "lastReportSequence": 0
+        }
+      ],
+      "firmwareImages": [],
+      "campaigns": [],
+      "deviceUpdates": [],
+      "commands": [],
+      "reports": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "COMMAND_DELIVERY",
+            "REPORT_TIMEOUT",
+            "ROLLBACK"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "campaign.created",
+            "device-update.started",
+            "firmware.installed",
+            "device-update.failed",
+            "device-update.rolled-back",
+            "campaign.completed"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceModel": {
+      "type": "object",
+      "properties": {
+        "modelId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "modelId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Device": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "modelId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "installedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "installedDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "lastReportSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "deviceId",
+        "modelId",
+        "labels",
+        "installedVersion",
+        "installedDigest",
+        "lastReportSequence"
+      ],
+      "additionalProperties": false
+    },
+    "FirmwareImage": {
+      "type": "object",
+      "properties": {
+        "firmwareImageId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "modelId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "downloadPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/firmware/[a-z0-9][a-z0-9._/-]{0,255}$"
+        },
+        "compatibleFromVersions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "firmwareImageId",
+        "modelId",
+        "version",
+        "sha256",
+        "size",
+        "downloadPath",
+        "compatibleFromVersions",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "FirmwareCampaign": {
+      "type": "object",
+      "properties": {
+        "campaignId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "firmwareImageId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "targetCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "targetDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "maxParallel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "reportTimeoutSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "campaignId",
+        "firmwareImageId",
+        "targetCount",
+        "targetDigest",
+        "maxParallel",
+        "reportTimeoutSeconds",
+        "state",
+        "createdAt",
+        "completedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyDeviceUpdate": {
+      "type": "object",
+      "properties": {
+        "deviceUpdateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "campaignId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priorVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "targetVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "state": {
+          "enum": [
+            "WAITING",
+            "DOWNLOADING",
+            "INSTALLING",
+            "VERIFYING",
+            "SUCCEEDED",
+            "FAILED",
+            "ROLLED_BACK",
+            "CANCELLED"
+          ]
+        },
+        "currentCommandSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "installedDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "deviceUpdateId",
+        "campaignId",
+        "deviceId",
+        "priorVersion",
+        "targetVersion",
+        "state",
+        "currentCommandSequence",
+        "installedDigest"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceCommand": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceUpdateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "DOWNLOAD",
+            "INSTALL",
+            "VERIFY",
+            "ROLLBACK"
+          ]
+        },
+        "imageDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "commandToken": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "commandId",
+        "deviceUpdateId",
+        "sequence",
+        "type",
+        "imageDigest",
+        "commandToken",
+        "createdAt",
+        "expiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceReport": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceUpdateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "commandId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "commandToken": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED"
+          ]
+        },
+        "installedDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "deviceId",
+        "deviceUpdateId",
+        "sequence",
+        "commandId",
+        "commandToken",
+        "outcome",
+        "installedDigest",
+        "reportedAt"
+      ],
+      "additionalProperties": false
+    },
+    "UpgradeHopAttempt": {
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "DOWNLOADING",
+            "INSTALLING",
+            "VERIFYING",
+            "SUCCEEDED",
+            "FAILED",
+            "ROLLED_BACK"
+          ]
+        },
+        "firstCommandSequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "lastCommandSequence": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "attempt",
+        "state",
+        "firstCommandSequence",
+        "lastCommandSequence",
+        "startedAt",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "UpgradeHop": {
+      "type": "object",
+      "properties": {
+        "hopIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "firmwareImageId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "fromVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "toVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "imageDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "WAITING",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED"
+          ]
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpgradeHopAttempt"
+          }
+        }
+      },
+      "required": [
+        "hopIndex",
+        "firmwareImageId",
+        "fromVersion",
+        "toVersion",
+        "imageDigest",
+        "state",
+        "attempts"
+      ],
+      "additionalProperties": false
+    },
+    "UpgradePlan": {
+      "type": "object",
+      "properties": {
+        "deviceUpdateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sourceVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "targetVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "pathDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "currentHopIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "hops": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpgradeHop"
+          },
+          "minItems": 1,
+          "maxItems": 5
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "deviceUpdateId",
+        "sourceVersion",
+        "targetVersion",
+        "pathDigest",
+        "currentHopIndex",
+        "hops",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "MultiHopDeviceUpdate": {
+      "type": "object",
+      "properties": {
+        "deviceUpdateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "campaignId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priorVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "targetVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "state": {
+          "enum": [
+            "WAITING",
+            "DOWNLOADING",
+            "INSTALLING",
+            "VERIFYING",
+            "SUCCEEDED",
+            "FAILED",
+            "ROLLED_BACK",
+            "CANCELLED"
+          ]
+        },
+        "currentCommandSequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "installedDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "upgradePlan": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpgradeHop"
+          },
+          "minItems": 2,
+          "maxItems": 5
+        },
+        "currentHopIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        }
+      },
+      "required": [
+        "deviceUpdateId",
+        "campaignId",
+        "deviceId",
+        "priorVersion",
+        "targetVersion",
+        "state",
+        "currentCommandSequence",
+        "installedDigest",
+        "upgradePlan",
+        "currentHopIndex"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceUpdate": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/LegacyDeviceUpdate"
+        },
+        {
+          "$ref": "#/$defs/MultiHopDeviceUpdate"
+        }
+      ]
+    },
+    "DeviceCommandPollResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "const": "COMMAND"
+            },
+            "command": {
+              "$ref": "#/$defs/DeviceCommand"
+            }
+          },
+          "required": [
+            "status",
+            "command"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "const": "NO_CHANGE"
+            },
+            "command": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "status",
+            "command"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "SnapshotDeviceCommand": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceUpdateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "DOWNLOAD",
+            "INSTALL",
+            "VERIFY",
+            "ROLLBACK"
+          ]
+        },
+        "imageDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "commandId",
+        "deviceUpdateId",
+        "sequence",
+        "type",
+        "imageDigest",
+        "createdAt",
+        "expiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotDeviceReport": {
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "deviceUpdateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "commandId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "outcome": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED"
+          ]
+        },
+        "installedDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "deviceId",
+        "deviceUpdateId",
+        "sequence",
+        "commandId",
+        "outcome",
+        "installedDigest",
+        "reportedAt"
+      ],
+      "additionalProperties": false
+    },
+    "SeedFirmwareImage": {
+      "type": "object",
+      "properties": {
+        "firmwareImageId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "modelId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "downloadPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/firmware/[a-z0-9][a-z0-9._/-]{0,255}$"
+        },
+        "compatibleFromVersions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "assetPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\\\]+$"
+        }
+      },
+      "required": [
+        "firmwareImageId",
+        "modelId",
+        "version",
+        "sha256",
+        "size",
+        "downloadPath",
+        "compatibleFromVersions",
+        "createdAt",
+        "assetPath"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "deviceModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceModel"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Device"
+          }
+        },
+        "firmwareImages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedFirmwareImage"
+          }
+        },
+        "campaigns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FirmwareCampaign"
+          }
+        },
+        "deviceUpdates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyDeviceUpdate"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceCommand"
+          }
+        },
+        "reports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceReport"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "deviceModels",
+        "devices",
+        "firmwareImages",
+        "campaigns",
+        "deviceUpdates",
+        "commands",
+        "reports"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "deviceModels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceModel"
+          }
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Device"
+          }
+        },
+        "firmwareImages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FirmwareImage"
+          }
+        },
+        "firmwareCampaigns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FirmwareCampaign"
+          }
+        },
+        "deviceUpdates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeviceUpdate"
+          }
+        },
+        "deviceCommands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotDeviceCommand"
+          }
+        },
+        "deviceReports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotDeviceReport"
+          }
+        },
+        "upgradePlans": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpgradePlan"
+          }
+        }
+      },
+      "required": [
+        "deviceModels",
+        "devices",
+        "firmwareImages",
+        "firmwareCampaigns",
+        "deviceUpdates",
+        "deviceCommands",
+        "deviceReports",
+        "upgradePlans"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "list-firmware-campaigns",
+      "method": "GET",
+      "path": "/api/v1/firmware-campaigns",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FirmwareCampaign"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-firmware-campaign",
+      "method": "GET",
+      "path": "/api/v1/firmware-campaigns/:campaignId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/FirmwareCampaign"
+      },
+      "example": {
+        "params": {
+          "campaignId": "00000000-0000-4000-8000-000000000004"
+        }
+      },
+      "parameters": [
+        {
+          "name": "campaignId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-firmware-campaign",
+      "method": "POST",
+      "path": "/api/v1/firmware-campaigns",
+      "status": 202,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "firmwareImageId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "selector": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "labels": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "modelId",
+              "labels"
+            ],
+            "additionalProperties": false
+          },
+          "maxParallel": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "reportTimeoutSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "firmwareImageId",
+          "selector",
+          "maxParallel",
+          "reportTimeoutSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/FirmwareCampaign"
+      },
+      "example": {
+        "body": {
+          "firmwareImageId": "00000000-0000-4000-8000-000000000003",
+          "selector": {
+            "modelId": "00000000-0000-4000-8000-000000000001",
+            "labels": {
+              "fleet": "public"
+            }
+          },
+          "maxParallel": 1,
+          "reportTimeoutSeconds": 30
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-firmware-campaign"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-firmware-image",
+      "method": "POST",
+      "path": "/api/v1/firmware-images",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "modelId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483648
+          },
+          "downloadPath": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^/firmware/[a-z0-9][a-z0-9._/-]{0,255}$"
+          },
+          "compatibleFromVersions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^(?:0|[1-9][0-9]*)(?:\\.(?:0|[1-9][0-9]*)){0,7}$"
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "modelId",
+          "version",
+          "sha256",
+          "size",
+          "downloadPath",
+          "compatibleFromVersions"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/FirmwareImage"
+      },
+      "example": {
+        "body": {
+          "modelId": "00000000-0000-4000-8000-000000000001",
+          "version": "2.0.0",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "size": 5,
+          "downloadPath": "/firmware/public-v2.bin",
+          "compatibleFromVersions": [
+            "1.0.0"
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-firmware-image"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "poll-device-command",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/commands/poll",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "lastCommandSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "lastCommandSequence"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/DeviceCommandPollResponse"
+      },
+      "example": {
+        "params": {
+          "deviceId": "00000000-0000-4000-8000-000000000002"
+        },
+        "body": {
+          "lastCommandSequence": 0
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-poll-device-command"
+        }
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "report-device-batch",
+      "method": "POST",
+      "path": "/api/v1/devices/:deviceId/report-batches",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "firstSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sequence": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "commandId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "commandToken": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "outcome": {
+                  "enum": [
+                    "SUCCEEDED",
+                    "FAILED"
+                  ]
+                },
+                "installedDigest": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "sequence",
+                "commandId",
+                "commandToken",
+                "outcome",
+                "installedDigest"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "firstSequence",
+          "reports"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/DeviceReport"
+        }
+      },
+      "example": {
+        "params": {
+          "deviceId": "00000000-0000-4000-8000-000000000002"
+        },
+        "body": {
+          "firstSequence": 1,
+          "reports": [
+            {
+              "sequence": 1,
+              "commandId": "00000000-0000-4000-8000-000000000006",
+              "commandToken": "public-example-command-token",
+              "outcome": "SUCCEEDED",
+              "installedDigest": null
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-report-device-batch"
+        }
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel-firmware-campaign",
+      "method": "POST",
+      "path": "/api/v1/firmware-campaigns/:campaignId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/FirmwareCampaign"
+      },
+      "example": {
+        "params": {
+          "campaignId": "00000000-0000-4000-8000-000000000004"
+        },
+        "body": {
+          "reason": "Public cancellation"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-cancel-firmware-campaign"
+        }
+      },
+      "parameters": [
+        {
+          "name": "campaignId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-device-updates",
+      "method": "GET",
+      "path": "/api/v1/devices/:deviceId/updates",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DeviceUpdate"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "deviceId": "00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "parameters": [
+        {
+          "name": "deviceId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-campaign-updates",
+      "method": "GET",
+      "path": "/api/v1/firmware-campaigns/:campaignId/updates",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DeviceUpdate"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "campaignId": "00000000-0000-4000-8000-000000000004"
+        }
+      },
+      "parameters": [
+        {
+          "name": "campaignId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "aggregateId": "00000000-0000-4000-8000-000000000004",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-upgrade-plan",
+      "method": "GET",
+      "path": "/api/v1/device-updates/:deviceUpdateId/upgrade-plan",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/UpgradePlan"
+      },
+      "example": {
+        "params": {
+          "deviceUpdateId": "00000000-0000-4000-8000-000000000005"
+        }
+      },
+      "parameters": [
+        {
+          "name": "deviceUpdateId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "retry-device-update",
+      "method": "POST",
+      "path": "/api/v1/device-updates/:deviceUpdateId/retry",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedCurrentHopIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4
+          },
+          "expectedAttempt": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedCurrentHopIndex",
+          "expectedAttempt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/DeviceUpdate"
+      },
+      "example": {
+        "params": {
+          "deviceUpdateId": "00000000-0000-4000-8000-000000000005"
+        },
+        "body": {
+          "expectedCurrentHopIndex": 0,
+          "expectedAttempt": 1
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-retry-device-update"
+        }
+      },
+      "parameters": [
+        {
+          "name": "deviceUpdateId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "deviceModels"
+          ],
+          "match": {
+            "modelId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Device Model"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "devices"
+          ],
+          "match": {
+            "deviceId": "00000000-0000-4000-8000-000000000002",
+            "modelId": "00000000-0000-4000-8000-000000000001",
+            "labels": {
+              "fleet": "public"
+            },
+            "installedVersion": "1.0.0",
+            "installedDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "lastReportSequence": 0
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "poll-device-command",
+      "params": {
+        "deviceId": "00000000-0000-4000-8000-000000000002"
+      },
+      "body": {
+        "lastCommandSequence": 0
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-initial-poll"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "NO_CHANGE",
+        "command": null
+      }
+    },
+    {
+      "operationId": "create-firmware-image",
+      "body": {
+        "modelId": "00000000-0000-4000-8000-000000000001",
+        "version": "2.0.0",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "size": 5,
+        "downloadPath": "/firmware/public-v2.bin",
+        "compatibleFromVersions": [
+          "1.0.0"
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-create-firmware"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "modelId": "00000000-0000-4000-8000-000000000001",
+        "version": "2.0.0",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "size": 5,
+        "downloadPath": "/firmware/public-v2.bin",
+        "compatibleFromVersions": [
+          "1.0.0"
+        ]
+      },
+      "capture": {
+        "newFirmwareId": [
+          "firmwareImageId"
+        ]
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "firmwareImages"
+          ],
+          "match": {
+            "firmwareImageId": "${newFirmwareId}",
+            "modelId": "00000000-0000-4000-8000-000000000001",
+            "version": "2.0.0",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "size": 5,
+            "downloadPath": "/firmware/public-v2.bin",
+            "compatibleFromVersions": [
+              "1.0.0"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-firmware-campaign",
+      "body": {
+        "firmwareImageId": "${newFirmwareId}",
+        "selector": {
+          "modelId": "00000000-0000-4000-8000-000000000001",
+          "labels": {
+            "fleet": "public"
+          }
+        },
+        "maxParallel": 1,
+        "reportTimeoutSeconds": 30
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-create-campaign"
+      },
+      "expectStatus": 202,
+      "expectBody": {
+        "firmwareImageId": "${newFirmwareId}",
+        "targetCount": 1,
+        "maxParallel": 1
+      },
+      "capture": {
+        "newCampaignId": [
+          "campaignId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-firmware-campaign",
+      "params": {
+        "campaignId": "${newCampaignId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "campaignId": "${newCampaignId}",
+        "firmwareImageId": "${newFirmwareId}",
+        "targetCount": 1
+      }
+    },
+    {
+      "operationId": "read-campaign-updates",
+      "params": {
+        "campaignId": "${newCampaignId}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "campaignId": "${newCampaignId}",
+            "deviceId": "00000000-0000-4000-8000-000000000002",
+            "priorVersion": "1.0.0",
+            "targetVersion": "2.0.0"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 wire clarification: selector is {modelId,labels}, with labels a string equality map. Campaign creation returns the exact FirmwareCampaign at 202; targetCount, digest and progress are its published fields. Both device and campaign update reads return {items:[DeviceUpdate]}; report batches return a JSON array of DeviceReport. Reports and command polls expose only the command token needed by that Device.",
+    "V2 wire clarification: snapshot DeviceCommand and DeviceReport remove commandToken entirely, as the literal recursive Token omission requires; operational poll/report schemas retain it. Multi-hop DeviceUpdate adds upgradePlan:[UpgradeHop] and currentHopIndex, while one-hop compatibility responses retain the exact legacy shape. Full UpgradePlan is always available through its dedicated read and FINAL snapshot.",
+    "The minimal seed is one DeviceModel with one idle Device and no FirmwareImages, Campaigns or byte assets. Registering FirmwareImage publishes immutable metadata and a device downloadPath, and requires no upload of bytes to the API. Seeded FirmwareImages, when present, must include fully verified fixture bytes. Every numeric version component must also be a JSON-safe integer; path segments must reject empty, dot and dot-dot independently of the pattern.",
+    "Upgrade-plan retry returns the changed DeviceUpdate; successful earlier hops are immutable. Hops and attempts retain global increasing command/report sequences. Domain-event reads return {items:[DomainEvent]} with aggregateId required and default afterSequence=0. Legacy public performance and recovery requirements are unchanged.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 2,
+  "taskId": "artifactvault",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Upload stream, verification and seed contract", "weight": 30 },
+    "B": { "title": "Content identity, atomic Release and idempotency", "weight": 25 },
+    "C": { "title": "GC, leased recovery, outbox and recovery load", "weight": 20 },
+    "D": { "title": "OpenAPI, Chromium, snapshot and post-load closure", "weight": 15 },
+    "E": { "title": "Migration and fixed HTTP performance", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "DOMAIN_ATOMICITY", "cap": 35, "publicInvariant": "Committed bytes, Blob References, Release publication, range rejection and terminal effects remain atomic and conserved." },
+    { "id": "IDEMPOTENCY_CORRECTNESS", "cap": 30, "publicInvariant": "Unknown, concurrent and restart replay never creates a second business effect." },
+    { "id": "EVENT_CORRECTNESS", "cap": 40, "publicInvariant": "Committed transitions have one stable Event and rollback has none; retries preserve identity and semantic body." },
+    { "id": "WORK_RECOVERY_CORRECTNESS", "cap": 40, "publicInvariant": "Pending Work survives process death and stale lease owners cannot publish or collect content." },
+    { "id": "MIGRATION_CORRECTNESS", "cap": 35, "publicInvariant": "Migration preserves bytes, identities, ETags, events, saved replay, deadlines and old-client response bodies." }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-AV-01", "summary": "No new Manager Domain Event type name is published; the evaluator requires no invented type." },
+    { "id": "SPEC-GAP-AV-02", "summary": "No Release collection endpoint is published; UI cases use detail and navigation without inventing one." }
+  ],
+  "cases": [
+    { "id":"STREAM-01","title":"Sequential Content-Range and exact replay","dimension":"A","weight":6,"prerequisites":["FINAL"] },
+    { "id":"STREAM-02","title":"Atomic gap overlap and different-byte rejection","dimension":"A","weight":6,"prerequisites":["FINAL"] },
+    { "id":"STREAM-03","title":"Streaming declared size and digest verification","dimension":"A","weight":6,"prerequisites":["FINAL"] },
+    { "id":"STREAM-04","title":"Cross-Package content-addressed deduplication","dimension":"B","weight":5,"prerequisites":["FINAL"] },
+    { "id":"STREAM-05","title":"ETag Range download and immutable content","dimension":"A","weight":6,"prerequisites":["FINAL"] },
+    { "id":"RELEASE-01","title":"Independent verified Release members without early references","dimension":"B","weight":5,"prerequisites":["FINAL"] },
+    { "id":"RELEASE-02","title":"Canonical manifest and atomic all-member publication","dimension":"B","weight":5,"prerequisites":["FINAL"] },
+    { "id":"RELEASE-03","title":"Rejected abandoned and retry members never leak versions","dimension":"B","weight":5,"prerequisites":["FINAL"] },
+    { "id":"RELEASE-04","title":"Platform download OpenAPI UI and snapshot closure","dimension":"D","weight":4,"prerequisites":["FINAL"] },
+    { "id":"RELEASE-05","title":"Reference-safe grace and second-check garbage collection","dimension":"C","weight":5,"prerequisites":["FINAL"] },
+    { "id":"RACE-01","title":"Complete and publish unknown-response durable replay","dimension":"B","weight":5,"prerequisites":["FINAL"] },
+    { "id":"RACE-02","title":"Cross-layer V1 and Release version uniqueness race","dimension":"D","weight":4,"prerequisites":["FINAL"] },
+    { "id":"RACE-03","title":"Verification expiry and GC lease fencing","dimension":"C","weight":5,"prerequisites":["FINAL"] },
+    { "id":"RACE-04","title":"Outbox unknown acknowledgement stable body","dimension":"C","weight":5,"prerequisites":["FINAL"] },
+    { "id":"MIGRATE-01","title":"V1 default-platform mapping with zero Blob rewrite","dimension":"E","weight":2.5,"prerequisites":["V1","FINAL"] },
+    { "id":"MIGRATE-02","title":"Pending verification and expiry deadline preservation","dimension":"E","weight":2.5,"prerequisites":["V1","FINAL"] },
+    { "id":"MIGRATE-03","title":"Atomic V1 Artifact and Blob seed compatibility","dimension":"A","weight":6,"prerequisites":["FINAL"] },
+    { "id":"MIGRATE-04","title":"Release UI OpenAPI and snapshot dual-shape evidence","dimension":"D","weight":4,"prerequisites":["V1","FINAL"] },
+    { "id":"LOAD-01","title":"Twenty concurrent 64 MiB upload streams","dimension":"E","weight":2.5,"prerequisites":["FINAL","PERF"] },
+    { "id":"LOAD-02","title":"Sustained Artifact metadata reads","dimension":"E","weight":2.5,"prerequisites":["FINAL","PERF"] },
+    { "id":"LOAD-03","title":"Two GiB verification crash recovery","dimension":"C","weight":5,"prerequisites":["FINAL","PERF"] },
+    { "id":"LOAD-04","title":"Post-load snapshot download and Event closure","dimension":"D","weight":3,"prerequisites":["FINAL","PERF"] }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "personaId": "mediadock-delivery-lead",
+  "taskId": "mediadock",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, worker, dispatcher, and production UI using only published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"upload-integrity","category":"correctness","requirement":"Upload sessions, Content-Range, part digests, resumable replay, complete races, whole-object digest, and atomic assembly agree with the public contract.","weight":14,"testGates":["H-02","H-03","H-04","H-05","H-06"]},
+    {"id":"scan-gate","category":"correctness","requirement":"Only CLEAN assets can be accessed or transcoded; infected, failed, unknown, duplicated, and reordered scan outcomes converge without bypassing quarantine.","weight":11,"testGates":["H-03","H-07"]},
+    {"id":"transcode-recovery","category":"correctness","requirement":"Transcode identities, staging output, verified digest promotion, retry exhaustion, and Worker death produce one complete Rendition and no partial publication.","weight":12,"testGates":["H-06","H-07","H-12"]},
+    {"id":"temporary-access","category":"correctness","requirement":"Access grants are short-lived, revocable, tenant-scoped, revision-bound capabilities with correct Range behavior and no raw-token or path leakage.","weight":10,"testGates":["H-02","H-05","H-10"]},
+    {"id":"cleanup-safety","category":"correctness","requirement":"Cleanup uses a frozen reachability decision, survives Worker death, removes eligible staging/orphan/expired data, and never deletes any live or leased object.","weight":12,"testGates":["H-08","H-09","H-11","H-12"]},
+    {"id":"manager-publication","category":"correctness","requirement":"Manager MediaAlias publication is revisioned, atomic, non-tearing, grant-pinned, cleanup-safe, and compare-and-swap correct under concurrent publish.","weight":12,"testGates":["H-09","H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three sustained scenarios meet throughput, latency, recovery, digest, reference, cleanup, and resource requirements.","weight":9,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The repository owns meaningful unit, real PostgreSQL/filesystem integration, production Chromium, multi-process concurrency, SIGKILL recovery, invariant, aggregate, and performance commands.","weight":7,"testGates":["H-13"]},
+    {"id":"security-isolation","category":"correctness","requirement":"Tenant data, upload bytes, raw tokens, scanner input, managed paths, signing material, and physical deduplication facts never cross or leak.","weight":4,"testGates":["H-02","H-04","H-12"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains ownership, byte flow, state transitions, failure recovery, lifecycle boundaries, and review findings clearly.","weight":2},
+    {"id":"evidence-quality","category":"persona","requirement":"Every stage and final handoff reports actual commands, results, risks, and checks not run accurately.","weight":2}
+  ]
+}

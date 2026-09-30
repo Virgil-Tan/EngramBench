@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 2,
+  "taskId": "configrelay",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": { "id": "CR-CONFIGURATION-RUNTIME", "source": "workspace/README.md#http-and-openapi-31", "summary": "Configuration publication accepts every bounded RFC 8785 JSON value, derives a contiguous revision and canonical SHA-256 digest, and rejects invalid requests atomically." },
+      "privateFailureCodePrefix": "CR_A01_",
+      "publicFeedbackCategory": "configuration-contract"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": { "id": "CR-LEGACY-DEPLOYMENT", "source": "workspace/README.md#http-and-openapi-31", "summary": "Legacy create, detail and cancel preserve the exact V1 Deployment surface and frozen selector result." },
+      "privateFailureCodePrefix": "CR_A02_",
+      "publicFeedbackCategory": "legacy-deployment"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": { "id": "CR-AGENT-COMMAND-RUNTIME", "source": "workspace/README.md#mandatory-invariants", "summary": "Poll returns the current complete command or exact NO_CHANGE and acknowledgements validate the complete tuple, sequence and current token." },
+      "privateFailureCodePrefix": "CR_A03_",
+      "publicFeedbackCategory": "agent-command"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": { "id": "CR-STAGED-DEPLOYMENT", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Staged plans have one through twenty ordered, valid, exact-one partition Cohorts while an omitted plan remains a V1 Deployment." },
+      "privateFailureCodePrefix": "CR_A04_",
+      "publicFeedbackCategory": "staged-deployment"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": { "id": "CR-ROLLOUT-WIRE", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Staged poll and detail expose exact RolloutCommand and DeploymentRollback shapes without contaminating legacy resources or inventing rollback Events." },
+      "privateFailureCodePrefix": "CR_A05_",
+      "publicFeedbackCategory": "rollout-wire"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": { "id": "CR-FROZEN-ORDER", "source": "workspace/README.md#deterministic-policy", "summary": "Deployment membership is an immutable sorted selector snapshot and every Agent receives only its lowest nonterminal gapless command with stable identity." },
+      "privateFailureCodePrefix": "CR_B01_",
+      "publicFeedbackCategory": "frozen-command-order"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": { "id": "CR-DURABLE-REPLAY", "source": "workspace/README.md#durable-idempotency", "summary": "Concurrent, unknown-response and post-restart replay creates one Deployment, acknowledgement or cancellation effect for method, canonical path and key scope." },
+      "privateFailureCodePrefix": "CR_B02_",
+      "publicFeedbackCategory": "idempotency"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": { "id": "CR-COHORT-HEALTH", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Cohort membership, conserved counts and integer basis-point health use frozen targetCount and count missing acknowledgements as failures at deadline." },
+      "privateFailureCodePrefix": "CR_B03_",
+      "publicFeedbackCategory": "cohort-health"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": { "id": "CR-COHORT-SUCCESSOR-GAP", "source": "evaluator/HIDDEN_TEST_V2_DESIGN.zh-CN.md#spec-gap", "summary": "Successor activation remains blocked until the public contract names its transition seam; the evaluator performs no inferred candidate action." },
+      "privateFailureCodePrefix": "CR_B04_",
+      "publicFeedbackCategory": "contract-diagnostic"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": { "id": "CR-ROLLBACK-AFFECTED-SET", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Cohort failure atomically freezes exactly the Agents changed by successful APPLY acknowledgements and creates one higher-sequence rollback command for each." },
+      "privateFailureCodePrefix": "CR_B05_",
+      "publicFeedbackCategory": "rollback-membership"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": { "id": "CR-ASSIGNMENT-RECOVERY", "source": "workspace/README.md#controlled-recovery-barrier", "summary": "ASSIGNMENT_DELIVERY survives process death at every published worker barrier while retaining Work and stable delivery identity." },
+      "privateFailureCodePrefix": "CR_C01_",
+      "publicFeedbackCategory": "assignment-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": { "id": "CR-DEADLINE-RECOVERY", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "COHORT_DEADLINE and the final acknowledgement have one durable cohort verdict under either commit order and stale owners are fenced." },
+      "privateFailureCodePrefix": "CR_C02_",
+      "publicFeedbackCategory": "deadline-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": { "id": "CR-ROLLBACK-RECOVERY", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "ROLLBACK_DELIVERY recovery preserves its frozen fanout and command identities across all worker crash windows and closes only after every command is terminal." },
+      "privateFailureCodePrefix": "CR_C03_",
+      "publicFeedbackCategory": "rollback-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": { "id": "CR-OUTBOX-RECOVERY", "source": "workspace/README.md#workers-events-and-recovery", "summary": "Unknown webhook acknowledgements retry the same Event identity and semantic body while preserving successful aggregate sequence order." },
+      "privateFailureCodePrefix": "CR_C04_",
+      "publicFeedbackCategory": "outbox-recovery"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": { "id": "CR-SEED-OPENAPI", "source": "workspace/README.md#seed-contract", "summary": "An exact V1 seed graph imports atomically and triangulates with public runtime and OpenAPI shapes, references, nullability and errors." },
+      "privateFailureCodePrefix": "CR_D01_",
+      "publicFeedbackCategory": "seed-openapi"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": { "id": "CR-BROWSER-LEGACY", "source": "workspace/README.md#real-ui", "summary": "Production Chromium completes a legacy Configuration and Deployment flow through visible API-backed controls at desktop and mobile viewports." },
+      "privateFailureCodePrefix": "CR_D02_",
+      "publicFeedbackCategory": "browser-legacy"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": { "id": "CR-BROWSER-STAGED", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Production Chromium creates and observes a staged Cohort failure and automatic rollback with identities and counts matching public Agent and snapshot observations." },
+      "privateFailureCodePrefix": "CR_D03_",
+      "publicFeedbackCategory": "browser-staged"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": { "id": "CR-FINAL-SNAPSHOT", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "The FINAL snapshot is one exact sorted point-in-time union of eight resource groups, three Work kinds and ordered token-redacted Events." },
+      "privateFailureCodePrefix": "CR_D04_",
+      "publicFeedbackCategory": "snapshot"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": { "id": "CR-PERF-POLL", "source": "workspace/README.md#scenario-agent-poll", "summary": "The exact 64-client 100000-Agent poll mix sustains 2000 successful responses per second at p95 80 ms without identity mix-up." },
+      "privateFailureCodePrefix": "CR_E01_",
+      "publicFeedbackCategory": "poll-performance"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": { "id": "CR-PERF-ACK", "source": "workspace/README.md#scenario-acknowledgement-ingest", "summary": "The exact APPLIED, REJECTED and replay mix sustains 1000 responses per second at p95 180 ms with one effect per Assignment." },
+      "privateFailureCodePrefix": "CR_E02_",
+      "publicFeedbackCategory": "ack-performance"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": { "id": "CR-PERF-DELIVERY", "source": "workspace/README.md#scenario-assignment-delivery-recovery", "summary": "Two replacement workers deliver the exact 50000-Assignment backlog within 120 seconds after claimed-worker death and preserve all delivery identities." },
+      "privateFailureCodePrefix": "CR_E03_",
+      "publicFeedbackCategory": "delivery-performance"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": { "id": "CR-V1-FINAL-MIGRATION", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "A populated V1 database upgrades without rewriting targets, Assignments, tokens, acknowledgements, Work, Events, delivery bodies or saved replay results." },
+      "privateFailureCodePrefix": "CR_E04_",
+      "publicFeedbackCategory": "compatibility"
+    }
+  ]
+}

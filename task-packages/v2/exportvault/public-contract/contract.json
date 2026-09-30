@@ -1,0 +1,2434 @@
+{
+  "taskId": "exportvault",
+  "title": "ExportVault",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT"
+  ],
+  "commands": [
+    "npm run build",
+    "npm run db:migrate",
+    "npm run db:seed -- --file <seed.json>",
+    "npm run dev",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "subjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportSubject"
+          }
+        },
+        "datasetRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DatasetRevision"
+          }
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedExport"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "subjects",
+        "datasetRevisions",
+        "exports"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "public-exportvault-v2",
+      "subjects": [
+        {
+          "subjectId": "00000000-0000-4000-8000-000000000001",
+          "name": "Public Export Subject",
+          "currentDatasetRevision": 1
+        }
+      ],
+      "datasetRevisions": [
+        {
+          "subjectId": "00000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "committedAt": "2026-01-01T00:00:00.000Z",
+          "records": [
+            {
+              "recordId": "00000000-0000-4000-8000-000000000002",
+              "scope": "profile",
+              "data": {
+                "message": "Public example"
+              }
+            }
+          ]
+        }
+      ],
+      "exports": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "AuditCheckpoint": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "tenantId",
+        "sequence",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "properties": {
+        "auditEntryId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payloadDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "priorDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "auditEntryId",
+        "tenantId",
+        "sequence",
+        "eventType",
+        "subjectRef",
+        "payloadDigest",
+        "priorDigest",
+        "digest",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "EXPORT_GENERATION",
+            "EXPORT_CLEANUP"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "enum": [
+            "export.requested",
+            "export.ready",
+            "export.failed",
+            "export.cancelled",
+            "export.expired",
+            "export.deleted",
+            "download-grant.revoked"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "ExportSubject": {
+      "type": "object",
+      "properties": {
+        "subjectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currentDatasetRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "subjectId",
+        "name",
+        "currentDatasetRevision"
+      ],
+      "additionalProperties": false
+    },
+    "DatasetRecord": {
+      "type": "object",
+      "properties": {
+        "recordId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "scope": {
+          "enum": [
+            "profile",
+            "activity",
+            "orders",
+            "files"
+          ]
+        },
+        "data": {
+          "$ref": "#/$defs/JsonValue"
+        }
+      },
+      "required": [
+        "recordId",
+        "scope",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "DatasetRevision": {
+      "type": "object",
+      "properties": {
+        "subjectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DatasetRecord"
+          }
+        }
+      },
+      "required": [
+        "subjectId",
+        "revision",
+        "committedAt",
+        "records"
+      ],
+      "additionalProperties": false
+    },
+    "DatasetRevisionSummary": {
+      "type": "object",
+      "properties": {
+        "subjectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "committedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "recordsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "subjectId",
+        "revision",
+        "committedAt",
+        "recordCount",
+        "recordsDigest"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyExport": {
+      "type": "object",
+      "properties": {
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "profile",
+              "activity",
+              "orders",
+              "files"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        },
+        "format": {
+          "enum": [
+            "JSONL",
+            "CSV"
+          ]
+        },
+        "datasetRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "REQUESTED",
+            "GENERATING",
+            "READY",
+            "EXPIRED",
+            "CANCELLED",
+            "FAILED"
+          ]
+        },
+        "object": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "mediaType": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "sha256",
+                "size",
+                "mediaType"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retentionUntil": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "readyAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "exportId",
+        "subjectId",
+        "scope",
+        "format",
+        "datasetRevision",
+        "state",
+        "object",
+        "retentionUntil",
+        "createdAt",
+        "readyAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ExportSection": {
+      "type": "object",
+      "properties": {
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "enum": [
+            "profile",
+            "activity",
+            "orders",
+            "files"
+          ]
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "firstRecordId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastRecordId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "WRITTEN",
+            "VERIFIED"
+          ]
+        }
+      },
+      "required": [
+        "exportId",
+        "name",
+        "recordCount",
+        "firstRecordId",
+        "lastRecordId",
+        "digest",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "DownloadGrant": {
+      "type": "object",
+      "properties": {
+        "grantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "grantId",
+        "exportId",
+        "expiresAt",
+        "revokedAt",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "DeletionProof": {
+      "type": "object",
+      "properties": {
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "objectSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "reason": {
+          "enum": [
+            "EXPIRED",
+            "CANCELLED"
+          ]
+        },
+        "deletedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "proofDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "exportId",
+        "objectSha256",
+        "reason",
+        "deletedAt",
+        "proofDigest"
+      ],
+      "additionalProperties": false
+    },
+    "ExportShard": {
+      "type": "object",
+      "properties": {
+        "shardId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "section": {
+          "enum": [
+            "profile",
+            "activity",
+            "orders",
+            "files"
+          ]
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "afterRecordId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "throughRecordId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "afterRecordId",
+            "throughRecordId"
+          ],
+          "additionalProperties": false
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "GENERATING",
+            "VERIFIED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "object": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "mediaType": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "sha256",
+                "size",
+                "mediaType"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "shardId",
+        "exportId",
+        "ordinal",
+        "section",
+        "range",
+        "recordCount",
+        "state",
+        "object"
+      ],
+      "additionalProperties": false
+    },
+    "ExportManifest": {
+      "type": "object",
+      "properties": {
+        "manifestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "canonicalDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "object": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "mediaType": {
+              "const": "application/json"
+            }
+          },
+          "required": [
+            "sha256",
+            "size",
+            "mediaType"
+          ],
+          "additionalProperties": false
+        },
+        "shards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "shardId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "ordinal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "section": {
+                "enum": [
+                  "profile",
+                  "activity",
+                  "orders",
+                  "files"
+                ]
+              },
+              "range": {
+                "type": "object",
+                "properties": {
+                  "afterRecordId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "throughRecordId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  }
+                },
+                "required": [
+                  "afterRecordId",
+                  "throughRecordId"
+                ],
+                "additionalProperties": false
+              },
+              "recordCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "mediaType": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "shardId",
+              "ordinal",
+              "section",
+              "range",
+              "recordCount",
+              "sha256",
+              "size",
+              "mediaType"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 2,
+          "maxItems": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "manifestId",
+        "exportId",
+        "canonicalDigest",
+        "object",
+        "shards",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ShardedDownloadGrant": {
+      "type": "object",
+      "properties": {
+        "grantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "target": {
+          "enum": [
+            "MANIFEST",
+            "SHARD"
+          ]
+        },
+        "shardId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "grantId",
+        "exportId",
+        "target",
+        "shardId",
+        "expiresAt",
+        "revokedAt",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "ShardedExport": {
+      "type": "object",
+      "properties": {
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "profile",
+              "activity",
+              "orders",
+              "files"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        },
+        "format": {
+          "enum": [
+            "JSONL",
+            "CSV"
+          ]
+        },
+        "datasetRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "REQUESTED",
+            "GENERATING",
+            "READY",
+            "EXPIRED",
+            "CANCELLED",
+            "FAILED"
+          ]
+        },
+        "object": {
+          "type": "null"
+        },
+        "retentionUntil": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "readyAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "manifest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportManifest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "shards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportShard"
+          },
+          "minItems": 2,
+          "maxItems": 100
+        }
+      },
+      "required": [
+        "exportId",
+        "subjectId",
+        "scope",
+        "format",
+        "datasetRevision",
+        "state",
+        "object",
+        "retentionUntil",
+        "createdAt",
+        "readyAt",
+        "sequence",
+        "manifest",
+        "shards"
+      ],
+      "additionalProperties": false
+    },
+    "Export": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/LegacyExport"
+        },
+        {
+          "$ref": "#/$defs/ShardedExport"
+        }
+      ]
+    },
+    "Grant": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/DownloadGrant"
+        },
+        {
+          "$ref": "#/$defs/ShardedDownloadGrant"
+        }
+      ]
+    },
+    "SeedExport": {
+      "type": "object",
+      "properties": {
+        "exportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "subjectId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "profile",
+              "activity",
+              "orders",
+              "files"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        },
+        "format": {
+          "enum": [
+            "JSONL",
+            "CSV"
+          ]
+        },
+        "datasetRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "REQUESTED",
+            "GENERATING",
+            "READY",
+            "EXPIRED",
+            "CANCELLED",
+            "FAILED"
+          ]
+        },
+        "object": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "mediaType": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "sha256",
+                "size",
+                "mediaType"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retentionUntil": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "readyAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "assetPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\\\]+$"
+        }
+      },
+      "required": [
+        "exportId",
+        "subjectId",
+        "scope",
+        "format",
+        "datasetRevision",
+        "state",
+        "object",
+        "retentionUntil",
+        "createdAt",
+        "readyAt",
+        "sequence"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "READY"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "assetPath"
+            ],
+            "properties": {
+              "object": {
+                "type": "object",
+                "properties": {
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "mediaType": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "sha256",
+                  "size",
+                  "mediaType"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "subjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportSubject"
+          }
+        },
+        "datasetRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DatasetRevision"
+          }
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedExport"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "subjects",
+        "datasetRevisions",
+        "exports"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotResources": {
+      "type": "object",
+      "properties": {
+        "subjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportSubject"
+          }
+        },
+        "datasetRevisionSummaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DatasetRevisionSummary"
+          }
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Export"
+          }
+        },
+        "exportSections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportSection"
+          }
+        },
+        "downloadGrants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DownloadGrant"
+          }
+        },
+        "deletionProofs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DeletionProof"
+          }
+        },
+        "exportShards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportShard"
+          }
+        },
+        "exportManifests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExportManifest"
+          }
+        },
+        "shardedDownloadGrants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ShardedDownloadGrant"
+          }
+        }
+      },
+      "required": [
+        "subjects",
+        "datasetRevisionSummaries",
+        "exports",
+        "exportSections",
+        "downloadGrants",
+        "deletionProofs",
+        "exportShards",
+        "exportManifests",
+        "shardedDownloadGrants"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "$ref": "#/$defs/SnapshotResources"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths",
+          "components"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "example": {},
+      "parameters": []
+    },
+    {
+      "id": "list-exports",
+      "method": "GET",
+      "path": "/api/v1/exports",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Export"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "read-export",
+      "method": "GET",
+      "path": "/api/v1/exports/:exportId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/Export"
+      },
+      "example": {
+        "params": {
+          "exportId": "00000000-0000-4000-8000-000000000003"
+        }
+      },
+      "parameters": [
+        {
+          "name": "exportId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-export",
+      "method": "POST",
+      "path": "/api/v1/exports",
+      "status": 202,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "profile",
+                "activity",
+                "orders",
+                "files"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "format": {
+            "enum": [
+              "JSONL",
+              "CSV"
+            ]
+          }
+        },
+        "required": [
+          "subjectId",
+          "scope",
+          "format"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Export"
+      },
+      "example": {
+        "body": {
+          "subjectId": "00000000-0000-4000-8000-000000000001",
+          "scope": [
+            "profile"
+          ],
+          "format": "JSONL"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-export"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel-export",
+      "method": "POST",
+      "path": "/api/v1/exports/:exportId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Export"
+      },
+      "example": {
+        "params": {
+          "exportId": "00000000-0000-4000-8000-000000000003"
+        },
+        "body": {
+          "reason": "Public cancellation"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-cancel-export"
+        }
+      },
+      "parameters": [
+        {
+          "name": "exportId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-download-grant",
+      "method": "POST",
+      "path": "/api/v1/exports/:exportId/download-grants",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md; docs/frontal-legacy/README.md",
+      "request": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "expiresInSeconds": {
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 900
+              }
+            },
+            "required": [
+              "expiresInSeconds"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "target": {
+                "const": "MANIFEST"
+              },
+              "expiresInSeconds": {
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 900
+              }
+            },
+            "required": [
+              "target",
+              "expiresInSeconds"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "target": {
+                "const": "SHARD"
+              },
+              "shardId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "expiresInSeconds": {
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 900
+              }
+            },
+            "required": [
+              "target",
+              "shardId",
+              "expiresInSeconds"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$ref": "#/$defs/Grant"
+      },
+      "example": {
+        "params": {
+          "exportId": "00000000-0000-4000-8000-000000000003"
+        },
+        "body": {
+          "expiresInSeconds": 300
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-create-download-grant"
+        }
+      },
+      "parameters": [
+        {
+          "name": "exportId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "revoke-download-grant",
+      "method": "POST",
+      "path": "/api/v1/download-grants/:grantId/revoke",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Grant"
+      },
+      "example": {
+        "params": {
+          "grantId": "00000000-0000-4000-8000-000000000004"
+        },
+        "body": {
+          "reason": "Public revoke"
+        },
+        "headers": {
+          "Idempotency-Key": "public-example-revoke-download-grant"
+        }
+      },
+      "parameters": [
+        {
+          "name": "grantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[!-~]+$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "download-grant-content",
+      "method": "GET",
+      "path": "/api/v1/download-grants/:grantId/content",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "string",
+        "contentMediaType": "application/octet-stream"
+      },
+      "example": {
+        "params": {
+          "grantId": "00000000-0000-4000-8000-000000000004"
+        }
+      },
+      "parameters": [
+        {
+          "name": "grantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Range",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^bytes=(?:[0-9]+-[0-9]*|-[0-9]+)$"
+          }
+        },
+        {
+          "name": "If-None-Match",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "successStatuses": [
+        200,
+        206,
+        304
+      ],
+      "successResponses": {
+        "206": {
+          "response": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream"
+          },
+          "description": "Exact range bytes with Content-Range, Content-Length and digest ETag."
+        },
+        "304": {
+          "description": "Empty body for unchanged object ETag."
+        }
+      }
+    },
+    {
+      "id": "read-export-sections",
+      "method": "GET",
+      "path": "/api/v1/exports/:exportId/sections",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ExportSection"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "params": {
+          "exportId": "00000000-0000-4000-8000-000000000003"
+        }
+      },
+      "parameters": [
+        {
+          "name": "exportId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ]
+    },
+    {
+      "id": "list-domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "example": {
+        "query": {
+          "aggregateId": "00000000-0000-4000-8000-000000000003",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      },
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        }
+      ]
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "subjects"
+          ],
+          "match": {
+            "subjectId": "00000000-0000-4000-8000-000000000001",
+            "name": "Public Export Subject",
+            "currentDatasetRevision": 1
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "datasetRevisionSummaries"
+          ],
+          "match": {
+            "subjectId": "00000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "recordCount": 1,
+            "recordsDigest": "7620d519e7922bae0b602bd8d1daaf284fda9f996629ca608a64db472bf79489"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-export",
+      "body": {
+        "subjectId": "00000000-0000-4000-8000-000000000001",
+        "scope": [
+          "profile"
+        ],
+        "format": "JSONL"
+      },
+      "headers": {
+        "Idempotency-Key": "smoke-create-export"
+      },
+      "expectStatus": 202,
+      "expectBody": {
+        "subjectId": "00000000-0000-4000-8000-000000000001",
+        "scope": [
+          "profile"
+        ],
+        "format": "JSONL",
+        "datasetRevision": 1,
+        "state": "REQUESTED"
+      },
+      "capture": {
+        "newExportId": [
+          "exportId"
+        ]
+      }
+    },
+    {
+      "operationId": "read-export",
+      "params": {
+        "exportId": "${newExportId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "exportId": "${newExportId}",
+        "subjectId": "00000000-0000-4000-8000-000000000001",
+        "scope": [
+          "profile"
+        ],
+        "format": "JSONL",
+        "datasetRevision": 1
+      }
+    },
+    {
+      "operationId": "list-exports",
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "exportId": "${newExportId}",
+            "subjectId": "00000000-0000-4000-8000-000000000001",
+            "datasetRevision": 1
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "exports"
+          ],
+          "match": {
+            "exportId": "${newExportId}",
+            "subjectId": "00000000-0000-4000-8000-000000000001",
+            "datasetRevision": 1
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The complete public README and Manager requirements remain business authority. These V2 schemas freeze previously unspecified transport fields; they are authored from public documents only. The public smoke checks interface and persistence identity, not complete business correctness.",
+    "V2 wire clarification: health returns {status:\"ok\"}; the production root returns HTML. Mutation bodies are closed, server-generated identity/state/timestamps are outputs, all mutation examples require durable Idempotency-Key, and unspecified success status is 200. Path parameters use their corresponding resource field types. Collection limits are 1..100 (default 50) with stable opaque cursors.",
+    "V2 wire clarification: Tenant is {tenantId,name}; the default AuditEntry/AuditCheckpoint, DomainEvent envelope and fenced Work fields are the published schema definitions. Unless legacy prose literally fixes payload to {}, DomainEvent.payload is a public JSON object. This does not authorize exposing secrets or inventing event types.",
+    "V2 wire clarification: snapshot is one PostgreSQL point-in-time with exact resources, work and events keys (and schemaVersion only where declared). Resource arrays are complete, sorted by public identity tuple; audit by tenantId then sequence, events by aggregateId then sequence then eventId, Work by workId. Foreign keys, state invariants and digest validity remain implementation validation. Token/credential/private-path fields never appear in snapshot.",
+    "Seed preserves exactly the V1 top-level members; Manager-only resources are created by public operations or the explicitly required compatibility migration. The nonempty example is a minimal legal starting graph, with no evaluator fixtures.",
+    "V2 wire clarification: grant creation returns the complete exact DownloadGrant for a legacy object or ShardedDownloadGrant for a Manager target. MANIFEST omits shardId in the request and returns shardId:null; SHARD requires shardId. Revocation returns the matching grant shape. Legacy and Manager grant arrays are separate in snapshot and must never duplicate the same grant.",
+    "V2 wire clarification: READY seed Export supplies assetPath as an extra top-level field, relative to assets; it is import-only and stripped from all responses and snapshot. Non-READY seeded Export does not need an asset. DatasetRevisionSummary.recordCount counts its records, and recordsDigest hashes their RFC 8785 array sorted by recordId.",
+    "V2 wire clarification: the preserved V1 legacy/small Export shape has no manifest or shards keys; sharded exports require both keys, object:null and a stable shard plan from creation. Empty selected sections do not create empty Shards in a manifest; shard ranges and recordCount must agree. The fixed seed contains one Subject, one DatasetRevision and one public record, without managed byte fixtures.",
+    "Raw downloads stream immutable target bytes with the target media type and digest ETag, exact Content-Length, and single-range 206 Content-Range; matching conditionals use empty 304, unsatisfiable ranges use 416 INVALID_RANGE. Revocation and expiry are checked before bytes become visible. Domain-event reads return {items:[DomainEvent]} in sequence, with required aggregateId and default afterSequence=0.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

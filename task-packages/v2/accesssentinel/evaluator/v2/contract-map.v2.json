@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 2,
+  "taskId": "accesssentinel",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "AS-A01",
+        "source": "V1 Required non-interactive commands、Environment",
+        "summary": "Clean commands and boot"
+      },
+      "privateFailureCodePrefix": "AS_A_01_",
+      "publicFeedbackCategory": "command_boot"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "AS-A02",
+        "source": "V1 db:migrate repeatability、V1 resources",
+        "summary": "Repeatable populated migration"
+      },
+      "privateFailureCodePrefix": "AS_A_02_",
+      "publicFeedbackCategory": "migration_repeatability"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "AS-A03",
+        "source": "V1 Seed contract",
+        "summary": "Strict atomic seed"
+      },
+      "privateFailureCodePrefix": "AS_A_03_",
+      "publicFeedbackCategory": "seed_atomicity"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "AS-A04",
+        "source": "V1 HTTP and OpenAPI 3.1、stable errors",
+        "summary": "HTTP/OpenAPI/error contract"
+      },
+      "privateFailureCodePrefix": "AS_A_04_",
+      "publicFeedbackCategory": "http_contract"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "AS-A05",
+        "source": "V1 tenant-scoped reads/isolation rules",
+        "summary": "Tenant isolation and read routes"
+      },
+      "privateFailureCodePrefix": "AS_A_05_",
+      "publicFeedbackCategory": "tenant_isolation"
+    },
+    {
+      "caseId": "A-06",
+      "requirement": {
+        "id": "AS-A06",
+        "source": "V1 Verification snapshot、Audit digest chain",
+        "summary": "Snapshot and Audit chain"
+      },
+      "privateFailureCodePrefix": "AS_A_06_",
+      "publicFeedbackCategory": "snapshot_audit"
+    },
+    {
+      "caseId": "A-07",
+      "requirement": {
+        "id": "AS-A07",
+        "source": "V1 Session create/refresh/reuse/revoke rules",
+        "summary": "Session create/refresh/reuse/revoke"
+      },
+      "privateFailureCodePrefix": "AS_A_07_",
+      "publicFeedbackCategory": "session_lifecycle"
+    },
+    {
+      "caseId": "A-08",
+      "requirement": {
+        "id": "AS-A08",
+        "source": "V1 Device Trust、revocation epoch rules",
+        "summary": "Device trust and revocation epochs"
+      },
+      "privateFailureCodePrefix": "AS_A_08_",
+      "publicFeedbackCategory": "trust_revocation"
+    },
+    {
+      "caseId": "A-09",
+      "requirement": {
+        "id": "AS-A09",
+        "source": "V1 Policy/Risk revision publication and frozen basis",
+        "summary": "Policy publish/rollback and frozen basis"
+      },
+      "privateFailureCodePrefix": "AS_A_09_",
+      "publicFeedbackCategory": "policy_revision"
+    },
+    {
+      "caseId": "A-10",
+      "requirement": {
+        "id": "AS-A10",
+        "source": "V1 Location observation/replay policy",
+        "summary": "Location observation/replay"
+      },
+      "privateFailureCodePrefix": "AS_A_10_",
+      "publicFeedbackCategory": "location_replay"
+    },
+    {
+      "caseId": "A-11",
+      "requirement": {
+        "id": "AS-A11",
+        "source": "V1 Access Request/batch atomicity",
+        "summary": "Access request and atomic batch"
+      },
+      "privateFailureCodePrefix": "AS_A_11_",
+      "publicFeedbackCategory": "access_request"
+    },
+    {
+      "caseId": "A-12",
+      "requirement": {
+        "id": "AS-A12",
+        "source": "V1 risk-score/policy decision rules; V2 public Review request/response contract",
+        "summary": "Risk and policy decision"
+      },
+      "privateFailureCodePrefix": "AS_A_12_",
+      "publicFeedbackCategory": "risk_decision"
+    },
+    {
+      "caseId": "A-13",
+      "requirement": {
+        "id": "AS-A13",
+        "source": "V1 Grant/check/revoke/expiry rules",
+        "summary": "Grant lifecycle and checks"
+      },
+      "privateFailureCodePrefix": "AS_A_13_",
+      "publicFeedbackCategory": "grant_lifecycle"
+    },
+    {
+      "caseId": "A-14",
+      "requirement": {
+        "id": "AS-A14",
+        "source": "V1 Work/Event/Audit shapes + author-approved accesssentinel-2026-09-08.1 exact event policy",
+        "summary": "Work, Events and transition evidence"
+      },
+      "privateFailureCodePrefix": "AS_A_14_",
+      "publicFeedbackCategory": "work_event"
+    },
+    {
+      "caseId": "A-15",
+      "requirement": {
+        "id": "AS-A15",
+        "source": "MGR BreakGlass quorum、activate、check、close/expiry",
+        "summary": "FINAL BreakGlass quorum and scoped authorization"
+      },
+      "privateFailureCodePrefix": "AS_A_15_",
+      "publicFeedbackCategory": "breakglass_authority"
+    },
+    {
+      "caseId": "A-16",
+      "requirement": {
+        "id": "AS-A16",
+        "source": "MGR RegionalQuarantine CAS、RetrospectiveReview、guarded release",
+        "summary": "FINAL quarantine and guarded release"
+      },
+      "privateFailureCodePrefix": "AS_A_16_",
+      "publicFeedbackCategory": "regional_quarantine"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "AS-B01",
+        "source": "V1 Session generation/reuse invariants",
+        "summary": "Session rotation/reuse contention"
+      },
+      "privateFailureCodePrefix": "AS_B_01_",
+      "publicFeedbackCategory": "session_concurrency"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "AS-B02",
+        "source": "V1 Trust publication/revocation serialization",
+        "summary": "Trust publication versus revoke"
+      },
+      "privateFailureCodePrefix": "AS_B_02_",
+      "publicFeedbackCategory": "trust_concurrency"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "AS-B03",
+        "source": "V1 immutable Policy/Risk capture",
+        "summary": "Policy revision freeze under races"
+      },
+      "privateFailureCodePrefix": "AS_B_03_",
+      "publicFeedbackCategory": "policy_concurrency"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "AS-B04",
+        "source": "V1 Location ordering/duplicate rules",
+        "summary": "Deterministic location convergence"
+      },
+      "privateFailureCodePrefix": "AS_B_04_",
+      "publicFeedbackCategory": "location_concurrency"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "AS-B05",
+        "source": "V1 risk threshold and deny override",
+        "summary": "Risk-score boundary oracle"
+      },
+      "privateFailureCodePrefix": "AS_B_05_",
+      "publicFeedbackCategory": "risk_correctness"
+    },
+    {
+      "caseId": "B-06",
+      "requirement": {
+        "id": "AS-B06",
+        "source": "V1 batch atomicity、durable idempotency",
+        "summary": "Batch/idempotency/unknown response"
+      },
+      "privateFailureCodePrefix": "AS_B_06_",
+      "publicFeedbackCategory": "idempotency_atomicity"
+    },
+    {
+      "caseId": "B-07",
+      "requirement": {
+        "id": "AS-B07",
+        "source": "V1 durable idempotency across API processes",
+        "summary": "Same-key multi-API authority"
+      },
+      "privateFailureCodePrefix": "AS_B_07_",
+      "publicFeedbackCategory": "idempotency_concurrency"
+    },
+    {
+      "caseId": "B-08",
+      "requirement": {
+        "id": "AS-B08",
+        "source": "V1 Grant uniqueness and revocation fences; V2 public Review request/response contract",
+        "summary": "Grant/revoke races"
+      },
+      "privateFailureCodePrefix": "AS_B_08_",
+      "publicFeedbackCategory": "grant_concurrency"
+    },
+    {
+      "caseId": "B-09",
+      "requirement": {
+        "id": "AS-B09",
+        "source": "V1 post-commit revocation fail-closed invariant",
+        "summary": "Cross-process revocation fence"
+      },
+      "privateFailureCodePrefix": "AS_B_09_",
+      "publicFeedbackCategory": "revocation_fence"
+    },
+    {
+      "caseId": "B-10",
+      "requirement": {
+        "id": "AS-B10",
+        "source": "MGR quorum/quarantine/review/release serialization",
+        "summary": "Manager quorum/quarantine/release races"
+      },
+      "privateFailureCodePrefix": "AS_B_10_",
+      "publicFeedbackCategory": "manager_concurrency"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "AS-C01",
+        "source": "V1 Work shape/lifecycle/retention",
+        "summary": "Work lifecycle/retention"
+      },
+      "privateFailureCodePrefix": "AS_C_01_",
+      "publicFeedbackCategory": "work_lifecycle"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "AS-C02",
+        "source": "V1 worker.claimed barrier、lease reclaim",
+        "summary": "SIGKILL after worker.claimed"
+      },
+      "privateFailureCodePrefix": "AS_C_02_",
+      "publicFeedbackCategory": "worker_recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "AS-C03",
+        "source": "V1 worker.before-effect barrier",
+        "summary": "SIGKILL at worker.before-effect"
+      },
+      "privateFailureCodePrefix": "AS_C_03_",
+      "publicFeedbackCategory": "worker_recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "AS-C04",
+        "source": "V1 persisted lease fencing",
+        "summary": "Expired lease fencing"
+      },
+      "privateFailureCodePrefix": "AS_C_04_",
+      "publicFeedbackCategory": "worker_fencing"
+    },
+    {
+      "caseId": "C-05",
+      "requirement": {
+        "id": "AS-C05",
+        "source": "V1 Location replay recoverability",
+        "summary": "Location replay recovery"
+      },
+      "privateFailureCodePrefix": "AS_C_05_",
+      "publicFeedbackCategory": "location_recovery"
+    },
+    {
+      "caseId": "C-06",
+      "requirement": {
+        "id": "AS-C06",
+        "source": "V1 Revocation/expiry Work convergence",
+        "summary": "Revocation/expiry recovery"
+      },
+      "privateFailureCodePrefix": "AS_C_06_",
+      "publicFeedbackCategory": "revocation_recovery"
+    },
+    {
+      "caseId": "C-07",
+      "requirement": {
+        "id": "AS-C07",
+        "source": "V1 dispatcher webhook retry/ACK rules",
+        "summary": "Unknown webhook ACK"
+      },
+      "privateFailureCodePrefix": "AS_C_07_",
+      "publicFeedbackCategory": "event_delivery"
+    },
+    {
+      "caseId": "C-08",
+      "requirement": {
+        "id": "AS-C08",
+        "source": "V1 transactional Audit/Event ordering",
+        "summary": "Transactional Audit/Event and ordering"
+      },
+      "privateFailureCodePrefix": "AS_C_08_",
+      "publicFeedbackCategory": "transactional_evidence"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "AS-D01",
+        "source": "V1 OpenAPI 3.1 and all live public traffic",
+        "summary": "OpenAPI validates live traffic"
+      },
+      "privateFailureCodePrefix": "AS_D_01_",
+      "publicFeedbackCategory": "openapi_runtime"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "AS-D02",
+        "source": "V1 Real UI identity/policy actions",
+        "summary": "Browser identity/policy lifecycle"
+      },
+      "privateFailureCodePrefix": "AS_D_02_",
+      "publicFeedbackCategory": "browser_v1"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "AS-D03",
+        "source": "V1 Real UI request/grant actions; V2 public Review request/response contract",
+        "summary": "Browser access/review/grant lifecycle"
+      },
+      "privateFailureCodePrefix": "AS_D_03_",
+      "publicFeedbackCategory": "browser_access"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "AS-D04",
+        "source": "V1 Real UI location/revocation/Audit evidence",
+        "summary": "Browser location/revocation/Audit"
+      },
+      "privateFailureCodePrefix": "AS_D_04_",
+      "publicFeedbackCategory": "browser_evidence"
+    },
+    {
+      "caseId": "D-05",
+      "requirement": {
+        "id": "AS-D05",
+        "source": "MGR UI/quorum/quarantine/retrospective/release requirement",
+        "summary": "Manager UI"
+      },
+      "privateFailureCodePrefix": "AS_D_05_",
+      "publicFeedbackCategory": "browser_manager"
+    },
+    {
+      "caseId": "D-06",
+      "requirement": {
+        "id": "AS-D06",
+        "source": "V1 UI loading/error/accessibility/security requirements",
+        "summary": "Accessibility/recovery/security"
+      },
+      "privateFailureCodePrefix": "AS_D_06_",
+      "publicFeedbackCategory": "ui_accessibility"
+    },
+    {
+      "caseId": "D-07",
+      "requirement": {
+        "id": "AS-D07",
+        "source": "V1 all test:* command contracts including test:perf",
+        "summary": "Project gates not fake green"
+      },
+      "privateFailureCodePrefix": "AS_D_07_",
+      "publicFeedbackCategory": "project_gates"
+    },
+    {
+      "caseId": "D-08",
+      "requirement": {
+        "id": "AS-D08",
+        "source": "V1 Project-owned verification and observable handoff evidence",
+        "summary": "README-to-evidence closure"
+      },
+      "privateFailureCodePrefix": "AS_D_08_",
+      "publicFeedbackCategory": "evidence_closure"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "AS-E01",
+        "source": "MGR migration preservation paragraph；V1 populated state",
+        "summary": "Populated V1→FINAL migration"
+      },
+      "privateFailureCodePrefix": "AS_E_01_",
+      "publicFeedbackCategory": "migration_compatibility"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "AS-E02",
+        "source": "V1 durable replay/Audit/Event identity + MGR preservation",
+        "summary": "Saved replay/Audit/Event compatibility"
+      },
+      "privateFailureCodePrefix": "AS_E_02_",
+      "publicFeedbackCategory": "migration_replay"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "AS-E03",
+        "source": "V1 Work leases/delivery + MGR migration preservation",
+        "summary": "Pending Work/delivery migration"
+      },
+      "privateFailureCodePrefix": "AS_E_03_",
+      "publicFeedbackCategory": "migration_pending_work"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "AS-E04",
+        "source": "V1 session-refresh-storm",
+        "summary": "session-refresh-storm"
+      },
+      "privateFailureCodePrefix": "AS_E_04_",
+      "publicFeedbackCategory": "performance_session"
+    },
+    {
+      "caseId": "E-05",
+      "requirement": {
+        "id": "AS-E05",
+        "source": "V1 access-decision-ingest",
+        "summary": "access-decision-ingest"
+      },
+      "privateFailureCodePrefix": "AS_E_05_",
+      "publicFeedbackCategory": "performance_access"
+    },
+    {
+      "caseId": "E-06",
+      "requirement": {
+        "id": "AS-E06",
+        "source": "V1 policy-evaluation-hotset",
+        "summary": "policy-evaluation-hotset"
+      },
+      "privateFailureCodePrefix": "AS_E_06_",
+      "publicFeedbackCategory": "performance_policy"
+    },
+    {
+      "caseId": "E-07",
+      "requirement": {
+        "id": "AS-E07",
+        "source": "V1 location-replay-convergence",
+        "summary": "location-replay-convergence"
+      },
+      "privateFailureCodePrefix": "AS_E_07_",
+      "publicFeedbackCategory": "performance_location"
+    },
+    {
+      "caseId": "E-08",
+      "requirement": {
+        "id": "AS-E08",
+        "source": "V1 grant-revocation-fanout",
+        "summary": "grant-revocation-fanout"
+      },
+      "privateFailureCodePrefix": "AS_E_08_",
+      "publicFeedbackCategory": "performance_revocation"
+    },
+    {
+      "caseId": "E-09",
+      "requirement": {
+        "id": "AS-E09",
+        "source": "V1 audit-chain-append",
+        "summary": "audit-chain-append"
+      },
+      "privateFailureCodePrefix": "AS_E_09_",
+      "publicFeedbackCategory": "performance_audit"
+    },
+    {
+      "caseId": "E-10",
+      "requirement": {
+        "id": "AS-E10",
+        "source": "V1 outbox-ack-recovery",
+        "summary": "outbox-ack-recovery"
+      },
+      "privateFailureCodePrefix": "AS_E_10_",
+      "publicFeedbackCategory": "performance_outbox"
+    },
+    {
+      "caseId": "E-11",
+      "requirement": {
+        "id": "AS-E11",
+        "source": "V1 revocation-fence-recovery and command cleanup/log rules",
+        "summary": "Revocation-fence recovery and cleanup"
+      },
+      "privateFailureCodePrefix": "AS_E_11_",
+      "publicFeedbackCategory": "performance_recovery"
+    }
+  ]
+}

@@ -1,0 +1,1626 @@
+{
+  "taskId": "launchpass",
+  "title": "LaunchPass",
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "HOLD_TTL_SECONDS",
+    "WAITLIST_HOLD_TTL_SECONDS"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm start",
+    "npm test",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedEvent"
+          }
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Customer"
+          }
+        },
+        "orders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedOrder"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "events",
+        "customers",
+        "orders"
+      ],
+      "additionalProperties": false
+    },
+    "replay": false,
+    "command": [
+      "npm",
+      "run",
+      "seed",
+      "--",
+      "--file",
+      "${SEED_PATH}"
+    ],
+    "example": {
+      "schemaVersion": 1,
+      "events": [
+        {
+          "id": "70000000-0000-4000-8000-000000000011",
+          "slug": "public-seed-event",
+          "title": "Public Seed Event",
+          "startsAt": "2099-01-01T00:00:00.000Z",
+          "capacity": 20
+        }
+      ],
+      "customers": [
+        {
+          "id": "70000000-0000-4000-8000-000000000012",
+          "displayName": "Public Customer"
+        }
+      ],
+      "orders": [
+        {
+          "id": "70000000-0000-4000-8000-000000000013",
+          "eventId": "70000000-0000-4000-8000-000000000011",
+          "customerId": "70000000-0000-4000-8000-000000000012",
+          "quantity": 2,
+          "confirmedAt": "2026-09-07T00:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "Event": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 120
+        },
+        "startsAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "availableCapacity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "id",
+        "slug",
+        "title",
+        "startsAt",
+        "capacity",
+        "availableCapacity",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Customer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "id",
+        "displayName"
+      ],
+      "additionalProperties": false
+    },
+    "Hold": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "CONFIRMED",
+            "RELEASED",
+            "EXPIRED"
+          ]
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "customerId",
+        "quantity",
+        "status",
+        "expiresAt",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Order": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "holdId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "customerId",
+        "holdId",
+        "quantity",
+        "confirmedAt"
+      ],
+      "additionalProperties": false
+    },
+    "WaitlistEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "WAITING",
+            "PROMOTED",
+            "WITHDRAWN"
+          ]
+        },
+        "position": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "holdId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "customerId",
+        "quantity",
+        "status",
+        "position",
+        "joinedAt",
+        "holdId"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "WAITING"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "position": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "holdId": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "PROMOTED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "position": {
+                "type": "null"
+              },
+              "holdId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "WITHDRAWN"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "position": {
+                "type": "null"
+              },
+              "holdId": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SeedEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 120
+        },
+        "startsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      },
+      "required": [
+        "id",
+        "slug",
+        "title",
+        "startsAt",
+        "capacity"
+      ],
+      "additionalProperties": false
+    },
+    "SeedOrder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "eventId",
+        "customerId",
+        "quantity",
+        "confirmedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedEvent"
+          }
+        },
+        "customers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Customer"
+          }
+        },
+        "orders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SeedOrder"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "events",
+        "customers",
+        "orders"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "events": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Event"
+              }
+            },
+            "customers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Customer"
+              }
+            },
+            "holds": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Hold"
+              }
+            },
+            "orders": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Order"
+              }
+            },
+            "waitlistEntries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/WaitlistEntry"
+              }
+            }
+          },
+          "required": [
+            "events",
+            "customers",
+            "holds",
+            "orders",
+            "waitlistEntries"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "asOf",
+        "resources"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#real-ui",
+      "response": {
+        "type": "string",
+        "minLength": 1
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "create-event",
+      "method": "POST",
+      "path": "/api/admin/events",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/$defs/Event"
+          }
+        },
+        "required": [
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "maxLength": 120
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "startsAt",
+          "capacity"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "slug": "independent-v2-event",
+          "title": "Independent V2 Event",
+          "startsAt": "2099-01-01T00:00:00.000Z",
+          "capacity": 24
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-event",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "list-events",
+      "method": "GET",
+      "path": "/api/events",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Event"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 20,
+          "q": "public"
+        }
+      }
+    },
+    {
+      "id": "read-event",
+      "method": "GET",
+      "path": "/api/events/:eventId",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/$defs/Event"
+          }
+        },
+        "required": [
+          "event"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "eventId": "70000000-0000-4000-8000-000000000011"
+        }
+      }
+    },
+    {
+      "id": "create-hold",
+      "method": "POST",
+      "path": "/api/holds",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "hold": {
+            "$ref": "#/$defs/Hold"
+          }
+        },
+        "required": [
+          "hold"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          }
+        },
+        "required": [
+          "eventId",
+          "customerId",
+          "quantity"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "eventId": "70000000-0000-4000-8000-000000000011",
+          "customerId": "70000000-0000-4000-8000-000000000012",
+          "quantity": 1
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-hold"
+        }
+      }
+    },
+    {
+      "id": "read-hold",
+      "method": "GET",
+      "path": "/api/holds/:holdId",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "hold": {
+            "$ref": "#/$defs/Hold"
+          }
+        },
+        "required": [
+          "hold"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "holdId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "holdId": "70000000-0000-4000-8000-000000000014"
+        }
+      }
+    },
+    {
+      "id": "confirm-hold",
+      "method": "POST",
+      "path": "/api/holds/:holdId/confirm",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "hold": {
+            "$ref": "#/$defs/Hold"
+          },
+          "order": {
+            "$ref": "#/$defs/Order"
+          }
+        },
+        "required": [
+          "hold",
+          "order"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "holdId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "holdId": "70000000-0000-4000-8000-000000000014"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-confirm-hold"
+        }
+      }
+    },
+    {
+      "id": "release-hold",
+      "method": "DELETE",
+      "path": "/api/holds/:holdId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "hold": {
+            "$ref": "#/$defs/Hold"
+          }
+        },
+        "required": [
+          "hold"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "holdId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "holdId": "70000000-0000-4000-8000-000000000014"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-release-hold"
+        }
+      }
+    },
+    {
+      "id": "customer-holds",
+      "method": "GET",
+      "path": "/api/customers/:customerId/holds",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Hold"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "customerId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "customerId": "70000000-0000-4000-8000-000000000012"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "customer-orders",
+      "method": "GET",
+      "path": "/api/customers/:customerId/orders",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Order"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "customerId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "customerId": "70000000-0000-4000-8000-000000000012"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "join-waitlist",
+      "method": "POST",
+      "path": "/api/events/:eventId/waitlist",
+      "status": 201,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "waitlistEntry": {
+            "$ref": "#/$defs/WaitlistEntry"
+          }
+        },
+        "required": [
+          "waitlistEntry"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          }
+        },
+        "required": [
+          "customerId",
+          "quantity"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "eventId": "70000000-0000-4000-8000-000000000011"
+        },
+        "body": {
+          "customerId": "70000000-0000-4000-8000-000000000012",
+          "quantity": 2
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-join-waitlist"
+        }
+      }
+    },
+    {
+      "id": "read-waitlist",
+      "method": "GET",
+      "path": "/api/events/:eventId/waitlist/:customerId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "waitlistEntry": {
+            "$ref": "#/$defs/WaitlistEntry"
+          }
+        },
+        "required": [
+          "waitlistEntry"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "customerId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "eventId": "70000000-0000-4000-8000-000000000011",
+          "customerId": "70000000-0000-4000-8000-000000000012"
+        }
+      }
+    },
+    {
+      "id": "withdraw-waitlist",
+      "method": "DELETE",
+      "path": "/api/events/:eventId/waitlist/:customerId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "type": "object",
+        "properties": {
+          "waitlistEntry": {
+            "$ref": "#/$defs/WaitlistEntry"
+          }
+        },
+        "required": [
+          "waitlistEntry"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "customerId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "eventId": "70000000-0000-4000-8000-000000000011",
+          "customerId": "70000000-0000-4000-8000-000000000012"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-withdraw-waitlist"
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/verification-snapshot",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "ok"
+      }
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "events"
+          ],
+          "match": {
+            "id": "70000000-0000-4000-8000-000000000011",
+            "capacity": 20,
+            "availableCapacity": 18
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "customers"
+          ],
+          "match": {
+            "id": "70000000-0000-4000-8000-000000000012"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "orders"
+          ],
+          "match": {
+            "id": "70000000-0000-4000-8000-000000000013",
+            "holdId": null,
+            "eventId": "70000000-0000-4000-8000-000000000011",
+            "customerId": "70000000-0000-4000-8000-000000000012",
+            "quantity": 2
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "customer-orders",
+      "params": {
+        "customerId": "70000000-0000-4000-8000-000000000012"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "id": "70000000-0000-4000-8000-000000000013",
+            "holdId": null
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "create-event",
+      "body": {
+        "slug": "independent-v2-event",
+        "title": "Independent V2 Event",
+        "startsAt": "2099-01-01T00:00:00.000Z",
+        "capacity": 24
+      },
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}",
+        "Idempotency-Key": "v2-public-create-event"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "event": {
+          "slug": "independent-v2-event",
+          "title": "Independent V2 Event",
+          "startsAt": "2099-01-01T00:00:00.000Z",
+          "capacity": 24,
+          "availableCapacity": 24
+        }
+      },
+      "capture": {
+        "createdEvent": [
+          "event",
+          "id"
+        ]
+      }
+    },
+    {
+      "operationId": "read-event",
+      "params": {
+        "eventId": "${createdEvent}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "event": {
+          "id": "${createdEvent}",
+          "slug": "independent-v2-event",
+          "title": "Independent V2 Event",
+          "startsAt": "2099-01-01T00:00:00.000Z",
+          "capacity": 24,
+          "availableCapacity": 24
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Authority is the complete original LaunchPass README plus the published waitlist Manager change; no private tests or submissions were read. Every original route and all three waitlist routes are fixed here.",
+    "V2 wire clarification: GET event and hold detail use the same {event} and {hold} envelopes as their creation routes. Successful confirmation remains {hold,order}; release remains {hold}. Confirm, release and waitlist withdrawal have no request body.",
+    "V2 adds GET /api/verification-snapshot, ADMIN_TOKEN protected, with exactly {asOf,resources:{events,customers,holds,orders,waitlistEntries}} and the typed resource shapes here. This is a new verification surface, not a claim that the original README published a snapshot.",
+    "V2 clarification: Error.details contains {message,field?} objects, empty array allowed. Unknown resource errors are EVENT_NOT_FOUND, HOLD_NOT_FOUND, CUSTOMER_NOT_FOUND, ORDER_NOT_FOUND and WAITLIST_ENTRY_NOT_FOUND respectively; the original demanded specific stable names without spelling them out.",
+    "The V1 seed remains exactly {schemaVersion,events,customers,orders}. It imports once into empty application tables; a second import must be rejected, not required as idempotent replay. Preserve the original npm run seed command. Seeded Event.createdAt uses the first import transaction time; historical Order.holdId is null and availableCapacity subtracts all imported quantities.",
+    "No new customer-registration API is invented: the seed creates the customer. Waitlist joining requires insufficient available capacity and a quantity no greater than total capacity; its transport example does not bypass those state prerequisites.",
+    "V2 exposes /openapi.json for the fixed scaffold in addition to the required workspace openapi.yaml. The expiration and promotion lifecycle runs durably under the original npm start application; worker and dispatcher commands were not part of this task.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "invalidJson": {
+      "status": 400,
+      "code": "INVALID_JSON"
+    },
+    "invalidRequest": {
+      "status": 422,
+      "code": "VALIDATION_ERROR"
+    },
+    "unknownField": {
+      "status": 422,
+      "code": "VALIDATION_ERROR"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

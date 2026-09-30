@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "id": "parcelflow",
+  "phase": "transfer",
+  "environmentProfile": {
+    "catalog": "../../environments/catalog.v1.json",
+    "id": "fullstack-node22-postgres16-chromium",
+    "version": 1,
+    "platform": "linux/arm64"
+  },
+  "runtimeEnv": {
+    "BENCH_POSTGRES_DATABASES": "parcelflow parcelflow_test",
+    "DATABASE_URL": "postgresql://postgres@127.0.0.1:5432/parcelflow",
+    "TEST_DATABASE_URL": "postgresql://postgres@127.0.0.1:5432/parcelflow_test",
+    "PORT": "3000",
+    "ADMIN_TOKEN": "parcelflow-local-admin-token",
+    "WEBHOOK_URL": "http://127.0.0.1:4010/events",
+    "DISPATCH_LEASE_SECONDS": "3"
+  },
+  "fixture": {
+    "path": "../../tasks/parcelflow/workspace",
+    "commit": "dee49c75bafe40cbf6c3a1c2747e37cc2b6b8596",
+    "format": "source"
+  },
+  "publicTask": "Build ParcelFlow from this intentionally blank Git repository. Use Node.js 22, TypeScript, React, PostgreSQL 16, npm, and the preinstalled Chromium; README.md and AGENTS.md are the exact public contract. Deliver a production API and real React UI, OpenAPI 3.1, versioned migrations and deterministic seed import, warehouse/SKU inventory, atomic multi-line order allocation to one complete warehouse, cancellation and shipment races, durable dispatch tasks processed by multiple recoverable workers, transactional domain events and an at-least-once local webhook dispatcher, customer history, strict validation and errors, and durable idempotency. Correctness must survive restarts, unknown response outcomes, at least two API instances, and at least two workers sharing one PostgreSQL database: no partial order, oversell, negative or unbalanced inventory, duplicate settlement, duplicate shipment, lost event, or process-local correctness authority. Provide every exact non-interactive command required by README for migration, seed, development, build, production API/UI, worker, dispatcher, unit tests, real PostgreSQL HTTP integration tests, production Chromium browser E2E, multi-process concurrency, SIGKILL recovery, aggregate verification, and sustained performance. Meet the published latency, throughput, backlog-recovery, accessibility, responsive-UI, and post-load correctness targets. Review and simplify only concrete issues, and finish with accurate architecture, operation, test, performance, recovery, risk, and unrun-check documentation. Do not invent product behavior beyond README.md or a later explicit Manager message.",
+  "setup": [],
+  "hiddenTests": [
+    {
+      "id": "project-owned-all",
+      "command": [
+        "npm",
+        "run",
+        "test:all"
+      ],
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "PF-E2E-01",
+      "command": ["node", "/hidden/PF-E2E-01/run.mjs", "--case", "PF-E2E-01", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-E2E-02",
+      "command": ["node", "/hidden/PF-E2E-02/run.mjs", "--case", "PF-E2E-02", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 90000
+    },
+    {
+      "id": "PF-E2E-03",
+      "command": ["node", "/hidden/PF-E2E-03/run.mjs", "--case", "PF-E2E-03", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-E2E-04",
+      "command": ["node", "/hidden/PF-E2E-04/run.mjs", "--case", "PF-E2E-04", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 240000
+    },
+    {
+      "id": "PF-E2E-05",
+      "command": ["node", "/hidden/PF-E2E-05/run.mjs", "--case", "PF-E2E-05", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 90000
+    },
+    {
+      "id": "PF-E2E-06",
+      "command": ["node", "/hidden/PF-E2E-06/run.mjs", "--case", "PF-E2E-06", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-E2E-07",
+      "command": ["node", "/hidden/PF-E2E-07/run.mjs", "--case", "PF-E2E-07", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 90000
+    },
+    {
+      "id": "PF-E2E-08",
+      "command": ["node", "/hidden/PF-E2E-08/run.mjs", "--case", "PF-E2E-08", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-E2E-09",
+      "command": ["node", "/hidden/PF-E2E-09/run.mjs", "--case", "PF-E2E-09", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 240000
+    },
+    {
+      "id": "PF-E2E-11",
+      "command": ["node", "/hidden/PF-E2E-11/run.mjs", "--case", "PF-E2E-11", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-CON-01",
+      "command": ["node", "/hidden/PF-CON-01/run.mjs", "--case", "PF-CON-01", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-CON-02",
+      "command": ["node", "/hidden/PF-CON-02/run.mjs", "--case", "PF-CON-02", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 180000
+    },
+    {
+      "id": "PF-CON-03",
+      "command": ["node", "/hidden/PF-CON-03/run.mjs", "--case", "PF-CON-03", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-CON-04",
+      "command": ["node", "/hidden/PF-CON-04/run.mjs", "--case", "PF-CON-04", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 180000
+    },
+    {
+      "id": "PF-CON-05",
+      "command": ["node", "/hidden/PF-CON-05/run.mjs", "--case", "PF-CON-05", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 240000
+    },
+    {
+      "id": "PF-CON-06",
+      "command": ["node", "/hidden/PF-CON-06/run.mjs", "--case", "PF-CON-06", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 300000
+    },
+    {
+      "id": "PF-REC-01",
+      "command": ["node", "/hidden/PF-REC-01/run.mjs", "--case", "PF-REC-01", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 300000
+    },
+    {
+      "id": "PF-REC-03",
+      "command": ["node", "/hidden/PF-REC-03/run.mjs", "--case", "PF-REC-03", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 300000
+    },
+    {
+      "id": "PF-REC-04",
+      "command": ["node", "/hidden/PF-REC-04/run.mjs", "--case", "PF-REC-04", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "PF-REC-05",
+      "command": ["node", "/hidden/PF-REC-05/run.mjs", "--case", "PF-REC-05", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 300000
+    },
+    {
+      "id": "PF-REC-06",
+      "command": ["node", "/hidden/PF-REC-06/run.mjs", "--case", "PF-REC-06", "--snapshot", "V1_TO_FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 1200000
+    },
+    {
+      "id": "PF-PERF-01",
+      "command": ["node", "/hidden/PF-PERF-01/run.mjs", "--case", "PF-PERF-01", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 2700000
+    },
+    {
+      "id": "PF-PERF-02",
+      "command": ["node", "/hidden/PF-PERF-02/run.mjs", "--case", "PF-PERF-02", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 2700000
+    },
+    {
+      "id": "PF-PERF-04",
+      "command": ["node", "/hidden/PF-PERF-04/run.mjs", "--case", "PF-PERF-04", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 600000
+    },
+    {
+      "id": "PF-AUD-01",
+      "command": ["node", "/hidden/PF-AUD-01/run.mjs", "--case", "PF-AUD-01", "--snapshot", "FINAL"],
+      "assetsPath": "../../hidden/parcelflow",
+      "timeoutMs": 600000
+    }
+  ],
+  "snapshotExcludes": [
+    ".git",
+    "node_modules",
+    "dist",
+    "coverage",
+    ".cache",
+    "playwright-report",
+    "test-results",
+    "perf-results"
+  ]
+}

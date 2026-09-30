@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 2,
+  "taskId": "capacitylease",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": { "id": "CL-COMMANDS-PRODUCTION", "source": "workspace/README.md#required-non-interactive-commands", "summary": "Published commands build and run separate production processes non-interactively and cleanly." },
+      "privateFailureCodePrefix": "CL_A01_",
+      "publicFeedbackCategory": "build-and-process-lifecycle"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": { "id": "CL-MIGRATION-REPEATABLE", "source": "workspace/README.md#required-non-interactive-commands", "summary": "Versioned migrations are repeatable and safe against populated PostgreSQL state." },
+      "privateFailureCodePrefix": "CL_A02_",
+      "publicFeedbackCategory": "migration-integrity"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": { "id": "CL-SEED-ATOMIC", "source": "workspace/README.md#seed-contract", "summary": "The versioned seed import is deterministic, atomic, reference-safe, and conflict-aware." },
+      "privateFailureCodePrefix": "CL_A03_",
+      "publicFeedbackCategory": "seed-validation"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": { "id": "CL-OPENAPI-COMPLETE", "source": "workspace/README.md#http-and-openapi-31", "summary": "Canonical OpenAPI 3.1 completely describes the published runtime contract." },
+      "privateFailureCodePrefix": "CL_A04_",
+      "publicFeedbackCategory": "openapi-contract"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": { "id": "CL-HTTP-ERRORS", "source": "workspace/README.md#http-and-openapi-31", "summary": "Every public route applies the published common HTTP errors and exact error envelope." },
+      "privateFailureCodePrefix": "CL_A05_",
+      "publicFeedbackCategory": "http-error-contract"
+    },
+    {
+      "caseId": "A-06",
+      "requirement": { "id": "CL-SCALAR-TIME-BOUNDARIES", "source": "workspace/README.md#deterministic-policy", "summary": "Lease quantities, intervals, hold duration, revisions, and timestamps obey published boundaries." },
+      "privateFailureCodePrefix": "CL_A06_",
+      "publicFeedbackCategory": "input-boundaries"
+    },
+    {
+      "caseId": "A-07",
+      "requirement": { "id": "CL-PAGINATION-CURSOR", "source": "workspace/README.md#http-and-openapi-31", "summary": "Collection reads use exact shapes, stable opaque cursors, and published limit boundaries." },
+      "privateFailureCodePrefix": "CL_A07_",
+      "publicFeedbackCategory": "read-and-pagination-contract"
+    },
+    {
+      "caseId": "A-08",
+      "requirement": { "id": "CL-CREATE-HOLD", "source": "workspace/README.md#deterministic-policy", "summary": "An admissible request creates exactly one HELD Lease; unavailable non-waiting requests have no effect." },
+      "privateFailureCodePrefix": "CL_A08_",
+      "publicFeedbackCategory": "lease-creation"
+    },
+    {
+      "caseId": "A-09",
+      "requirement": { "id": "CL-CONFIRM-HOLD", "source": "workspace/README.md#deterministic-policy", "summary": "Confirmation requires the current token, revision, and unexpired Hold and transitions exactly once." },
+      "privateFailureCodePrefix": "CL_A09_",
+      "publicFeedbackCategory": "lease-confirmation"
+    },
+    {
+      "caseId": "A-10",
+      "requirement": { "id": "CL-RENEW-LEASE", "source": "workspace/README.md#deterministic-policy", "summary": "Renewal only extends a pre-ACTIVE Lease when every newly covered Slice has capacity." },
+      "privateFailureCodePrefix": "CL_A10_",
+      "publicFeedbackCategory": "lease-renewal"
+    },
+    {
+      "caseId": "A-11",
+      "requirement": { "id": "CL-LEASE-LIFECYCLE", "source": "workspace/README.md#domain-and-v1-behavior", "summary": "Activation, release, and expiry follow the published state machine and release capacity once." },
+      "privateFailureCodePrefix": "CL_A11_",
+      "publicFeedbackCategory": "lease-lifecycle"
+    },
+    {
+      "caseId": "A-12",
+      "requirement": { "id": "CL-WAITING-CANCEL", "source": "workspace/README.md#deterministic-policy", "summary": "Unavailable waiting requests create one deterministic WAITING Entry that can be durably cancelled." },
+      "privateFailureCodePrefix": "CL_A12_",
+      "publicFeedbackCategory": "admission-lifecycle"
+    },
+    {
+      "caseId": "A-13",
+      "requirement": { "id": "CL-PROMOTION-ORDER", "source": "workspace/README.md#deterministic-policy", "summary": "Promotion follows priority and tie-break order with overlap-scoped bypass and atomic effects." },
+      "privateFailureCodePrefix": "CL_A13_",
+      "publicFeedbackCategory": "admission-promotion"
+    },
+    {
+      "caseId": "A-14",
+      "requirement": { "id": "CL-SNAPSHOT-TIMELINE", "source": "workspace/README.md#v1-verification-snapshot", "summary": "Timeline and verification snapshot are exact, sorted, token-free views of one PostgreSQL point-in-time." },
+      "privateFailureCodePrefix": "CL_A14_",
+      "publicFeedbackCategory": "snapshot-and-timeline"
+    },
+    {
+      "caseId": "A-15",
+      "requirement": { "id": "CL-EVENT-QUERY", "source": "workspace/README.md#workers-events-and-recovery", "summary": "Committed Domain Events have exact shape, contiguous aggregate sequence, and atomic business state." },
+      "privateFailureCodePrefix": "CL_A15_",
+      "publicFeedbackCategory": "domain-events"
+    },
+    {
+      "caseId": "A-16",
+      "requirement": { "id": "CL-FINAL-GANG-WIRE", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "FINAL exposes the published all-or-nothing Gang Lease member wire contract and legacy compatibility." },
+      "privateFailureCodePrefix": "CL_A16_",
+      "publicFeedbackCategory": "gang-public-contract"
+    },
+
+    {
+      "caseId": "B-01",
+      "requirement": { "id": "CL-CAPACITY-PER-INSTANT", "source": "workspace/README.md#mandatory-invariants", "summary": "Capacity is conserved at every instant rather than by summing all interval-overlapping Leases." },
+      "privateFailureCodePrefix": "CL_B01_",
+      "publicFeedbackCategory": "capacity-conservation"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": { "id": "CL-HALF-OPEN-INTERVAL", "source": "workspace/README.md#mandatory-invariants", "summary": "Lease intervals are half-open and Slice boundaries arise only from Lease boundaries." },
+      "privateFailureCodePrefix": "CL_B02_",
+      "publicFeedbackCategory": "interval-correctness"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": { "id": "CL-LEASE-XOR-WAITING", "source": "workspace/README.md#mandatory-invariants", "summary": "One logical request produces either one consuming Lease or one WAITING Entry, never both." },
+      "privateFailureCodePrefix": "CL_B03_",
+      "publicFeedbackCategory": "request-atomicity"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": { "id": "CL-IDEMPOTENCY-UNKNOWN-OUTCOME", "source": "workspace/README.md#durable-idempotency", "summary": "Unknown mutation outcomes replay the original durable status and body without another effect." },
+      "privateFailureCodePrefix": "CL_B04_",
+      "publicFeedbackCategory": "durable-idempotency"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": { "id": "CL-IDEMPOTENCY-SCOPE", "source": "workspace/README.md#durable-idempotency", "summary": "Idempotency scope and canonical semantic fingerprint follow the published contract." },
+      "privateFailureCodePrefix": "CL_B05_",
+      "publicFeedbackCategory": "idempotency-scope"
+    },
+    {
+      "caseId": "B-06",
+      "requirement": { "id": "CL-IDEMPOTENCY-CONTENTION", "source": "workspace/README.md#durable-idempotency", "summary": "Concurrent same-key requests across API processes converge on one durable result." },
+      "privateFailureCodePrefix": "CL_B06_",
+      "publicFeedbackCategory": "idempotency-concurrency"
+    },
+    {
+      "caseId": "B-07",
+      "requirement": { "id": "CL-HOT-CAPACITY-CONTENTION", "source": "workspace/README.md#mandatory-invariants", "summary": "Distinct-key concurrent requests cannot oversubscribe a hot Capacity Pool." },
+      "privateFailureCodePrefix": "CL_B07_",
+      "publicFeedbackCategory": "capacity-concurrency"
+    },
+    {
+      "caseId": "B-08",
+      "requirement": { "id": "CL-REVISION-TERMINAL-RACES", "source": "workspace/README.md#mandatory-invariants", "summary": "Concurrent transitions serialize to one revision winner and one legal terminal effect." },
+      "privateFailureCodePrefix": "CL_B08_",
+      "publicFeedbackCategory": "transition-concurrency"
+    },
+    {
+      "caseId": "B-09",
+      "requirement": { "id": "CL-GANG-ATOMIC-LOCKING", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Gang creation locks Pools in byte order and commits all Members or none without deadlock." },
+      "privateFailureCodePrefix": "CL_B09_",
+      "publicFeedbackCategory": "gang-atomicity"
+    },
+    {
+      "caseId": "B-10",
+      "requirement": { "id": "CL-GANG-PROMOTION", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "A Gang Admission Entry promotes only when every captured Member fits simultaneously." },
+      "privateFailureCodePrefix": "CL_B10_",
+      "publicFeedbackCategory": "gang-promotion"
+    },
+
+    {
+      "caseId": "C-01",
+      "requirement": { "id": "CL-WORK-LIFECYCLE", "source": "workspace/README.md#v1-verification-snapshot", "summary": "Durable Work has the exact published lifecycle, lease fields, attempts, terminal derivation, and retention." },
+      "privateFailureCodePrefix": "CL_C01_",
+      "publicFeedbackCategory": "work-lifecycle"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": { "id": "CL-RECOVERY-AFTER-CLAIM", "source": "workspace/README.md#controlled-recovery-barrier", "summary": "Claimed Work survives SIGKILL, expires, and is reclaimed once by a replacement Worker." },
+      "privateFailureCodePrefix": "CL_C02_",
+      "publicFeedbackCategory": "worker-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": { "id": "CL-RECOVERY-AFTER-EFFECT", "source": "workspace/README.md#controlled-recovery-barrier", "summary": "A crash after effect completion recovers without duplicate business, capacity, or event effects." },
+      "privateFailureCodePrefix": "CL_C03_",
+      "publicFeedbackCategory": "worker-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": { "id": "CL-RECOVERY-BEFORE-COMMIT", "source": "workspace/README.md#controlled-recovery-barrier", "summary": "A crash before commit leaves either no transaction or one complete replacement commit." },
+      "privateFailureCodePrefix": "CL_C04_",
+      "publicFeedbackCategory": "worker-transaction-recovery"
+    },
+    {
+      "caseId": "C-05",
+      "requirement": { "id": "CL-WORK-FENCING", "source": "workspace/README.md#workers-events-and-recovery", "summary": "Expired Work ownership is reclaimable and the stale owner or token cannot commit." },
+      "privateFailureCodePrefix": "CL_C05_",
+      "publicFeedbackCategory": "work-fencing"
+    },
+    {
+      "caseId": "C-06",
+      "requirement": { "id": "CL-OBSOLETE-WORK-CLOSURE", "source": "workspace/README.md#v1-verification-snapshot", "summary": "Manual winning transitions close or safely terminalize obsolete nonterminal Work." },
+      "privateFailureCodePrefix": "CL_C06_",
+      "publicFeedbackCategory": "work-backlog-convergence"
+    },
+    {
+      "caseId": "C-07",
+      "requirement": { "id": "CL-WEBHOOK-UNKNOWN-ACK", "source": "workspace/README.md#workers-events-and-recovery", "summary": "Unknown webhook acknowledgements retry indefinitely with stable event identity and semantic body." },
+      "privateFailureCodePrefix": "CL_C07_",
+      "publicFeedbackCategory": "event-delivery-recovery"
+    },
+    {
+      "caseId": "C-08",
+      "requirement": { "id": "CL-EVENT-TRANSACTION-ORDER", "source": "workspace/README.md#workers-events-and-recovery", "summary": "Events commit with business state and successful delivery remains ordered per aggregate through recovery." },
+      "privateFailureCodePrefix": "CL_C08_",
+      "publicFeedbackCategory": "event-atomicity-and-ordering"
+    },
+
+    {
+      "caseId": "D-01",
+      "requirement": { "id": "CL-OPENAPI-LIVE-AGREEMENT", "source": "workspace/README.md#http-and-openapi-31", "summary": "Independent contract validation proves live requests and responses agree with OpenAPI 3.1." },
+      "privateFailureCodePrefix": "CL_D01_",
+      "publicFeedbackCategory": "openapi-runtime-agreement"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": { "id": "CL-UI-V1-LIFECYCLE", "source": "workspace/README.md#real-ui", "summary": "Visible production UI controls complete the V1 Lease lifecycle against real HTTP and PostgreSQL." },
+      "privateFailureCodePrefix": "CL_D02_",
+      "publicFeedbackCategory": "production-ui-lifecycle"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": { "id": "CL-UI-ASYNC-ADMISSION", "source": "workspace/README.md#real-ui", "summary": "The production UI exposes WAITING, cancellation, Promotion, expiry, history, and refresh recovery." },
+      "privateFailureCodePrefix": "CL_D03_",
+      "publicFeedbackCategory": "production-ui-async-state"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": { "id": "CL-UI-GANG", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "The real UI supports dynamic 2 through 10 Member Gang Lease flows and legacy one-Member flows." },
+      "privateFailureCodePrefix": "CL_D04_",
+      "publicFeedbackCategory": "production-ui-gang"
+    },
+    {
+      "caseId": "D-05",
+      "requirement": { "id": "CL-UI-FAILURE-STATES", "source": "workspace/README.md#real-ui", "summary": "The UI visibly and safely handles loading, empty, conflict, stale, offline, terminal, and permission states." },
+      "privateFailureCodePrefix": "CL_D05_",
+      "publicFeedbackCategory": "production-ui-resilience"
+    },
+    {
+      "caseId": "D-06",
+      "requirement": { "id": "CL-UI-ACCESSIBILITY", "source": "workspace/README.md#real-ui", "summary": "Primary desktop and mobile flows provide semantic controls, keyboard access, labels, focus, and AA contrast." },
+      "privateFailureCodePrefix": "CL_D06_",
+      "publicFeedbackCategory": "ui-accessibility"
+    },
+    {
+      "caseId": "D-07",
+      "requirement": { "id": "CL-PROJECT-VERIFICATION-GATES", "source": "workspace/README.md#project-owned-verification", "summary": "Published project-owned gates exercise real public seams and fail rather than reporting fake green." },
+      "privateFailureCodePrefix": "CL_D07_",
+      "publicFeedbackCategory": "project-verification"
+    },
+    {
+      "caseId": "D-08",
+      "requirement": { "id": "CL-HANDOFF-EVIDENCE", "source": "workspace/AGENTS.md#handoff", "summary": "Completion claims are backed by executable cross-layer evidence and explicitly report unrun checks." },
+      "privateFailureCodePrefix": "CL_D08_",
+      "publicFeedbackCategory": "cross-layer-evidence"
+    },
+
+    {
+      "caseId": "E-01",
+      "requirement": { "id": "CL-V1-FINAL-MIGRATION", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Populated V1 Leases migrate to one Member without changing state, capacity, identity, or old client behavior." },
+      "privateFailureCodePrefix": "CL_E01_",
+      "publicFeedbackCategory": "v1-final-migration"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": { "id": "CL-MIGRATION-REPLAY-EVENT", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "FINAL migration preserves saved idempotency responses and committed event identity, body, and sequence." },
+      "privateFailureCodePrefix": "CL_E02_",
+      "publicFeedbackCategory": "migration-replay-compatibility"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": { "id": "CL-MIGRATION-WORK-DELIVERY", "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message", "summary": "Pending or leased V1 Work and undelivered events retain ownership and ordering data and recover under FINAL." },
+      "privateFailureCodePrefix": "CL_E03_",
+      "publicFeedbackCategory": "migration-recovery-compatibility"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": { "id": "CL-PERF-TIMELINE", "source": "workspace/README.md#scenario-pool-timeline-read", "summary": "The fixed pool-timeline-read workload meets throughput, latency, response, and invariant thresholds." },
+      "privateFailureCodePrefix": "CL_E04_",
+      "publicFeedbackCategory": "timeline-performance"
+    },
+    {
+      "caseId": "E-05",
+      "requirement": { "id": "CL-PERF-HOLD", "source": "workspace/README.md#scenario-independent-hold-create", "summary": "The fixed independent-hold-create workload meets throughput, latency, effect, and conservation thresholds." },
+      "privateFailureCodePrefix": "CL_E05_",
+      "publicFeedbackCategory": "hold-performance"
+    },
+    {
+      "caseId": "E-06",
+      "requirement": { "id": "CL-PERF-RECOVERY", "source": "workspace/README.md#scenario-expiry-promotion-recovery", "summary": "The fixed recovery workload drains expiry and Promotion backlogs within 90 seconds with all invariants." },
+      "privateFailureCodePrefix": "CL_E06_",
+      "publicFeedbackCategory": "recovery-performance"
+    },
+    {
+      "caseId": "E-07",
+      "requirement": { "id": "CL-OPERABILITY-HYGIENE", "source": "workspace/AGENTS.md#security-and-hygiene", "summary": "Commands clean up deterministically and logs and generated artifacts do not leak or pollute the Submission." },
+      "privateFailureCodePrefix": "CL_E07_",
+      "publicFeedbackCategory": "operational-hygiene"
+    }
+  ]
+}

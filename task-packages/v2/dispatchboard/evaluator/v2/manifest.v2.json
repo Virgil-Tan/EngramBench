@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 2,
+  "taskId": "dispatchboard",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "name": "public-runtime-contract",
+      "weight": 30
+    },
+    "B": {
+      "name": "assignment-and-team-atomicity",
+      "weight": 25
+    },
+    "C": {
+      "name": "delivery-and-recovery",
+      "weight": 20
+    },
+    "D": {
+      "name": "cross-layer-contract",
+      "weight": 15
+    },
+    "E": {
+      "name": "performance-and-compatibility",
+      "weight": 10
+    }
+  },
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-DB-01",
+      "summary": "Non-scoring scope note: The public FINAL snapshot does not define where the migrated DRIVER RoleAssignment lineage is exposed for an ordinary Delivery."
+    },
+    {
+      "id": "SPEC-GAP-DB-02",
+      "summary": "Non-scoring scope note: The public contract does not define when a FORMING TeamAssignment identity is created; cases assert only unique final activation."
+    },
+    {
+      "id": "SPEC-GAP-DB-03",
+      "summary": "Non-scoring scope note: No Manager-only Domain Event type name is published; cases reject invented names."
+    }
+  ],
+  "hardCaps": [
+    {
+      "id": "ASSIGNMENT_OR_CAPACITY",
+      "cap": 35,
+      "publicInvariant": "A Delivery has one winner and Courier live load never exceeds capacity."
+    },
+    {
+      "id": "DEADLINE_PRECEDENCE",
+      "cap": 40,
+      "publicInvariant": "Delivery deadline precedes Offer deadline and no expired claim can assign work."
+    },
+    {
+      "id": "TEAM_AGGREGATE_CLOSURE",
+      "cap": 35,
+      "publicInvariant": "Team roles activate and terminate atomically without duplicate Courier roles or load release."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Concurrent replay and lost responses create exactly one durable business effect."
+    },
+    {
+      "id": "WORK_FENCING_OR_RECOVERY",
+      "cap": 40,
+      "publicInvariant": "Expired owners cannot commit and replacement processes preserve work and delivery identities."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "Migration preserves V1 state, identities, deadlines, events, Work, and replay bodies."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Delivery create and read runtime contract",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Delivery deadline takes precedence over Offer deadline",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Ordinary cancel pickup and completion lifecycle",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Team create detail Offer and notification wire",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Team mutation and stable error contract",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Courier eligibility ranking and frozen Offer Rounds",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "First ordinary claim and terminal races are atomic",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Team role fanout Courier exclusion and role-local re-offer",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Final team activation readiness and terminal closure",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Durable replay and cross-Delivery capacity contention",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Captured OfferNotification delivery survives unknown outcomes",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "OFFER_ISSUANCE recovers at all public worker barriers",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "OFFER_EXPIRY recovery preserves ordinary and role-local closure",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Domain Event dispatcher retries unknown acknowledgements in order",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "V1 seed OpenAPI and runtime form one closed contract",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Ordinary Delivery completes through real Chromium controls",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Team roles readiness and terminal flow close through Chromium",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "FINAL snapshot is point-in-time closed across ordinary and team state",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Fixed delivery-create sustained load",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Fixed 1000 hot Offer claim load",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Fixed 5000 due Offer crash recovery",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF_V1"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Current ordinary and team Offer issuance recovers after FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

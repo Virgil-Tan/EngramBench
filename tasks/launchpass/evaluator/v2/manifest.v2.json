@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 2,
+  "taskId": "launchpass",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Event, Hold and Waitlist public flows", "weight": 30 },
+    "B": { "title": "Capacity, idempotency and concurrency", "weight": 25 },
+    "C": { "title": "Passive expiry, crashes and restart", "weight": 20 },
+    "D": { "title": "Production browser and OpenAPI closure", "weight": 15 },
+    "E": { "title": "Seed and published performance", "weight": 10 }
+  },
+  "hardCaps": [
+    {
+      "id": "CORRECTNESS_INVARIANT",
+      "cap": 30,
+      "publicInvariant": "Available capacity stays bounded and every hold, order, terminal transition, restoration, and promotion effect occurs at most once."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "LP-GAP-01",
+      "summary": "The Manager did not publish exact success statuses for waitlist GET and DELETE."
+    },
+    {
+      "id": "LP-GAP-02",
+      "summary": "No populated V1-to-FINAL binary migration or replay checkpoint contract was published."
+    },
+    {
+      "id": "LP-GAP-03",
+      "summary": "No waitlist history or list endpoint was published."
+    }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "Event create, search, ordering and cursor pages", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "Hold reservation and atomic rejection", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Confirm, release, order and customer history", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "Passive expiration within the public observation window", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    {
+      "id": "A-05",
+      "title": "Waitlist join, query, withdraw and automatic promotion",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": ["FINAL"],
+      "blockedAssertions": [
+        { "id": "waitlist-get-success-status", "blockedBy": "LP-GAP-01", "policy": "fail-closed-diagnostic" },
+        { "id": "waitlist-delete-success-status", "blockedBy": "LP-GAP-01", "policy": "fail-closed-diagnostic" }
+      ]
+    },
+
+    { "id": "B-01", "title": "Two-process hot-event capacity conservation", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "Scoped durable idempotency and unknown response replay", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Confirm, release and expiration terminal race", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "Strict FIFO, head blocking and continuous promotion", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "Two-process exactly-once promotion and withdraw race", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+
+    { "id": "C-01", "title": "Durable hold after response-side disconnect and process crash", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-02", "title": "Passive expiration recovery after creator exit", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-03", "title": "Unknown terminal outcome recovery across processes", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-04", "title": "FIFO promotion recovery after process termination", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+
+    { "id": "D-01", "title": "Production browser browse, hold, confirm and order", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "D-02", "title": "Production browser release, passive expiry and refresh", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "D-03", "title": "Production browser waitlist position, withdraw and promotion", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    {
+      "id": "D-04",
+      "title": "OpenAPI 3.1 and exact runtime wire agreement",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": ["FINAL"],
+      "blockedAssertions": [
+        { "id": "openapi-waitlist-get-success-status", "blockedBy": "LP-GAP-01", "policy": "fail-closed-diagnostic" },
+        { "id": "openapi-waitlist-delete-success-status", "blockedBy": "LP-GAP-01", "policy": "fail-closed-diagnostic" }
+      ]
+    },
+
+    { "id": "E-01", "title": "V1 seed scale, atomic rejection and FINAL compatibility", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL"] },
+    { "id": "E-02", "title": "Published event search latency target", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "E-03", "title": "Published hot-event hold and confirm latency target", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "E-04", "title": "Published mixed throughput and post-load audit", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] }
+  ]
+}

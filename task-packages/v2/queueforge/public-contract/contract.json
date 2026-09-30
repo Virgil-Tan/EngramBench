@@ -1,0 +1,2613 @@
+{
+  "taskId": "queueforge",
+  "title": "QueueForge",
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "CHROMIUM_PATH",
+    "MANAGED_DATA_ROOT",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "queues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Queue"
+          }
+        },
+        "jobDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JobDefinition"
+          }
+        },
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyRun"
+          }
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Attempt"
+          }
+        },
+        "executionLeases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExecutionLease"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "queues",
+        "jobDefinitions",
+        "runs",
+        "attempts",
+        "executionLeases"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "v2-public-queueforge-1",
+      "queues": [
+        {
+          "queueId": "70000000-0000-4000-8000-000000000041",
+          "name": "Public Queue",
+          "capacity": 2
+        }
+      ],
+      "jobDefinitions": [
+        {
+          "jobDefinitionId": "70000000-0000-4000-8000-000000000042",
+          "version": 1,
+          "operation": "ECHO",
+          "maxAttempts": 3,
+          "timeoutSeconds": 30,
+          "createdAt": "2026-09-07T00:00:00.000Z"
+        }
+      ],
+      "runs": [
+        {
+          "runId": "70000000-0000-4000-8000-000000000043",
+          "jobDefinitionId": "70000000-0000-4000-8000-000000000042",
+          "jobVersion": 1,
+          "queueId": "70000000-0000-4000-8000-000000000041",
+          "priority": 0,
+          "notBefore": "2026-09-07T00:00:00.000Z",
+          "input": {
+            "value": "Public persisted run"
+          },
+          "state": "SUCCEEDED",
+          "attemptCount": 1,
+          "output": {
+            "value": "Public persisted run"
+          },
+          "errorCode": null,
+          "createdAt": "2026-09-07T00:00:00.000Z",
+          "startedAt": "2026-09-07T00:00:00.000Z",
+          "terminalAt": "2026-09-07T00:00:00.000Z",
+          "sequence": 3
+        }
+      ],
+      "attempts": [
+        {
+          "runId": "70000000-0000-4000-8000-000000000043",
+          "attempt": 1,
+          "workerId": "public-seed-worker",
+          "startedAt": "2026-09-07T00:00:00.000Z",
+          "finishedAt": "2026-09-07T00:00:00.000Z",
+          "outcome": "SUCCEEDED",
+          "outputDigest": "41425a0b1a73e6b5f40f4191bcf848955d47dc25f4f17cc8c70e74a7aca30465"
+        }
+      ],
+      "executionLeases": []
+    }
+  },
+  "schemas": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "minimum": -1.7976931348623157e+308,
+          "maximum": 1.7976931348623157e+308
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "RUN_EXECUTION"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "LEASED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaseOwner": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "leaseExpiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "leaseOwner": {
+                "type": "null"
+              },
+              "leaseExpiresAt": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED",
+                  "CANCELLED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "terminal": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "run.queued",
+            "run.started",
+            "run.retry-scheduled",
+            "run.succeeded",
+            "run.failed",
+            "run.cancelled"
+          ]
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "schemaVersion": {
+          "const": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "aggregateId",
+        "sequence",
+        "type",
+        "occurredAt",
+        "schemaVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "Queue": {
+      "type": "object",
+      "properties": {
+        "queueId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "queueId",
+        "name",
+        "capacity"
+      ],
+      "additionalProperties": false
+    },
+    "JobDefinition": {
+      "type": "object",
+      "properties": {
+        "jobDefinitionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "ECHO",
+            "SHA256",
+            "SUM_INTEGERS"
+          ]
+        },
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "jobDefinitionId",
+        "version",
+        "operation",
+        "maxAttempts",
+        "timeoutSeconds",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyRun": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "jobDefinitionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "jobVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "queueId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "notBefore": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "input": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "attemptCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "output": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "runId",
+        "jobDefinitionId",
+        "jobVersion",
+        "queueId",
+        "priority",
+        "notBefore",
+        "input",
+        "state",
+        "attemptCount",
+        "output",
+        "errorCode",
+        "createdAt",
+        "startedAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ExecutionLease": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "workerId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "leaseToken": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "leasedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "runId",
+        "attempt",
+        "workerId",
+        "leaseToken",
+        "leasedAt",
+        "expiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "Attempt": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "workerId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "SUCCEEDED",
+                "RETRYABLE_FAILURE",
+                "PERMANENT_FAILURE",
+                "TIMED_OUT",
+                "CANCELLED"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "runId",
+        "attempt",
+        "workerId",
+        "startedAt",
+        "finishedAt",
+        "outcome",
+        "outputDigest"
+      ],
+      "additionalProperties": false
+    },
+    "WorkflowNode": {
+      "type": "object",
+      "properties": {
+        "nodeKey": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "BLOCKED",
+            "CANCELLED"
+          ]
+        }
+      },
+      "required": [
+        "nodeKey",
+        "runId",
+        "dependsOn",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    "WorkflowRun": {
+      "type": "object",
+      "properties": {
+        "workflowRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WorkflowNode"
+          },
+          "minItems": 1,
+          "maxItems": 50
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "workflowRunId",
+        "state",
+        "nodes",
+        "createdAt",
+        "terminalAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "GraphRun": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "jobDefinitionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "jobVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "queueId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "notBefore": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "input": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "BLOCKED",
+            "CANCELLED"
+          ]
+        },
+        "attemptCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "output": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "workflowRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "nodeKey": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "runId",
+        "jobDefinitionId",
+        "jobVersion",
+        "queueId",
+        "priority",
+        "notBefore",
+        "input",
+        "state",
+        "attemptCount",
+        "output",
+        "errorCode",
+        "createdAt",
+        "startedAt",
+        "terminalAt",
+        "sequence",
+        "workflowRunId",
+        "nodeKey"
+      ],
+      "additionalProperties": false
+    },
+    "Run": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/LegacyRun"
+        },
+        {
+          "$ref": "#/$defs/GraphRun"
+        }
+      ]
+    },
+    "SnapshotRun": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "jobDefinitionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "jobVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "queueId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "notBefore": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "input": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "QUEUED",
+            "RUNNING",
+            "SUCCEEDED",
+            "FAILED",
+            "BLOCKED",
+            "CANCELLED"
+          ]
+        },
+        "attemptCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "output": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "terminalAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "workflowRunId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nodeKey": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "runId",
+        "jobDefinitionId",
+        "jobVersion",
+        "queueId",
+        "priority",
+        "notBefore",
+        "input",
+        "state",
+        "attemptCount",
+        "output",
+        "errorCode",
+        "createdAt",
+        "startedAt",
+        "terminalAt",
+        "sequence",
+        "workflowRunId",
+        "nodeKey"
+      ],
+      "additionalProperties": false
+    },
+    "SnapshotExecutionLease": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "workerId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "leasedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "runId",
+        "attempt",
+        "workerId",
+        "leasedAt",
+        "expiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "AttemptResult": {
+      "type": "object",
+      "properties": {
+        "run": {
+          "$ref": "#/$defs/Run"
+        },
+        "attempt": {
+          "$ref": "#/$defs/Attempt"
+        }
+      },
+      "required": [
+        "run",
+        "attempt"
+      ],
+      "additionalProperties": false
+    },
+    "WorkerClaimResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "run": {
+                "$ref": "#/$defs/Run"
+              },
+              "executionLease": {
+                "$ref": "#/$defs/ExecutionLease"
+              }
+            },
+            "required": [
+              "run",
+              "executionLease"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 20
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "Seed": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "maxLength": 64
+        },
+        "queues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Queue"
+          }
+        },
+        "jobDefinitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JobDefinition"
+          }
+        },
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LegacyRun"
+          }
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Attempt"
+          }
+        },
+        "executionLeases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExecutionLease"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "queues",
+        "jobDefinitions",
+        "runs",
+        "attempts",
+        "executionLeases"
+      ],
+      "additionalProperties": false
+    },
+    "VerificationSnapshot": {
+      "type": "object",
+      "properties": {
+        "asOf": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "queues": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Queue"
+              }
+            },
+            "jobDefinitions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/JobDefinition"
+              }
+            },
+            "runs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SnapshotRun"
+              }
+            },
+            "executionLeases": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SnapshotExecutionLease"
+              }
+            },
+            "attempts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Attempt"
+              }
+            },
+            "workflowRuns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/WorkflowRun"
+              }
+            }
+          },
+          "required": [
+            "queues",
+            "jobDefinitions",
+            "runs",
+            "executionLeases",
+            "attempts",
+            "workflowRuns"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "asOf",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "required": [
+          "openapi",
+          "info",
+          "paths"
+        ],
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "info": {
+            "type": "object"
+          },
+          "paths": {
+            "type": "object"
+          },
+          "components": {
+            "type": "object"
+          }
+        }
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#real-ui",
+      "response": {
+        "type": "string",
+        "minLength": 1
+      },
+      "requestBody": "none",
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "list-runs",
+      "method": "GET",
+      "path": "/api/v1/runs",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Run"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "read-run",
+      "method": "GET",
+      "path": "/api/v1/runs/:runId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Run"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "runId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "runId": "70000000-0000-4000-8000-000000000043"
+        }
+      }
+    },
+    {
+      "id": "create-run",
+      "method": "POST",
+      "path": "/api/v1/runs",
+      "status": 202,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/LegacyRun"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "jobDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "jobVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "queueId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": -100,
+            "maximum": 100
+          },
+          "notBefore": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+          },
+          "input": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        "required": [
+          "jobDefinitionId",
+          "jobVersion",
+          "queueId",
+          "priority",
+          "notBefore",
+          "input"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "jobDefinitionId": "70000000-0000-4000-8000-000000000042",
+          "jobVersion": 1,
+          "queueId": "70000000-0000-4000-8000-000000000041",
+          "priority": 0,
+          "notBefore": "2026-09-07T00:00:00.000Z",
+          "input": {
+            "value": "Independent run"
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-run"
+        }
+      }
+    },
+    {
+      "id": "create-job-definition",
+      "method": "POST",
+      "path": "/api/v1/job-definitions",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/JobDefinition"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "enum": [
+              "ECHO",
+              "SHA256",
+              "SUM_INTEGERS"
+            ]
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300
+          }
+        },
+        "required": [
+          "operation",
+          "maxAttempts",
+          "timeoutSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "operation": "ECHO",
+          "maxAttempts": 3,
+          "timeoutSeconds": 30
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-job-definition"
+        }
+      }
+    },
+    {
+      "id": "version-job-definition",
+      "method": "POST",
+      "path": "/api/v1/job-definitions/:jobDefinitionId/versions",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/JobDefinition"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedLatestVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "ECHO",
+              "SHA256",
+              "SUM_INTEGERS"
+            ]
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300
+          }
+        },
+        "required": [
+          "expectedLatestVersion",
+          "operation",
+          "maxAttempts",
+          "timeoutSeconds"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "jobDefinitionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "jobDefinitionId": "70000000-0000-4000-8000-000000000042"
+        },
+        "body": {
+          "expectedLatestVersion": 1,
+          "operation": "SHA256",
+          "maxAttempts": 3,
+          "timeoutSeconds": 30
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-version-job-definition"
+        }
+      }
+    },
+    {
+      "id": "cancel-run",
+      "method": "POST",
+      "path": "/api/v1/runs/:runId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/Run"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "runId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "runId": "70000000-0000-4000-8000-000000000043"
+        },
+        "body": {
+          "reason": "Cancel requested execution"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-cancel-run"
+        }
+      }
+    },
+    {
+      "id": "claim-runs",
+      "method": "POST",
+      "path": "/api/v1/workers/:workerId/claim",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/WorkerClaimResponse"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "queueIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "maxRuns": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          }
+        },
+        "required": [
+          "queueIds",
+          "maxRuns"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "workerId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "workerId": "public-worker"
+        },
+        "body": {
+          "queueIds": [
+            "70000000-0000-4000-8000-000000000041"
+          ],
+          "maxRuns": 1
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-claim-runs"
+        }
+      }
+    },
+    {
+      "id": "complete-attempt",
+      "method": "POST",
+      "path": "/api/v1/runs/:runId/attempt-result",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/AttemptResult"
+      },
+      "request": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "attempt": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "leaseToken": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "outcome": {
+                "const": "SUCCEEDED"
+              },
+              "output": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "errorCode": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "attempt",
+              "leaseToken",
+              "outcome",
+              "output",
+              "errorCode"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "attempt": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "leaseToken": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "RETRYABLE_FAILURE",
+                  "PERMANENT_FAILURE"
+                ]
+              },
+              "output": {
+                "type": "null"
+              },
+              "errorCode": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            },
+            "required": [
+              "attempt",
+              "leaseToken",
+              "outcome",
+              "output",
+              "errorCode"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "runId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "runId": "70000000-0000-4000-8000-000000000043"
+        },
+        "body": {
+          "attempt": 1,
+          "leaseToken": "example-token-from-claim-response",
+          "outcome": "SUCCEEDED",
+          "output": {
+            "value": "Public persisted run"
+          },
+          "errorCode": null
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-complete-attempt"
+        }
+      }
+    },
+    {
+      "id": "read-queue",
+      "method": "GET",
+      "path": "/api/v1/queues/:queueId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "queueId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "activeLeaseCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "queuedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "queueId",
+          "name",
+          "capacity",
+          "activeLeaseCount",
+          "queuedCount"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "queueId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "queueId": "70000000-0000-4000-8000-000000000041"
+        }
+      }
+    },
+    {
+      "id": "run-attempts",
+      "method": "GET",
+      "path": "/api/v1/runs/:runId/attempts",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Attempt"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "runId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "runId": "70000000-0000-4000-8000-000000000043"
+        }
+      }
+    },
+    {
+      "id": "create-workflow-run",
+      "method": "POST",
+      "path": "/api/v1/workflow-runs",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/WorkflowRun"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nodeKey": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
+                },
+                "jobDefinitionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "jobVersion": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "queueId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "priority": {
+                  "type": "integer",
+                  "minimum": -100,
+                  "maximum": 100
+                },
+                "input": {
+                  "$ref": "#/$defs/JsonValue"
+                },
+                "dependsOn": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S"
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "nodeKey",
+                "jobDefinitionId",
+                "jobVersion",
+                "queueId",
+                "priority",
+                "input",
+                "dependsOn"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "nodes"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "nodes": [
+            {
+              "nodeKey": "first",
+              "jobDefinitionId": "70000000-0000-4000-8000-000000000042",
+              "jobVersion": 1,
+              "queueId": "70000000-0000-4000-8000-000000000041",
+              "priority": 0,
+              "input": {
+                "value": "Public persisted run"
+              },
+              "dependsOn": []
+            },
+            {
+              "nodeKey": "next",
+              "jobDefinitionId": "70000000-0000-4000-8000-000000000042",
+              "jobVersion": 1,
+              "queueId": "70000000-0000-4000-8000-000000000041",
+              "priority": 0,
+              "input": {
+                "value": "Public persisted run"
+              },
+              "dependsOn": [
+                "first"
+              ]
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-workflow-run"
+        }
+      }
+    },
+    {
+      "id": "read-workflow-run",
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/:workflowRunId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/WorkflowRun"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "workflowRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "workflowRunId": "70000000-0000-4000-8000-000000000044"
+        }
+      }
+    },
+    {
+      "id": "cancel-workflow-run",
+      "method": "POST",
+      "path": "/api/v1/workflow-runs/:workflowRunId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/WorkflowRun"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "workflowRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "workflowRunId": "70000000-0000-4000-8000-000000000044"
+        },
+        "body": {
+          "reason": "Cancel workflow"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-cancel-workflow-run"
+        }
+      }
+    },
+    {
+      "id": "retry-workflow-node",
+      "method": "POST",
+      "path": "/api/v1/workflow-runs/:workflowRunId/nodes/:nodeKey/retry",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "response": {
+        "$ref": "#/$defs/GraphRun"
+      },
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "workflowRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "nodeKey",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[\\x21-\\x7e]+$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "workflowRunId": "70000000-0000-4000-8000-000000000044",
+          "nodeKey": "first"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "v2-public-retry-workflow-node"
+        }
+      }
+    },
+    {
+      "id": "domain-events",
+      "method": "GET",
+      "path": "/api/v1/domain-events",
+      "status": 200,
+      "source": "V2 public wire clarification (contract notes)",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DomainEvent"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "aggregateId",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "afterSequence",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "aggregateId": "70000000-0000-4000-8000-000000000001",
+          "afterSequence": 0,
+          "limit": 50
+        }
+      }
+    },
+    {
+      "id": "verification-snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#http-and-openapi-31",
+      "response": {
+        "$ref": "#/$defs/VerificationSnapshot"
+      },
+      "requestBody": "none",
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "ok"
+      }
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "queues"
+          ],
+          "match": {
+            "queueId": "70000000-0000-4000-8000-000000000041",
+            "capacity": 2
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "jobDefinitions"
+          ],
+          "match": {
+            "jobDefinitionId": "70000000-0000-4000-8000-000000000042",
+            "version": 1,
+            "operation": "ECHO"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "runs"
+          ],
+          "match": {
+            "runId": "70000000-0000-4000-8000-000000000043",
+            "state": "SUCCEEDED",
+            "output": {
+              "value": "Public persisted run"
+            },
+            "workflowRunId": null,
+            "nodeKey": null
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "attempts"
+          ],
+          "match": {
+            "runId": "70000000-0000-4000-8000-000000000043",
+            "attempt": 1,
+            "outputDigest": "41425a0b1a73e6b5f40f4191bcf848955d47dc25f4f17cc8c70e74a7aca30465"
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "read-run",
+      "params": {
+        "runId": "70000000-0000-4000-8000-000000000043"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "runId": "70000000-0000-4000-8000-000000000043",
+        "jobDefinitionId": "70000000-0000-4000-8000-000000000042",
+        "jobVersion": 1,
+        "queueId": "70000000-0000-4000-8000-000000000041",
+        "priority": 0,
+        "notBefore": "2026-09-07T00:00:00.000Z",
+        "input": {
+          "value": "Public persisted run"
+        },
+        "state": "SUCCEEDED",
+        "attemptCount": 1,
+        "output": {
+          "value": "Public persisted run"
+        },
+        "errorCode": null,
+        "createdAt": "2026-09-07T00:00:00.000Z",
+        "startedAt": "2026-09-07T00:00:00.000Z",
+        "terminalAt": "2026-09-07T00:00:00.000Z",
+        "sequence": 3
+      }
+    },
+    {
+      "operationId": "create-job-definition",
+      "body": {
+        "operation": "ECHO",
+        "maxAttempts": 3,
+        "timeoutSeconds": 30
+      },
+      "headers": {
+        "Idempotency-Key": "v2-public-create-job-definition"
+      },
+      "expectStatus": 201,
+      "expectBody": {
+        "version": 1,
+        "operation": "ECHO",
+        "maxAttempts": 3,
+        "timeoutSeconds": 30
+      },
+      "capture": {
+        "createdDefinition": [
+          "jobDefinitionId"
+        ]
+      }
+    },
+    {
+      "operationId": "verification-snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "jobDefinitions"
+          ],
+          "match": {
+            "jobDefinitionId": "${createdDefinition}",
+            "version": 1,
+            "operation": "ECHO",
+            "maxAttempts": 3,
+            "timeoutSeconds": 30
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Authority: the complete original public README and Manager requirements. This contract uses no private evaluator cases or submitted implementation. Wire validation does not establish workflow, recovery or performance correctness.",
+    "V2 wire clarification: unspecified health body is exactly {status:\"ok\"}; production UI is HTML at /. GET domain-events returns {items:[DomainEvent]} with aggregateId required and optional afterSequence (default 0), limit (default 50, range 1..100), ordered by sequence. No other query keys are accepted.",
+    "Original error details is an exact empty object. Every mutation requires its published Idempotency-Key. Only documented admin routes require ADMIN_TOKEN. Output timestamps retain the original UTC millisecond precision.",
+    "The FINAL snapshot has exactly its published resource keys and explicitly typed Work/DomainEvent records. It is one database snapshot; recursive *Token omission, stable ordering, retained terminal Work and event identity remain business requirements. Manager-only data is created by public APIs, never inserted through the V1 seed.",
+    "Examples are independent public transport examples, not a required stateful sequence. A success requires the state/time/lease/revision prerequisites in the original public documents. Smoke checks identity and a separate write/read path, not every operation or concurrency invariant.",
+    "Original policy maxRuns is 1..20, but short-run-execution later sends maxRuns:25. V2 fixes request validation at the explicit business bound 1..20; the old performance scenario requires a public correction before it can be an acceptance gate. No maxRuns:25 example or performance pass is claimed.",
+    "V2 wire clarification: fresh standalone Run HTTP responses retain the exact V1 fields; graph node HTTP responses add non-null workflowRunId and nodeKey. FINAL snapshot Run rows always contain the two nullable Manager fields, null for migrated standalone Runs. Snapshot ExecutionLease omits leaseToken, while the authenticated claim operation returns its token as explicitly required.",
+    "V2 wire clarification: workflow creation/cancellation return WorkflowRun at 200 under the original default rule. Node retry returns the updated graph node Run at 200; related descendants and workflow state are observed using GET workflow-run. Node notBefore is the creation transaction timestamp since the graph create request does not accept notBefore.",
+    "The example seed is a real Queue -> immutable ECHO JobDefinition -> SUCCEEDED Run -> finished Attempt graph. Its outputDigest is SHA-256 of canonical output. No live/expired lease is inserted merely to make a smoke request possible.",
+    "Output semantics still require the captured ECHO/SHA256/SUM_INTEGERS operation. Lease ownership, DAG validity, ancestor failure and queue capacity cannot be validated by transport schemas alone. The documented claim route is not ADMIN_TOKEN protected in the original contract.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    },
+    "unknownField": {
+      "status": 400,
+      "code": "UNKNOWN_FIELD"
+    },
+    "invalidRequest": {
+      "status": 400,
+      "code": "INVALID_REQUEST"
+    },
+    "invalidJson": {
+      "status": 400,
+      "code": "MALFORMED_JSON"
+    },
+    "unsupportedMediaType": {
+      "status": 415,
+      "code": "UNSUPPORTED_MEDIA_TYPE"
+    }
+  }
+}

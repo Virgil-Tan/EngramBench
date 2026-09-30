@@ -1,0 +1,493 @@
+{
+  "schemaVersion": 2,
+  "taskId": "dockchain",
+  "profile": "transfer-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Public resource and lifecycle contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Bundle allocation and concurrency correctness",
+      "weight": 25
+    },
+    "C": {
+      "title": "Worker recovery and persistence",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI browser and cross-layer closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration performance and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "PRODUCTION_BOOT",
+      "cap": 25,
+      "publicInvariant": "The clean production stack migrates builds boots and terminates through the published commands."
+    },
+    {
+      "id": "BUNDLE_CONSERVATION",
+      "cap": 35,
+      "publicInvariant": "Berth Tug and Yard allocations are one atomic complete bundle and never overlap or oversubscribe."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Unknown and concurrent replay preserves one saved response and one Port Call effect."
+    },
+    {
+      "id": "EVENT_TRANSACTIONALITY",
+      "cap": 40,
+      "publicInvariant": "Every published successful transition commits one stable ordered Event and rejected transitions commit none."
+    },
+    {
+      "id": "STALE_WORK_OR_LOST_WORK",
+      "cap": 40,
+      "publicInvariant": "Clearance expiry and promotion Work survive process death while stale leases cannot commit."
+    },
+    {
+      "id": "LINKED_MOVEMENT_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "A linked Call creates two complete movement bundles atomically and preserves the published aggregate projection."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "V1 Calls allocations Clearances replay Work and Events migrate without changed identity or behavior."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-01",
+      "summary": "ResourceAllocation does not publish a Port Call or movement owner field."
+    },
+    {
+      "id": "SPEC-GAP-02",
+      "summary": "Standby WITHDRAWN has no published withdraw mutation."
+    },
+    {
+      "id": "SPEC-GAP-03",
+      "summary": "Linked movement Standby request and promotion semantics are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-04",
+      "summary": "Movement-specific Domain Event names are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-05",
+      "summary": "Clearance checkedRules string vocabulary is unpublished."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Published commands and production boot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Repeatable populated migration",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Atomic deterministic seed",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "OpenAPI 3.1 exact contract",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Common errors and interval boundaries",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-06",
+      "title": "Pagination, reads and snapshot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-07",
+      "title": "Feasible-window search and ordering",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-08",
+      "title": "Atomic deterministic Port Call hold",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-09",
+      "title": "Confirm, Clearance and start-service",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-10",
+      "title": "Complete, cancel and expiry",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-11",
+      "title": "Standby creation and deterministic promotion",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-12",
+      "title": "Schedule and Domain Event query",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-13",
+      "title": "FINAL linked-call creation and compatibility",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-14",
+      "title": "Movement lifecycle and aggregate projection",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Half-open interval and capacity oracle",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Deterministic complete-bundle selection",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Atomic rejection and no partial allocation",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Unknown-response durable replay",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Same-key contention across two APIs",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-06",
+      "title": "Distinct-key hot bundle contention",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-07",
+      "title": "Clearance/start/cancel/expiry races",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-08",
+      "title": "Standby fairness under concurrent release",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-09",
+      "title": "Linked two-bundle atomicity and deadlock freedom",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-10",
+      "title": "Concurrent movement transitions and aggregate state",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Work schema, lifecycle and retention",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "SIGKILL after worker.claimed",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "SIGKILL after worker.effect-complete",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "SIGKILL at worker.before-commit",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-05",
+      "title": "Expired-lease fencing",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-06",
+      "title": "Manual transitions close obsolete Work",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-07",
+      "title": "Unknown webhook ACK and ordered retry",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-08",
+      "title": "Transactional events and linked recovery",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Independent OpenAPI/live-traffic validation",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production-browser V1 lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production-browser Standby and linked movements",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Loading, empty, conflict, stale, offline and permission",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-05",
+      "title": "Keyboard, labels, focus and mobile",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-06",
+      "title": "Project-owned gates are not fake green",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-07",
+      "title": "README-to-evidence closure",
+      "weight": 3,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1→FINAL movement migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved replay and event identity migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Clearance and delivery continuity",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Read/create sustained performance",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-05",
+      "title": "Clearance recovery performance and operability",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ]
+}

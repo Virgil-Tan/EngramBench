@@ -1,0 +1,43 @@
+{
+  "seedKeys": ["tenants", "uploadSessions", "uploadParts", "blobObjects", "mediaAssets", "scanJobs", "scanResults", "transcodeProfiles", "transcodeJobs", "renditions", "accessGrants", "cleanupPolicies", "cleanupRuns", "cleanupEntries"],
+  "publicPaths": [
+    "/api/v1/tenants", "/api/v1/transcode-profiles", "/api/v1/cleanup-policies", "/api/v1/uploads",
+    "/api/v1/uploads/:uploadId", "/api/v1/uploads/:uploadId/parts/:partNumber",
+    "/api/v1/uploads/:uploadId/complete", "/api/v1/uploads/:uploadId/abort",
+    "/api/v1/assets/:assetId", "/api/v1/assets/:assetId/renditions",
+    "/api/v1/assets/:assetId/access-grants", "/api/v1/access-grants/:grantId/revoke",
+    "/media/:grantId", "/api/v1/scanner/results", "/api/v1/scan-jobs/:scanJobId/reconcile",
+    "/api/v1/cleanup-runs", "/api/v1/cleanup-runs/:cleanupRunId", "/api/v1/verification-snapshot"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"uploadSessions","shape":"UploadSession","sort":["uploadId"]},
+      {"key":"uploadParts","shape":"UploadPart","sort":["uploadId","partNumber"]},
+      {"key":"blobObjects","shape":"BlobObject","sort":["blobId"]},
+      {"key":"mediaAssets","shape":"MediaAsset","sort":["assetId"]},
+      {"key":"scanJobs","shape":"ScanJob","sort":["scanJobId"]},
+      {"key":"scanResults","shape":"ScanResult","sort":["scanResultId"]},
+      {"key":"transcodeProfiles","shape":"TranscodeProfile","sort":["profileId","revision"]},
+      {"key":"transcodeJobs","shape":"TranscodeJob","sort":["transcodeJobId"]},
+      {"key":"renditions","shape":"Rendition","sort":["renditionId"]},
+      {"key":"accessGrants","shape":"AccessGrant","sort":["grantId"]},
+      {"key":"cleanupPolicies","shape":"CleanupPolicy","sort":["cleanupPolicyId","revision"]},
+      {"key":"cleanupRuns","shape":"CleanupRun","sort":["cleanupRunId"]},
+      {"key":"cleanupEntries","shape":"CleanupEntry","sort":["cleanupRunId","cleanupEntryId"]}
+    ],
+    "managerResources": [
+      {"key":"mediaAliases","shape":"MediaAlias","sort":["aliasId"]},
+      {"key":"publicationRevisions","shape":"PublicationRevision","sort":["aliasId","revision"]}
+    ]
+  },
+  "workKinds": {
+    "v1": ["UPLOAD_EXPIRY", "VIRUS_SCAN", "TRANSCODE", "CLEANUP_DELETE"],
+    "manager": ["PUBLICATION_SWITCH"]
+  },
+  "perfScenarios": [
+    {"id":"multipart-ingest"},
+    {"id":"resume-contention"},
+    {"id":"pipeline-cleanup-recovery"}
+  ]
+}

@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 2,
+  "taskId": "notifyroute",
+  "profile": "learning-v2",
+  "formalReady": true,
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Requirements and domain correctness",
+      "weight": 30
+    },
+    "B": {
+      "title": "Data correctness, idempotency and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Worker, recovery and persistence",
+      "weight": 20
+    },
+    "D": {
+      "title": "Public API, security and browser closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Final-system concurrency, persistence and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "CORRECTNESS_INVARIANT",
+      "cap": 35,
+      "publicInvariant": "Suppression may not be bypassed, a recipient effect duplicated, or a terminal state regress."
+    },
+    {
+      "id": "DURABLE_REPLAY_DUPLICATE",
+      "cap": 30,
+      "publicInvariant": "Durable replay may not create a second business effect."
+    },
+    {
+      "id": "WORK_FENCE_OR_LOSS",
+      "cap": 40,
+      "publicInvariant": "A stale lease may not commit and valid durable Work may not be lost."
+    },
+    {
+      "id": "MIGRATION_IDENTITY_REWRITE",
+      "cap": 35,
+      "publicInvariant": "Final-system restart may not rewrite identity, event history, Work, or saved replay."
+    }
+  ],
+  "specGaps": [],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Notification freezes TemplateVersion, data and RoutePolicy",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Suppression fence precedes Provider call",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Two-level rate windows and ordered fallback",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "UNKNOWN receipt and reconcile convergence",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Campaign creates an exact deduplicated audience with frozen preference, template and route revisions through public calls.",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Notification mutation durable replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Multi-process Provider send keeps one identity",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Suppression and send claim serialize",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Receipt and reconcile commute under duplicates",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Paused Campaign does not fan out while workers prove progress; resume creates one real Notification per frozen member.",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "UNKNOWN Provider outcome survives process crash",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Outbox unknown acknowledgement preserves event body and order",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Queued Campaign work survives API replacement; concurrent and replacement workers preserve one Notification per member.",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "A committed Campaign cancellation fence survives process replacement and prevents member creation and send.",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Published Notification creation/item read, closed errors and tenant ownership are enforced through real public HTTP.",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Webhook HMAC and receipt replay boundary",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production browser closes notification and consent flow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Production browser pause/resume/cancel controls persist Campaign state and survive refresh.",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Same-final-system restart and repeat initialization preserve populated Notification identity, replay, work and events.",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Concurrent bounded ingestion and replay conserve Notification identities and one successful external call per logical request.",
+      "dimension": "E",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Concurrent hot-recipient work respects published fixed-window capacity and records exact next-window boundaries.",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "A bounded accepted workload survives API replacement and drains exactly once with concurrent workers.",
+      "dimension": "E",
+      "weight": 2,
+      "prerequisites": [
+        "FINAL"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "semanticRevisions": [
+    {
+      "caseIds": [
+        "E-01"
+      ],
+      "summary": "One final system: populated state and replay survive process restart and repeated initialization, with no intermediate V1 binary/database."
+    },
+    {
+      "caseIds": [
+        "E-02",
+        "E-03",
+        "E-04"
+      ],
+      "summary": "Published correctness under bounded concurrent ingest/quota/recovery, not an unpublished throughput, latency or recovery-time score."
+    },
+    {
+      "caseIds": [
+        "A-01",
+        "D-01"
+      ],
+      "summary": "Literal-template strict input and immutable rendering; only published Notification item route. No hidden template grammar or invented Notification collection route."
+    },
+    {
+      "caseIds": [
+        "D-02"
+      ],
+      "summary": "Retain actual HMAC verification using newly public NOTIFYROUTE_WEBHOOK_SIGNING_SECRET and X-NotifyRoute-Signature."
+    },
+    {
+      "caseIds": [
+        "C-03",
+        "C-04"
+      ],
+      "summary": "Durable queued fan-out/control and process replacement are observable; no claim to force unpublished private lease barrier phases."
+    }
+  ]
+}

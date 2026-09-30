@@ -1,0 +1,266 @@
+{
+  "schemaVersion": 2,
+  "taskId": "configrelay",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Configuration, Deployment and Agent wire contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Frozen membership, replay and cohort correctness",
+      "weight": 25
+    },
+    "C": {
+      "title": "Delivery, deadline, rollback and outbox recovery",
+      "weight": 20
+    },
+    "D": {
+      "title": "Seed, OpenAPI, production UI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Published loads, persistence and restart",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "ORDERED_DELIVERY_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Agent commandSequence is gapless and delivery identity, body and fencing token remain stable until one exact acknowledgement wins."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Durable mutation replay preserves the original status and semantic body without a second state, Work or Event effect."
+    },
+    {
+      "id": "ROLLBACK_RECOVERY_CORRECTNESS",
+      "cap": 40,
+      "publicInvariant": "Cohort evaluation and frozen rollback fanout have one durable winner and stale workers cannot commit."
+    },
+    {
+      "id": "MIGRATION_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Current-system process restart preserves committed identities, state, events, pending work and durable replay results."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-CR-01",
+      "summary": "No Manager-only Domain Event name is published; rollback and other new transitions create no invented Event."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Configuration publish and RFC 8785 boundaries",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Legacy Deployment create and cancel contract",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Agent poll and acknowledgement exact wire",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Staged Cohort create and detail contract",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "RolloutCommand and rollback compatibility surface",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Frozen selector and ordered Agent command authority",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Deployment, acknowledgement and cancel replay scope",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Cohort partition, counts and basis-point health",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Failed first Cohort isolates later Cohorts across restart",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "B-05",
+      "title": "Failed Cohort rollback affected-set closure",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "ASSIGNMENT_DELIVERY three-barrier takeover",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "COHORT_DEADLINE recovery and final acknowledgement race",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "ROLLBACK_DELIVERY frozen fanout recovery",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Dispatcher unknown acknowledgement identity and order",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "V1 seed to OpenAPI and runtime closure",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production Chromium legacy Deployment flow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production Chromium staged rollback flow",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "FINAL point-in-time snapshot closure",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Published 100000-Agent poll workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Published acknowledgement replay workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Published 50000-Assignment recovery workload",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Fresh deployment replay, process restart and in-flight recovery",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

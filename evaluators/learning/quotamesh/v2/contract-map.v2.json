@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 2,
+  "taskId": "quotamesh",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "QM-VECTOR-RESERVE",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "A Reservation acquires every requested Dimension atomically and leaves non-negative Pool vectors within capacity."
+      },
+      "privateFailureCodePrefix": "QM_A01_",
+      "publicFeedbackCategory": "vector-conservation"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "QM-STATE-CONSERVATION",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Commit, release and expiry have one terminal winner and adjust the complete Reservation vector exactly once."
+      },
+      "privateFailureCodePrefix": "QM_A02_",
+      "publicFeedbackCategory": "state-conservation"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "QM-ADMISSION-HEAD",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Admission order is priority, requestedAt and ID, and only the current head may be promoted when its complete vector fits."
+      },
+      "privateFailureCodePrefix": "QM_A03_",
+      "publicFeedbackCategory": "admission-order"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "QM-HIERARCHY-RESERVE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "A Project Reservation atomically consumes both Project allocation and Organization capacity without borrowing sibling allocation."
+      },
+      "privateFailureCodePrefix": "QM_A04_",
+      "publicFeedbackCategory": "hierarchy-conservation"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "QM-HIERARCHY-CAS",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Organization capacity and Project allocation use exact revision CAS and reject every infeasible vector without partial revision changes."
+      },
+      "privateFailureCodePrefix": "QM_A05_",
+      "publicFeedbackCategory": "cas-invariant"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "QM-DURABLE-REPLAY",
+        "source": "workspace/README.md#durable-idempotency",
+        "summary": "Concurrent, unknown-response and post-restart Reservation replay preserves original status, body, identity and one vector effect."
+      },
+      "privateFailureCodePrefix": "QM_B01_",
+      "publicFeedbackCategory": "idempotency"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "QM-HOT-POOL",
+        "source": "workspace/README.md#mandatory-invariants",
+        "summary": "Two API processes linearize hot Pool vectors so winners fit every Dimension and losers leave no orphan Reservation."
+      },
+      "privateFailureCodePrefix": "QM_B02_",
+      "publicFeedbackCategory": "contention"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "QM-TERMINAL-RACE",
+        "source": "workspace/README.md#domain-and-v1-behavior",
+        "summary": "Concurrent commit, release and expiry converge on exactly one terminal Reservation and one complete vector transition."
+      },
+      "privateFailureCodePrefix": "QM_B03_",
+      "publicFeedbackCategory": "terminal-race"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "QM-PROMOTION-LINEARIZATION",
+        "source": "workspace/README.md#deterministic-policy",
+        "summary": "Concurrent capacity release and workers reconsider only the queue head and promote each Admission Entry at most once."
+      },
+      "privateFailureCodePrefix": "QM_B04_",
+      "publicFeedbackCategory": "promotion-linearization"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "QM-HIERARCHY-RACE",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Project allocation CAS racing a Project Reservation permits only serializable outcomes that preserve both hierarchy feasible regions."
+      },
+      "privateFailureCodePrefix": "QM_B05_",
+      "publicFeedbackCategory": "hierarchy-race"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "QM-EXPIRY-RECOVERY",
+        "source": "workspace/README.md#controlled-recovery-barrier",
+        "summary": "Expired Reservation Work recovers after SIGKILL and lease expiry while fencing the stale owner and releasing quota once."
+      },
+      "privateFailureCodePrefix": "QM_C01_",
+      "publicFeedbackCategory": "lease-recovery"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "QM-PROGRESS-RECOVERY",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Expiry and head-only Admission promotion survive effect and commit crash windows without lost or duplicate progress."
+      },
+      "privateFailureCodePrefix": "QM_C02_",
+      "publicFeedbackCategory": "progress-recovery"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "QM-HIERARCHY-ATOMIC-RECOVERY",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Unknown hierarchy update or Reservation outcomes replay with both Organization and Project vectors changed together or unchanged."
+      },
+      "privateFailureCodePrefix": "QM_C03_",
+      "publicFeedbackCategory": "atomic-recovery"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "QM-OUTBOX",
+        "source": "workspace/README.md#workers-events-and-recovery",
+        "summary": "Committed quota transitions deliver ordered Events and unknown acknowledgements retry stable headers, identity and body."
+      },
+      "privateFailureCodePrefix": "QM_C04_",
+      "publicFeedbackCategory": "outbox"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "QM-API-CONTRACT",
+        "source": "workspace/README.md#http-and-openapi-31",
+        "summary": "Runtime and OpenAPI expose exact closed Pool, Reservation, Admission and hierarchy shapes, statuses, errors and stable pages."
+      },
+      "privateFailureCodePrefix": "QM_D01_",
+      "publicFeedbackCategory": "api-contract"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "QM-BROWSER-V1",
+        "source": "workspace/README.md#real-ui",
+        "summary": "Production Chromium completes V1 reserve, commit, release and Admission flows through visible API-backed controls."
+      },
+      "privateFailureCodePrefix": "QM_D02_",
+      "publicFeedbackCategory": "browser-v1"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "QM-BROWSER-HIERARCHY",
+        "source": "orchestration/user-and-manager-prompts.zh-CN.md#fixed-manager-message",
+        "summary": "Production Chromium displays Organization and Project vector usage, CAS conflicts and the no-sibling-borrow boundary after refresh."
+      },
+      "privateFailureCodePrefix": "QM_D03_",
+      "publicFeedbackCategory": "browser-manager"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "QM-SNAPSHOT",
+        "source": "workspace/README.md#v1-verification-snapshot",
+        "summary": "The FINAL snapshot is one exact sorted point-in-time view that independently reconciles flat and hierarchy vectors, Work and Events."
+      },
+      "privateFailureCodePrefix": "QM_D04_",
+      "publicFeedbackCategory": "snapshot"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "QM-COMPATIBILITY",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current quota vectors, admission order and expiry survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "privateFailureCodePrefix": "QM_E01_",
+      "publicFeedbackCategory": "final-system-persistence"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "QM-PERF-READ",
+        "source": "workspace/README.md#scenario-quota-pool-read",
+        "summary": "The exact 64-client quota Pool read workload reaches 500/s at p95 100 ms with consistent vectors."
+      },
+      "privateFailureCodePrefix": "QM_E02_",
+      "publicFeedbackCategory": "read-performance"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "QM-PERF-HOT-POOL",
+        "source": "workspace/README.md#scenario-hot-pool-reservation-race",
+        "summary": "The exact 80/20 hot Pool workload reaches 200 attempts/s at p95 400 ms while preserving vector and idempotency invariants."
+      },
+      "privateFailureCodePrefix": "QM_E03_",
+      "publicFeedbackCategory": "contention-performance"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "QM-PERF-RECOVERY",
+        "source": "workspace/README.md#scenario-expiry-and-admission-recovery",
+        "summary": "Two replacement workers expire and promote both exact 20,000-record backlogs in 60 seconds without bypass, duplication or oversubscription."
+      },
+      "privateFailureCodePrefix": "QM_E04_",
+      "publicFeedbackCategory": "recovery-performance"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

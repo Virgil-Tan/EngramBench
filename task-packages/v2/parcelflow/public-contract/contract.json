@@ -1,0 +1,2831 @@
+{
+  "taskId": "parcelflow",
+  "title": "ParcelFlow",
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/JsonValue"
+              }
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "Warehouse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32,
+          "pattern": "^[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Trim before applying the public maximum of 120 characters; reject blank values and never truncate."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        }
+      },
+      "required": [
+        "id",
+        "code",
+        "name",
+        "priority",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "Sku": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 64,
+          "pattern": "^[A-Z0-9._-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Trim before applying the public maximum of 160 characters; reject blank values and never truncate."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        }
+      },
+      "required": [
+        "id",
+        "code",
+        "name",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "StockPosition": {
+      "type": "object",
+      "properties": {
+        "warehouseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "skuId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "onHand": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "reserved": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "available": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        }
+      },
+      "required": [
+        "warehouseId",
+        "skuId",
+        "onHand",
+        "reserved",
+        "available",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "InventoryItem": {
+      "type": "object",
+      "properties": {
+        "warehouseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "skuId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "onHand": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "reserved": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "available": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "warehouseCode": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32,
+          "pattern": "^[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+        },
+        "skuCode": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 64,
+          "pattern": "^[A-Z0-9._-]+$"
+        }
+      },
+      "required": [
+        "warehouseId",
+        "skuId",
+        "onHand",
+        "reserved",
+        "available",
+        "updatedAt",
+        "warehouseCode",
+        "skuCode"
+      ],
+      "additionalProperties": false
+    },
+    "OrderLine": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "skuId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      },
+      "required": [
+        "id",
+        "skuId",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "Shipment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "shippedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        }
+      },
+      "required": [
+        "id",
+        "shippedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Fulfillment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "warehouseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "SHIPPED",
+            "CANCELLED"
+          ]
+        },
+        "shipment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Shipment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "warehouseId",
+        "status",
+        "shipment"
+      ],
+      "additionalProperties": false
+    },
+    "FulfillmentGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "warehouseId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "SHIPPED",
+            "CANCELLED"
+          ]
+        },
+        "shipment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Shipment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "allocations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skuId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000000
+              }
+            },
+            "required": [
+              "skuId",
+              "quantity"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "id",
+        "warehouseId",
+        "status",
+        "shipment",
+        "allocations"
+      ],
+      "additionalProperties": false
+    },
+    "LegacyOrder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "customerReference": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Trim before applying the public maximum of 100 characters; reject blank values and never truncate."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ALLOCATED",
+            "SHIPPED",
+            "CANCELLED"
+          ]
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OrderLine"
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "fulfillment": {
+          "$ref": "#/$defs/Fulfillment"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        }
+      },
+      "required": [
+        "id",
+        "customerReference",
+        "status",
+        "lines",
+        "fulfillment",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Order": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "customerReference": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Trim before applying the public maximum of 100 characters; reject blank values and never truncate."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ALLOCATED",
+            "PARTIALLY_SHIPPED",
+            "SHIPPED",
+            "CANCELLED"
+          ]
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OrderLine"
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "fulfillment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Fulfillment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+        },
+        "fulfillments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FulfillmentGroup"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "customerReference",
+        "status",
+        "lines",
+        "fulfillment",
+        "createdAt",
+        "updatedAt",
+        "fulfillments"
+      ],
+      "additionalProperties": false
+    },
+    "OrderReply": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/LegacyOrder"
+            },
+            {
+              "$ref": "#/$defs/Order"
+            }
+          ]
+        }
+      },
+      "required": [
+        "order"
+      ],
+      "additionalProperties": false
+    },
+    "DomainEvent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "type": {
+              "const": "order.allocated"
+            },
+            "aggregateType": {
+              "const": "order"
+            },
+            "aggregateId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "orderId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "fulfillmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "warehouseId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "lines": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "skuId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000
+                      }
+                    },
+                    "required": [
+                      "skuId",
+                      "quantity"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "orderId",
+                "fulfillmentId",
+                "warehouseId",
+                "lines"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "eventId",
+            "type",
+            "aggregateType",
+            "aggregateId",
+            "sequence",
+            "occurredAt",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "type": {
+              "const": "order.allocated"
+            },
+            "aggregateType": {
+              "const": "order"
+            },
+            "aggregateId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "orderId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "fulfillments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "fulfillmentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "warehouseId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "lines": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "skuId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                            },
+                            "quantity": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 1000000
+                            }
+                          },
+                          "required": [
+                            "skuId",
+                            "quantity"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "fulfillmentId",
+                      "warehouseId",
+                      "lines"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "orderId",
+                "fulfillments"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "eventId",
+            "type",
+            "aggregateType",
+            "aggregateId",
+            "sequence",
+            "occurredAt",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "type": {
+              "const": "fulfillment.shipped"
+            },
+            "aggregateType": {
+              "const": "order"
+            },
+            "aggregateId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "orderId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "fulfillmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "warehouseId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "shipmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "shippedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                }
+              },
+              "required": [
+                "orderId",
+                "fulfillmentId",
+                "warehouseId",
+                "shipmentId",
+                "shippedAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "eventId",
+            "type",
+            "aggregateType",
+            "aggregateId",
+            "sequence",
+            "occurredAt",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "type": {
+              "const": "order.shipped"
+            },
+            "aggregateType": {
+              "const": "order"
+            },
+            "aggregateId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "orderId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "fulfillmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "warehouseId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "shipmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "shippedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                }
+              },
+              "required": [
+                "orderId",
+                "fulfillmentId",
+                "warehouseId",
+                "shipmentId",
+                "shippedAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "eventId",
+            "type",
+            "aggregateType",
+            "aggregateId",
+            "sequence",
+            "occurredAt",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "type": {
+              "const": "order.shipped"
+            },
+            "aggregateType": {
+              "const": "order"
+            },
+            "aggregateId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "orderId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "fulfillmentIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  }
+                },
+                "shippedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                }
+              },
+              "required": [
+                "orderId",
+                "fulfillmentIds",
+                "shippedAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "eventId",
+            "type",
+            "aggregateType",
+            "aggregateId",
+            "sequence",
+            "occurredAt",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "type": {
+              "const": "order.cancelled"
+            },
+            "aggregateType": {
+              "const": "order"
+            },
+            "aggregateId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "orderId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "fulfillmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "warehouseId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "cancelledAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                }
+              },
+              "required": [
+                "orderId",
+                "fulfillmentId",
+                "warehouseId",
+                "cancelledAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "eventId",
+            "type",
+            "aggregateType",
+            "aggregateId",
+            "sequence",
+            "occurredAt",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "eventId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "type": {
+              "const": "order.cancelled"
+            },
+            "aggregateType": {
+              "const": "order"
+            },
+            "aggregateId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "occurredAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "orderId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "fulfillmentIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  }
+                },
+                "cancelledAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+                }
+              },
+              "required": [
+                "orderId",
+                "fulfillmentIds",
+                "cancelledAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "eventId",
+            "type",
+            "aggregateType",
+            "aggregateId",
+            "sequence",
+            "occurredAt",
+            "data"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "operations": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [],
+      "example": {
+        "headers": {}
+      }
+    },
+    {
+      "id": "production-ui",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "string",
+        "contentMediaType": "text/html"
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [],
+      "example": {
+        "headers": {}
+      }
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "openapi": {
+            "type": "string",
+            "pattern": "^3\\.1\\."
+          },
+          "paths": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "openapi",
+          "paths"
+        ]
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [],
+      "example": {
+        "headers": {}
+      }
+    },
+    {
+      "id": "create-warehouse",
+      "method": "POST",
+      "path": "/api/admin/warehouses",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "warehouse": {
+            "$ref": "#/$defs/Warehouse"
+          }
+        },
+        "required": [
+          "warehouse"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 32,
+            "pattern": "^[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "description": "Trim before applying the public maximum of 120 characters; reject blank values and never truncate."
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "priority"
+        ],
+        "additionalProperties": false
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_IDEMPOTENCY_KEY"
+          },
+          "missingTransportError": {
+            "status": 400,
+            "code": "IDEMPOTENCY_KEY_REQUIRED"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "ADMIN_AUTH_INVALID"
+          },
+          "missingTransportError": {
+            "status": 401,
+            "code": "ADMIN_AUTH_REQUIRED"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "code": "PUBLIC-02",
+          "name": "Public created warehouse",
+          "priority": 20
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-warehouse",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "create-sku",
+      "method": "POST",
+      "path": "/api/admin/skus",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "$ref": "#/$defs/Sku"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 64,
+            "pattern": "^[A-Z0-9._-]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "description": "Trim before applying the public maximum of 160 characters; reject blank values and never truncate."
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_IDEMPOTENCY_KEY"
+          },
+          "missingTransportError": {
+            "status": 400,
+            "code": "IDEMPOTENCY_KEY_REQUIRED"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "ADMIN_AUTH_INVALID"
+          },
+          "missingTransportError": {
+            "status": 401,
+            "code": "ADMIN_AUTH_REQUIRED"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "code": "PUBLIC-CREATED",
+          "name": "Public created item"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-sku",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "set-inventory",
+      "method": "PUT",
+      "path": "/api/admin/inventory/:warehouseId/:skuId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "stockPosition": {
+            "$ref": "#/$defs/StockPosition"
+          }
+        },
+        "required": [
+          "stockPosition"
+        ],
+        "additionalProperties": false
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "onHand": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000
+          }
+        },
+        "required": [
+          "onHand"
+        ],
+        "additionalProperties": false
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "warehouseId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_ID"
+          }
+        },
+        {
+          "name": "skuId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_ID"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_IDEMPOTENCY_KEY"
+          },
+          "missingTransportError": {
+            "status": 400,
+            "code": "IDEMPOTENCY_KEY_REQUIRED"
+          }
+        },
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "pattern": "^Bearer .+$"
+          },
+          "transportError": {
+            "status": 401,
+            "code": "ADMIN_AUTH_INVALID"
+          },
+          "missingTransportError": {
+            "status": 401,
+            "code": "ADMIN_AUTH_REQUIRED"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "warehouseId": "70000000-0000-4000-8000-000000000301",
+          "skuId": "70000000-0000-4000-8000-000000000302"
+        },
+        "body": {
+          "onHand": 20
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-set-inventory",
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "list-warehouses",
+      "method": "GET",
+      "path": "/api/warehouses",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Warehouse"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 20
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "list-skus",
+      "method": "GET",
+      "path": "/api/skus",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Sku"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "limit": 20
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "list-inventory",
+      "method": "GET",
+      "path": "/api/inventory",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/InventoryItem"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "warehouseId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_ID"
+          }
+        },
+        {
+          "name": "skuId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_ID"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "warehouseId": "70000000-0000-4000-8000-000000000301",
+          "skuId": "70000000-0000-4000-8000-000000000302",
+          "limit": 20
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "create-order",
+      "method": "POST",
+      "path": "/api/orders",
+      "status": 201,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "$ref": "#/$defs/OrderReply"
+      },
+      "request": {
+        "type": "object",
+        "properties": {
+          "customerReference": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "description": "Trim before applying the public maximum of 100 characters; reject blank values and never truncate."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "skuId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000000
+                }
+              },
+              "required": [
+                "skuId",
+                "quantity"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 8
+          }
+        },
+        "required": [
+          "customerReference",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_IDEMPOTENCY_KEY"
+          },
+          "missingTransportError": {
+            "status": 400,
+            "code": "IDEMPOTENCY_KEY_REQUIRED"
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "customerReference": "public-created-order",
+          "lines": [
+            {
+              "skuId": "70000000-0000-4000-8000-000000000302",
+              "quantity": 1
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-create-order"
+        }
+      }
+    },
+    {
+      "id": "list-orders",
+      "method": "GET",
+      "path": "/api/orders",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Order"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "customerReference",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "ALLOCATED",
+              "PARTIALLY_SHIPPED",
+              "SHIPPED",
+              "CANCELLED"
+            ]
+          }
+        },
+        {
+          "name": "warehouseId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_ID"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      ],
+      "example": {
+        "query": {
+          "customerReference": "public-history",
+          "limit": 20
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "get-order",
+      "method": "GET",
+      "path": "/api/orders/:orderId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "$ref": "#/$defs/Order"
+          }
+        },
+        "required": [
+          "order"
+        ],
+        "additionalProperties": false
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "orderId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_ID"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "orderId": "70000000-0000-4000-8000-000000000303"
+        },
+        "headers": {}
+      }
+    },
+    {
+      "id": "cancel-order",
+      "method": "POST",
+      "path": "/api/orders/:orderId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md#6-http-and-openapi-contract",
+      "response": {
+        "$ref": "#/$defs/OrderReply"
+      },
+      "requestBody": "none",
+      "errors": {
+        "400": {
+          "$ref": "#/$defs/Error"
+        },
+        "401": {
+          "$ref": "#/$defs/Error"
+        },
+        "404": {
+          "$ref": "#/$defs/Error"
+        },
+        "409": {
+          "$ref": "#/$defs/Error"
+        },
+        "415": {
+          "$ref": "#/$defs/Error"
+        },
+        "422": {
+          "$ref": "#/$defs/Error"
+        },
+        "500": {
+          "$ref": "#/$defs/Error"
+        },
+        "503": {
+          "$ref": "#/$defs/Error"
+        }
+      },
+      "parameters": [
+        {
+          "name": "orderId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_ID"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "pattern": "^[\\x20-\\x7e]+$"
+          },
+          "transportError": {
+            "status": 400,
+            "code": "INVALID_IDEMPOTENCY_KEY"
+          },
+          "missingTransportError": {
+            "status": 400,
+            "code": "IDEMPOTENCY_KEY_REQUIRED"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "orderId": "70000000-0000-4000-8000-000000000303"
+        },
+        "headers": {
+          "Idempotency-Key": "v2-public-cancel-order"
+        }
+      }
+    }
+  ],
+  "webhooks": {
+    "orderEvent": {
+      "post": {
+        "summary": "Outbound event delivery to WEBHOOK_URL",
+        "parameters": [
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "const": "application/json"
+            }
+          },
+          {
+            "name": "X-ParcelFlow-Event-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          },
+          {
+            "name": "X-ParcelFlow-Event-Type",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "order.allocated",
+                "fulfillment.shipped",
+                "order.shipped",
+                "order.cancelled"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/$defs/DomainEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Acknowledged; every non-2xx response or connection failure is retried according to the original outbox rules."
+          }
+        }
+      }
+    }
+  },
+  "commands": [
+    "npm run db:migrate",
+    "npm run seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm start",
+    "npm run worker",
+    "npm run dispatcher",
+    "npm test",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "environmentVariables": [
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "PORT",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORKER_POLL_INTERVAL_MS",
+    "DISPATCH_TASK_TIMEOUT_SECONDS",
+    "OUTBOX_POLL_INTERVAL_MS",
+    "WEBHOOK_TIMEOUT_MS"
+  ],
+  "transportErrors": {
+    "invalidJson": {
+      "status": 400,
+      "code": "INVALID_JSON"
+    },
+    "invalidRequest": {
+      "status": 422,
+      "code": "VALIDATION_ERROR"
+    },
+    "unknownField": {
+      "status": 422,
+      "code": "VALIDATION_ERROR"
+    },
+    "unknownQuery": {
+      "status": 422,
+      "code": "VALIDATION_ERROR"
+    },
+    "auth": {
+      "status": 401,
+      "code": "ADMIN_AUTH_REQUIRED"
+    }
+  },
+  "seed": {
+    "command": [
+      "npm",
+      "run",
+      "seed",
+      "--",
+      "--file",
+      "${SEED_PATH}"
+    ],
+    "replay": false,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "warehouses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "code": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 32,
+                "pattern": "^[A-Z0-9]+(?:-[A-Z0-9]+)*$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Trim before applying the public maximum of 120 characters; reject blank values and never truncate."
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            },
+            "required": [
+              "id",
+              "code",
+              "name",
+              "priority"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "skus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "code": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 64,
+                "pattern": "^[A-Z0-9._-]+$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Trim before applying the public maximum of 160 characters; reject blank values and never truncate."
+              }
+            },
+            "required": [
+              "id",
+              "code",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "stockPositions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "warehouseId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "skuId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "onHand": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000
+              }
+            },
+            "required": [
+              "warehouseId",
+              "skuId",
+              "onHand"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "customerReference": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Trim before applying the public maximum of 100 characters; reject blank values and never truncate."
+              },
+              "warehouseId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "fulfillmentId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "shipmentId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "lines": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "skuId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "skuId",
+                    "quantity"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 8
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "shippedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "customerReference",
+              "warehouseId",
+              "fulfillmentId",
+              "shipmentId",
+              "lines",
+              "createdAt",
+              "shippedAt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "warehouses",
+        "skus",
+        "stockPositions",
+        "orders"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "warehouses": [
+        {
+          "id": "70000000-0000-4000-8000-000000000301",
+          "code": "PUBLIC-01",
+          "name": "Public warehouse",
+          "priority": 10
+        }
+      ],
+      "skus": [
+        {
+          "id": "70000000-0000-4000-8000-000000000302",
+          "code": "PUBLIC-SKU",
+          "name": "Public parcel item"
+        }
+      ],
+      "stockPositions": [
+        {
+          "warehouseId": "70000000-0000-4000-8000-000000000301",
+          "skuId": "70000000-0000-4000-8000-000000000302",
+          "onHand": 20
+        }
+      ],
+      "orders": [
+        {
+          "id": "70000000-0000-4000-8000-000000000303",
+          "customerReference": "public-history",
+          "warehouseId": "70000000-0000-4000-8000-000000000301",
+          "fulfillmentId": "70000000-0000-4000-8000-000000000304",
+          "shipmentId": "70000000-0000-4000-8000-000000000305",
+          "lines": [
+            {
+              "id": "70000000-0000-4000-8000-000000000306",
+              "skuId": "70000000-0000-4000-8000-000000000302",
+              "quantity": 2
+            }
+          ],
+          "createdAt": "2026-01-01T00:00:00Z",
+          "shippedAt": "2026-01-01T01:00:00Z"
+        }
+      ]
+    }
+  },
+  "smoke": [
+    {
+      "operationId": "health",
+      "expectStatus": 200,
+      "expectBody": {
+        "status": "ok"
+      }
+    },
+    {
+      "operationId": "openapi",
+      "expectStatus": 200
+    },
+    {
+      "operationId": "list-inventory",
+      "query": {
+        "warehouseId": "70000000-0000-4000-8000-000000000301",
+        "skuId": "70000000-0000-4000-8000-000000000302"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "warehouseId": "70000000-0000-4000-8000-000000000301",
+            "skuId": "70000000-0000-4000-8000-000000000302",
+            "onHand": 20,
+            "reserved": 0,
+            "available": 20
+          }
+        }
+      ]
+    },
+    {
+      "operationId": "get-order",
+      "params": {
+        "orderId": "70000000-0000-4000-8000-000000000303"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "order": {
+          "id": "70000000-0000-4000-8000-000000000303",
+          "customerReference": "public-history",
+          "status": "SHIPPED"
+        }
+      }
+    },
+    {
+      "operationId": "create-order",
+      "body": {
+        "customerReference": "public-new-order",
+        "lines": [
+          {
+            "skuId": "70000000-0000-4000-8000-000000000302",
+            "quantity": 1
+          }
+        ]
+      },
+      "headers": {
+        "Idempotency-Key": "v2-public-new-order"
+      },
+      "expectStatus": 201,
+      "capture": {
+        "orderId": [
+          "order",
+          "id"
+        ]
+      }
+    },
+    {
+      "operationId": "cancel-order",
+      "params": {
+        "orderId": "${orderId}"
+      },
+      "headers": {
+        "Idempotency-Key": "v2-public-cancel-order"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "order": {
+          "id": "${orderId}",
+          "status": "CANCELLED"
+        }
+      }
+    },
+    {
+      "operationId": "get-order",
+      "params": {
+        "orderId": "${orderId}"
+      },
+      "expectStatus": 200,
+      "expectBody": {
+        "order": {
+          "id": "${orderId}",
+          "customerReference": "public-new-order",
+          "status": "CANCELLED"
+        }
+      }
+    },
+    {
+      "operationId": "list-orders",
+      "query": {
+        "customerReference": "public-new-order"
+      },
+      "expectStatus": 200,
+      "expectContains": [
+        {
+          "path": [
+            "items"
+          ],
+          "match": {
+            "id": "${orderId}",
+            "status": "CANCELLED"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Authority is the complete original README plus the preserved Manager requirement. The original commands, public query surfaces, domain errors, seed import scale, conservation, race, outbox, UI and performance requirements remain unchanged. No synthetic verification snapshot or seed-only business API is introduced.",
+    "V2 public wire clarification: canonical /openapi.json is generated from this contract; the originally required openapi.yaml uses the same canonical document serialized as JSON-compatible YAML 1.2 (JSON text is valid YAML 1.2), including outbound webhook body and header schemas. Both representations preserve the author operation schemas, parameters and statuses. Error details is a JSON array; input timestamps accept explicit RFC 3339 offsets, output timestamps are UTC Z. Names and customer references are trimmed, then checked against their documented length limits.",
+    "V2 Manager wire clarification: new Order reads include fulfillments, each {id,warehouseId,status,shipment,allocations:[{skuId,quantity}]}. Allocations expose the per-group quantities needed by the Manager UI and sort by skuId; groups sort by warehouse priority then warehouseId. The singular fulfillment remains exactly the V1 shape for one group and null for split orders. Saved V1 mutation replies remain valid without the added field.",
+    "V2 Manager event clarification: previously committed V1 events and replay bodies stay unchanged. New single-warehouse orders keep their V1 order.allocated and order.cancelled payloads. Split order.allocated data is {orderId,fulfillments:[{fulfillmentId,warehouseId,lines:[{skuId,quantity}]}]}; split order.cancelled data is {orderId,fulfillmentIds,cancelledAt}. Every newly completed group emits fulfillment.shipped with the V1 shipment data shape; the final split order.shipped data is {orderId,fulfillmentIds,shippedAt}, while a single-warehouse terminal order.shipped keeps its V1 data. Group ID arrays preserve the published group order; all new event sequences are contiguous per order. Immutable prior events are not rewritten.",
+    "Idempotency-Key and administrator Authorization distinguish absent from malformed parameters through missingTransportError and transportError. Invalid path and exact-ID filter values use INVALID_ID; an invalid or stale opaque cursor remains a business INVALID_CURSOR. Actual Bearer token comparison remains implementation-owned.",
+    "The nonempty public seed links warehouse, SKU, current stock and a historical shipped order with its line, fulfillment and shipment. It imports only into an empty database once, emits the exact summary and no historical Work/events, and does not decrement the already-current onHand quantity. No Manager-only seed fields are added.",
+    "The public smoke reads imported inventory/history and creates, cancels and rereads a fresh captured order without starting a worker. Full worker shipping, split allocation, concurrent cancellation, webhook delivery and recovery remain mandatory hidden/project-owned verification, not certified by this smoke."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.1"
+}

@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 1,
+  "id": "creatorrightsexchange-dialogue",
+  "ordered": true,
+  "userRole": "你是使用 Codex 交付 CreatorRightsExchange 的初级工程师。每轮只推进一个真实开发目标，可以询问模块职责、公开接口、状态、数据流、测试与 Review，但绝不提供代码、命令、SQL、算法、锁、索引、Debug 原因、修复提示、隐藏测试或未来需求。是否继续下一场景由完成证据决定；不会因为访问次数自动推进。",
+  "minimumTurns": 32,
+  "hardMaxTurns": 100,
+  "initialState": {
+    "turn": 0,
+    "lastScene": null,
+    "visits": {}
+  },
+  "scenes": [
+    {
+      "id": "T01",
+      "title": "Repository plan",
+      "objective": "Read the complete public contract and form a dependency-aware plan without editing.",
+      "when": "First turn.",
+      "advanceGate": "Plan covers the connected media-to-royalty lifecycle and verification.",
+      "required": true,
+      "requirementIds": [
+        "explanation-quality"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完整阅读 README.md 和 AGENTS.md，先不要改文件。给出按依赖排序的实现计划、关键不变量、风险和验证方式。"
+    },
+    {
+      "id": "T02",
+      "title": "Authority map",
+      "objective": "Explain process and data ownership.",
+      "when": "After planning.",
+      "advanceGate": "PostgreSQL authority and process seams are unambiguous.",
+      "required": true,
+      "requirementIds": [
+        "clean-operation",
+        "explanation-quality"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请解释 API、媒体存储、Worker、dispatcher、PostgreSQL、React UI 的职责，以及权利、支付、授权和账本的 authority 在哪里。"
+    },
+    {
+      "id": "T03",
+      "title": "Lifecycle data flow",
+      "objective": "Trace one complete commercial lifecycle and one rejected lifecycle.",
+      "when": "Before contract work.",
+      "advanceGate": "Atomic boundaries and forbidden partial states are explicit.",
+      "required": true,
+      "requirementIds": [
+        "media-ingestion",
+        "licensing-payment",
+        "royalty-ledger"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请用白话解释从分片上传到 royalty posting 的成功数据流，再解释一次必须整笔拒绝的失败流。"
+    },
+    {
+      "id": "T04",
+      "title": "HTTP and state contracts",
+      "objective": "Author public OpenAPI and state machines before implementation.",
+      "when": "After ownership review.",
+      "advanceGate": "Routes, strict errors, states, idempotency, Work and Event contracts are complete.",
+      "required": true,
+      "requirementIds": [
+        "public-contract"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请先完成 OpenAPI 3.1、状态机、错误、幂等、Worker、Event 和 verification snapshot 契约，本轮不实现业务。"
+    },
+    {
+      "id": "T05",
+      "title": "Verification design",
+      "objective": "Design independent evidence layers.",
+      "when": "After contracts.",
+      "advanceGate": "Each published gate proves distinct public behavior.",
+      "required": true,
+      "requirementIds": [
+        "project-tests"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请说明 Unit、PostgreSQL Integration、Chromium E2E、Concurrency、SIGKILL Recovery 和 Performance 分别验证哪些不变量。"
+    },
+    {
+      "id": "T06",
+      "title": "Runnable skeleton",
+      "objective": "Build the smallest real production skeleton.",
+      "when": "After test design.",
+      "advanceGate": "Build, migrations, API, Worker, dispatcher and UI boot independently.",
+      "required": true,
+      "requirementIds": [
+        "clean-operation"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请实现最小真实 TypeScript、React、PostgreSQL、API、Worker 和 dispatcher 骨架，运行 build、migration 和 smoke。"
+    },
+    {
+      "id": "T07",
+      "title": "Schema and seed",
+      "objective": "Implement the full durable schema and atomic seed importer.",
+      "when": "After skeleton.",
+      "advanceGate": "Valid import, exact replay, conflict, invalid rollback and migration replay are proven.",
+      "required": true,
+      "requirementIds": [
+        "clean-operation",
+        "public-contract"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 V1 migration 与严格 seed importer，并验证合法导入、同 digest 重放、冲突 seedVersion、未知字段和跨引用整批回滚。"
+    },
+    {
+      "id": "T08",
+      "title": "Creator rights",
+      "objective": "Implement Work and immutable rights revisions.",
+      "when": "After persistence.",
+      "advanceGate": "CAS, tenant isolation and 10,000 basis-point conservation pass.",
+      "required": true,
+      "requirementIds": [
+        "edition-rights"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 Creator、Work、RightsSplit revision 和 profile revision，验证 CAS、跨租户拒绝、总和守恒与旧 revision 不变。"
+    },
+    {
+      "id": "T09",
+      "title": "Multipart upload",
+      "objective": "Implement resumable bounded media ingestion.",
+      "when": "After rights authority.",
+      "advanceGate": "Ranges, digests, replay, contention, streaming assembly and file cleanup pass.",
+      "required": true,
+      "requirementIds": [
+        "media-ingestion"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 UploadSession、raw chunk、resume、complete、abort 与 expiry，使用真实文件验证 digest、range、冲突重传、并发 complete 和临时文件清理。"
+    },
+    {
+      "id": "T10",
+      "title": "Scan pipeline",
+      "objective": "Implement quarantine and scanner result authority.",
+      "when": "After upload.",
+      "advanceGate": "CLEAN/INFECTED and unknown recovery cannot escape fencing.",
+      "required": true,
+      "requirementIds": [
+        "media-processing",
+        "recovery-concurrency"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 VIRUS_SCAN lease、外部结果、冲突 verdict、reconcile 和 stale worker fencing，用 barrier SIGKILL 验证。"
+    },
+    {
+      "id": "T11",
+      "title": "Transcode pipeline",
+      "objective": "Implement frozen profile transcoding.",
+      "when": "After clean scan.",
+      "advanceGate": "Every required frozen rendition is unique and content verified.",
+      "required": true,
+      "requirementIds": [
+        "media-processing"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 TRANSCODE Work、profile revision 冻结、Rendition digest 和 READY 汇聚，并验证双 Worker 重领不会重复产物。"
+    },
+    {
+      "id": "T12",
+      "title": "Edition publication",
+      "objective": "Implement immutable Edition manifest publication.",
+      "when": "Media is READY.",
+      "advanceGate": "Assets, rights revision, digest and revision remain immutable under races.",
+      "required": true,
+      "requirementIds": [
+        "edition-rights"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 Edition DRAFT/PUBLISHED、manifest digest 和 rights snapshot，验证并发 publish、stale revision 和发布后不可变。"
+    },
+    {
+      "id": "T13",
+      "title": "Offer and purchase acceptance",
+      "objective": "Implement frozen commercial offer and purchase acceptance.",
+      "when": "Edition is published.",
+      "advanceGate": "Price, terms, rights and provider identity freeze atomically.",
+      "required": true,
+      "requirementIds": [
+        "licensing-payment"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 LicenseOffer 和 PurchaseOrder 接受事务，验证 price、terms、rights revision、providerRequestId、幂等和跨租户边界。"
+    },
+    {
+      "id": "T14",
+      "title": "Fraud assessment",
+      "objective": "Implement frozen rules and manual review fencing.",
+      "when": "Purchase acceptance works.",
+      "advanceGate": "APPROVE/REVIEW/BLOCK and reviewer leases cannot double decide.",
+      "required": true,
+      "requirementIds": [
+        "fraud-entitlement"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 FraudAssessment、ReviewCase claim/decision 和 frozen rules，验证 REVIEW 时不会提前支付，过期 reviewer 不能提交。"
+    },
+    {
+      "id": "T15",
+      "title": "Payment uncertainty",
+      "objective": "Implement monotonic provider outcomes and reconciliation.",
+      "when": "Risk authority works.",
+      "advanceGate": "Unknown, duplicate, out-of-order and restart produce one payment fact.",
+      "required": true,
+      "requirementIds": [
+        "licensing-payment",
+        "recovery-concurrency"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 PaymentIntent、provider events、UNKNOWN 和 reconcile，验证丢响应、并发 replay、乱序结果与 API 重启。"
+    },
+    {
+      "id": "T16",
+      "title": "License and entitlement",
+      "objective": "Make paid approval grant one authority.",
+      "when": "Payment flow is stable.",
+      "advanceGate": "License, grant, royalty and event commit together; authority reads converge.",
+      "required": true,
+      "requirementIds": [
+        "fraud-entitlement",
+        "royalty-ledger"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 License、EntitlementGrant 和 check authority，确保收款、授权、royalty 与 Event 没有部分提交，并验证双 API 可见性。"
+    },
+    {
+      "id": "T17",
+      "title": "Refund conservation",
+      "objective": "Implement partial/full refund and revocation fences.",
+      "when": "Licenses work.",
+      "advanceGate": "Concurrent refunds never exceed capture and full refund revokes access once.",
+      "required": true,
+      "requirementIds": [
+        "licensing-payment",
+        "fraud-entitlement",
+        "royalty-ledger"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 Refund UNKNOWN/reconcile、并发金额守恒、royalty reversal 与 full refund entitlement fence。"
+    },
+    {
+      "id": "T18",
+      "title": "Royalty close",
+      "objective": "Implement deterministic splits and frozen period close.",
+      "when": "Money flows are complete.",
+      "advanceGate": "Every posting balances and CLOSED snapshot is reproducible and immutable.",
+      "required": true,
+      "requirementIds": [
+        "royalty-ledger"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成整数 remainder 分配、双边 RoyaltyEntry、RoyaltyPeriod close、snapshot digest 和 lease 恢复，验证 10001 的精确分配。"
+    },
+    {
+      "id": "T19",
+      "title": "Notifications",
+      "objective": "Implement ordered transactional notification delivery.",
+      "when": "Domain facts are stable.",
+      "advanceGate": "Unknown ACK reuses exact identity/body and aggregate order stays gapless.",
+      "required": true,
+      "requirementIds": [
+        "events-notifications"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 Notification、Delivery、dispatcher、receipt/reconcile 与敏感字段过滤，用 unknown ACK 和 SIGKILL 验证。"
+    },
+    {
+      "id": "T20",
+      "title": "V1 UI and review",
+      "objective": "Complete production UI and conduct a findings-first V1 review.",
+      "when": "All V1 backend flows exist.",
+      "advanceGate": "Real browser lifecycle, multi-process recovery and all V1 findings are resolved or disclosed.",
+      "required": true,
+      "requirementIds": [
+        "project-tests",
+        "evidence-quality"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成真实 API 驱动的 V1 UI，运行 production Chromium、双 API/双 Worker、recovery 与 test:all，然后做 findings-first Review。"
+    },
+    {
+      "id": "T21",
+      "title": "Manager change",
+      "objective": "Reveal the only Manager change and require impact analysis first.",
+      "when": "Only after V1 review evidence.",
+      "advanceGate": "Impact, migration, state, concurrency and test plan are complete before edits.",
+      "required": true,
+      "requirementIds": [
+        "manager-rights"
+      ],
+      "revealsRequirementIds": [
+        "manager-rights"
+      ],
+      "speakerRole": "manager",
+      "fixedMessage": "【Product Manager】新增权利争议与结算后修正，但不得重写任何已发布或已结算事实。\n\n新增三种资源：\n\n```text\nRightsDispute = {\n  rightsDisputeId,tenantId,editionId,claimantCreatorId,licenseId:null|uuid,\n  reason,evidenceRefs:string[],state:OPEN|UPHELD|REJECTED,revision,\n  createdAt,resolvedAt:null|timestamp,resolutionReason:null|string\n}\nLicenseHold = {\n  licenseHoldId,tenantId,rightsDisputeId,scope:EDITION|LICENSE,\n  editionId,licenseId:null|uuid,state:ACTIVE|RELEASED,revision,reason,\n  createdAt,releasedAt:null|timestamp\n}\nRoyaltyAdjustment = {\n  royaltyAdjustmentId,tenantId,rightsDisputeId:null|uuid,originalPostingId,\n  targetRoyaltyPeriodId,amountMinor,currency,reason,adjustmentPostingId,createdAt\n}\n```\n\n新增以下 HTTP 合同。所有 mutation 继续要求 `Idempotency-Key`、严格拒绝未知字段，并持久化\nexact replay：\n\n```text\nPOST /api/v1/rights-disputes\n  request  {tenantId,editionId,claimantCreatorId,reason,evidenceRefs,expectedEditionRevision,licenseId?}\n  response {rightsDispute:RightsDispute}\nGET /api/v1/rights-disputes/:rightsDisputeId\n  response {rightsDispute:RightsDispute,holds:[LicenseHold,...]}\nPOST /api/v1/rights-disputes/:rightsDisputeId/resolve\n  request  {expectedRevision,outcome:UPHELD|REJECTED,reason}\n  response {rightsDispute:RightsDispute}\nPOST /api/v1/license-holds\n  request  {rightsDisputeId,scope:EDITION|LICENSE,licenseId?,reason}\n  response {licenseHold:LicenseHold}\nPOST /api/v1/license-holds/:licenseHoldId/release\n  request  {expectedRevision,reason}\n  response {licenseHold:LicenseHold}\nPOST /api/v1/royalty-adjustments\n  request  {tenantId,rightsDisputeId?,originalPostingId,amountMinor,currency,reason,targetPeriodStart}\n  response {royaltyAdjustment:RoyaltyAdjustment,entries:[RoyaltyEntry,...]}\n```\n\nRightsDispute 只能引用同租户的 PUBLISHED Edition、该 Edition 冻结 rights revision 中的 Creator，\n以及可选的同 Edition License。`expectedEditionRevision` 不匹配返回\n`409 EDITION_REVISION_CONFLICT`。`evidenceRefs` 为 1..20 个去重、升序、最大 512 字节的 opaque\nreference，绝不能由服务端抓取。每个 `(editionId,claimantCreatorId)` 同时最多一个 OPEN 争议。\n\nLicenseHold 必须引用 OPEN 或 UPHELD 的 RightsDispute。EDITION scope 的 `licenseId` 必须省略；\nLICENSE scope 必须引用争议中同 Edition 的 License。同一争议和 scope authority 最多一个 ACTIVE\nHold。创建 Hold 与 `LICENSE_HOLD_APPLY` Work、Event 和 authority fence 在一个事务提交。\n\nACTIVE Edition Hold 提交后，所有 API 进程立即拒绝该 Edition 的新 Purchase；已经收款但尚未授权的\nPurchase 停在 `LICENSE_HELD`，不得生成 License、Entitlement 或 Royalty posting；既有 ACTIVE License\n进入 `HELD`，entitlement check 返回 false，但不自动退款也不改写原 royalty。LICENSE scope 只影响\n指定 License。Release 后，未退款/未撤销的 License 恢复 ACTIVE，等待中的成功支付只生成一次授权。\nHold 与 Payment success、License grant、Refund success 并发时必须可串行化；任何可见状态都不能同时\n显示 allowed=true 与 ACTIVE Hold。\n\nresolve 使用 revision CAS。REJECTED 后允许 release Hold；UPHELD 保留 Hold，直到显式 release。争议\n结论绝不能重写 Edition、RightsSplit、License、RoyaltyEntry 或 CLOSED RoyaltyPeriod。所有状态转换写\ngapless Event sequence。\n\nRoyaltyAdjustment 只允许引用 CLOSED period 中的原 posting，且 `amountMinor` 非零、绝对值不超过原\nposting 可调整余额。它必须进入 `targetPeriodStart` 所属的 OPEN 下一期；若不存在则原子创建。使用原\nEdition 冻结的 rights split 做确定性 remainder 分配，创建一组新的平衡 RoyaltyEntry，并通过\n`originalPostingId` 关联。原 entry、原 CLOSED period、snapshotDigest 和既有通知保持逐字节不变。同一\n`(originalPostingId,reason,amountMinor,targetRoyaltyPeriodId)` 只能生成一个 adjustment posting。\n\n新增 `RIGHTS_DISPUTE_REVIEW`、`LICENSE_HOLD_APPLY`、`ROYALTY_ADJUSTMENT_POST` Work，以及\n`rights_dispute.opened/resolved`、`license_hold.activated/released`、`royalty.adjusted` Events。Worker\n继续使用 lease token fence；dispatcher 继续使用 stable event identity 与 unknown ACK 重试。\n\n迁移必须保留所有 V1 media、Edition manifest、rights revision、Purchase/Payment/License/Entitlement、\nRoyaltyEntry、CLOSED digest、Notification/Event、pending Work、lease 与幂等响应。UI 增加争议详情、\nHold authority、受影响授权以及 adjustment 原/新 posting 对照。增加真实 PostgreSQL、双 API/双 Worker、\nChromium、barrier SIGKILL 与持续负载测试。\n\n本轮只做影响分析和分阶段计划，不要立即编码。",
+      "safeMessage": "请先分析 Manager 需求对状态、迁移、并发和测试的影响，不要立即编码。"
+    },
+    {
+      "id": "T22",
+      "title": "Manager migration",
+      "objective": "Implement compatible schema migration before behavior.",
+      "when": "After Manager impact plan.",
+      "advanceGate": "V1 resources, files, replay, Work, Events and closed digests survive exactly.",
+      "required": true,
+      "requirementIds": [
+        "manager-rights"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请先完成兼容 migration，并用 V1 snapshot 验证媒体、manifest、授权、账本、CLOSED digest、pending Work、Event 和 replay 不变。"
+    },
+    {
+      "id": "T23",
+      "title": "Dispute lifecycle",
+      "objective": "Implement the published dispute contract.",
+      "when": "After migration.",
+      "advanceGate": "Open/resolve CAS, tenant and evidence validation, Work and Event pass.",
+      "required": true,
+      "requirementIds": [
+        "manager-rights"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请实现刚发布的争议 create/get/resolve 合同，验证 revision CAS、重复 OPEN、跨租户、evidence 边界和 ordered Event。"
+    },
+    {
+      "id": "T24",
+      "title": "Hold authority",
+      "objective": "Implement hold fencing across commercial state.",
+      "when": "Dispute lifecycle exists.",
+      "advanceGate": "Payment/grant/refund/entitlement races linearize around one active hold.",
+      "required": true,
+      "requirementIds": [
+        "manager-rights",
+        "recovery-concurrency"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请实现刚发布的 Hold create/release、authority fence 和恢复，用双 API/双 Worker 验证与 payment、grant、refund、entitlement 的竞争。"
+    },
+    {
+      "id": "T25",
+      "title": "Settled adjustment",
+      "objective": "Implement next-period balanced correction.",
+      "when": "Hold behavior is stable.",
+      "advanceGate": "Only eligible closed postings adjust and original close remains byte-stable.",
+      "required": true,
+      "requirementIds": [
+        "manager-rights",
+        "royalty-ledger"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请实现刚发布的结算后 adjustment，验证 eligible balance、确定性 split、新 posting 平衡、并发 replay 和原 CLOSED snapshot 不变。"
+    },
+    {
+      "id": "T26",
+      "title": "Manager UI and recovery",
+      "objective": "Complete UI and cross-domain recovery tests.",
+      "when": "Manager backend complete.",
+      "advanceGate": "Browser, migration, concurrency and SIGKILL cover the full new lifecycle.",
+      "required": true,
+      "requirementIds": [
+        "manager-rights",
+        "project-tests"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请完成 Manager UI，并运行真实 Chromium、PostgreSQL、双 API/双 Worker、barrier SIGKILL 和 Handoff 前回归。"
+    },
+    {
+      "id": "T27",
+      "title": "Six pressure scenarios",
+      "objective": "Run all fixed sustained scenarios and repair evidenced failures.",
+      "when": "All functionality is complete.",
+      "advanceGate": "All six thresholds and post-load invariants pass with real metrics.",
+      "required": true,
+      "requirementIds": [
+        "performance"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请运行 README 的六条正式压力场景，报告 fixture、并发、p50/p95/p99、吞吐、RSS、状态分布和负载后不变量，并修复有证据的问题。"
+    },
+    {
+      "id": "T28",
+      "title": "Final review and handoff",
+      "objective": "Run final gates and report an accurate findings-first handoff.",
+      "when": "Final scene.",
+      "advanceGate": "No hidden claim, omitted failure, or unverified completion remains.",
+      "required": true,
+      "requirementIds": [
+        "explanation-quality",
+        "evidence-quality"
+      ],
+      "speakerRole": "delivery_lead",
+      "safeMessage": "请做最终 findings-first code review，运行可执行的完整 gate，修复有依据的问题，并给出实际命令、结果、性能、风险和未运行项。"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "seedKeys": ["tenants","schemas","schemaRevisions","imports","uploadChunks","validationFindings","committedRecords","errorReports"],
+  "publicPaths": [
+    "/api/v1/tenants","/api/v1/schemas","/api/v1/schemas/:schemaId/revisions","/api/v1/imports",
+    "/api/v1/imports/:importId","/api/v1/imports/:importId/chunks/:chunkNumber",
+    "/api/v1/imports/:importId/complete","/api/v1/imports/:importId/commit","/api/v1/imports/:importId/cancel",
+    "/api/v1/imports/:importId/findings","/api/v1/imports/:importId/error-report","/api/v1/records",
+    "/api/v1/verification-snapshot",
+    "/api/v1/import-bundles","/api/v1/import-bundles/:bundleId/members",
+    "/api/v1/import-bundles/:bundleId/stage","/api/v1/import-bundles/:bundleId/publish"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"schemas","shape":"ImportSchema","sort":["schemaId"]},
+      {"key":"schemaRevisions","shape":"SchemaRevision","sort":["schemaId","revision"]},
+      {"key":"imports","shape":"ImportJob","sort":["importId"]},
+      {"key":"uploadChunks","shape":"UploadChunk","sort":["importId","chunkNumber"]},
+      {"key":"validationFindings","shape":"ValidationFinding","sort":["importId","rowNumber","field","code","findingId"]},
+      {"key":"committedRecords","shape":"CommittedRecord","sort":["tenantId","datasetKey","externalRowId"]},
+      {"key":"errorReports","shape":"ErrorReport","sort":["reportId"]}
+    ],
+    "managerResources": [
+      {"key":"importBundles","shape":"ImportBundle","sort":["bundleId"]},
+      {"key":"bundleMembers","shape":"BundleMember","sort":["bundleId","importId"]}
+    ]
+  },
+  "workKinds": {"v1":["UPLOAD_EXPIRY","IMPORT_VALIDATE","IMPORT_COMMIT","ERROR_REPORT","EVENT_DELIVERY"],"manager":["BUNDLE_PUBLISH"]},
+  "perfScenarios": [{"id":"resumable-upload"},{"id":"partial-commit"},{"id":"validation-recovery"}]
+}

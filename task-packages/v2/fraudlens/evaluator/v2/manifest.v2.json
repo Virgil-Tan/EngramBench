@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 2,
+  "taskId": "fraudlens",
+  "profile": "learning-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Domain contract and main flow",
+      "weight": 30
+    },
+    "B": {
+      "title": "Invariants idempotency and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Work recovery events and audit",
+      "weight": 20
+    },
+    "D": {
+      "title": "UI OpenAPI and snapshot closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Compatibility and fixed workloads",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "HISTORY_IMMUTABILITY",
+      "cap": 30,
+      "publicInvariant": "Historical Assessments, RuleHits, decisions and Audit entries are immutable."
+    },
+    {
+      "id": "REVIEW_TERMINAL",
+      "cap": 30,
+      "publicInvariant": "One ReviewCase has at most one fenced terminal decision."
+    },
+    {
+      "id": "CORRECTION_UNIQUENESS",
+      "cap": 30,
+      "publicInvariant": "One Remediation Run and Assessment pair has at most one append-only correction."
+    },
+    {
+      "id": "TENANT_ISOLATION",
+      "cap": 30,
+      "publicInvariant": "Tenant risk, review and audit state never crosses tenant boundaries."
+    },
+    {
+      "id": "IDENTITY_ATOMICITY",
+      "cap": 30,
+      "publicInvariant": "Request replay and external event identity each create at most one atomic effect."
+    },
+    {
+      "id": "VERSION_AUTHORITY",
+      "cap": 30,
+      "publicInvariant": "Every Assessment freezes the active RuleVersion at its acceptance boundary."
+    },
+    {
+      "id": "WORK_FENCE",
+      "cap": 30,
+      "publicInvariant": "Expired Work owners cannot commit and every durable Work reaches one terminal effect."
+    },
+    {
+      "id": "MIGRATION_IDENTITY",
+      "cap": 30,
+      "publicInvariant": "Compatible migration preserves all V1 identities, responses, Work, Events and audit history."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "FL-GAP-01",
+      "summary": "Non-scoring scope note: An unresolved Review Assessment has no published oldDecision value for AssessmentCorrection."
+    },
+    {
+      "id": "FL-GAP-02",
+      "summary": "Non-scoring scope note: AssessmentCorrection reason content generation is not published."
+    },
+    {
+      "id": "FL-GAP-03",
+      "summary": "Non-scoring scope note: Remediation snapshot keys and sort tuples are not published."
+    },
+    {
+      "id": "FL-GAP-04",
+      "summary": "Non-scoring scope note: The recovery barrier wire protocol and internal commit checkpoints are not published."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "RuleVersion activation immutability and deterministic scoring",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "RiskEvent acceptance tenant external identity and version freeze",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Review claim fenced decision and recommendation preservation",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Rule rollback history immutability and commit boundary",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Remediation frozen cohort recomputation and append-only correction",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "B-01",
+      "title": "Scoring arithmetic RuleHit order and independent reference model",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Idempotency-Key and externalEventId identity precedence",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Event acceptance activation and rollback serialization race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Hot Review claim opposite decision and expiry race",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Terminal-cohort Remediation create/cancel contention",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "C-01",
+      "title": "Risk assessment crash recovery after public lease",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "C-02",
+      "title": "Review expiry recovery and live-owner fence",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Publicly leased Remediation Work crash and cancellation",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "C-04",
+      "title": "Event unknown acknowledgement and tenant audit digest chain",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Browser rule event explanation review and rollback",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Browser remediation create progress cancel and differences",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI, base snapshot and completed Remediation GET shapes",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "D-04",
+      "title": "Immutable explanation chain from Assessment to Correction",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current scoring, review, audit and pending Work survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "One hundred thousand RiskEvent ingest and version freeze",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Hot-subject Review sustained terminal throughput",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "Ten thousand Assessment rollback-boundary recovery",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

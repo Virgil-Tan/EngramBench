@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "taskId": "auctionguard",
+  "profile": "learning-v2",
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Public auction and compatibility contracts", "weight": 30 },
+    "B": { "title": "Ordering, allocation and atomic correctness", "weight": 25 },
+    "C": { "title": "Durable replay, recovery and fencing", "weight": 20 },
+    "D": { "title": "OpenAPI, UI and cross-layer closure", "weight": 15 },
+    "E": { "title": "Migration and published performance", "weight": 10 }
+  },
+  "hardCaps": [
+    {
+      "id": "AUCTION_INVARIANT",
+      "cap": 30,
+      "publicInvariant": "Bid ordering, effective deadlines, idempotency, close fencing, outcomes and Awards remain linearizable and conserved."
+    }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-AG-01", "summary": "No Manager-only Domain Event type name was published." },
+    { "id": "SPEC-GAP-AG-02", "summary": "The Manager keeps the three V1-compatible performance workloads unchanged." },
+    { "id": "SPEC-GAP-AG-03", "summary": "No public seam freezes a database transaction timestamp at an exact deadline equality." },
+    { "id": "SPEC-GAP-AG-04", "summary": "The public API cannot create equal-price accepted Bids while V1 requires strictly increasing accepted amounts." },
+    { "id": "SPEC-GAP-AG-05", "summary": "A populated frozen V1 binary checkpoint must be supplied externally for binary migration Cases." }
+  ],
+  "cases": [
+    { "id": "BID-01", "title": "Reserve, increment and integer money boundaries", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "BID-02", "title": "Committed sequence chooses one leader", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "BID-03", "title": "Anti-sniping window with an observable safety margin", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "exact-anti-sniping-equality", "blockedBy": "SPEC-GAP-AG-03", "policy": "fail-closed-diagnostic" }] },
+    { "id": "BID-04", "title": "Effective deadline and state fence", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "exact-effective-end-equality", "blockedBy": "SPEC-GAP-AG-03", "policy": "fail-closed-diagnostic" }] },
+    { "id": "BID-05", "title": "Cancel and first accepted Bid are mutually exclusive", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "CLEAR-01", "title": "Multi-unit quantity and total overflow contract", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "CLEAR-02", "title": "Deterministic price, sequence and bidId ordering", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "equal-price-public-fixture", "blockedBy": "SPEC-GAP-AG-04", "policy": "fail-closed-diagnostic" }] },
+    { "id": "CLEAR-03", "title": "Uniform clearing price and final partial Award", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "CLEAR-04", "title": "Awards and outcome are atomic and immutable", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "CLEAR-05", "title": "One-unit and multi-unit OpenAPI and UI wire variants", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "RACE-01", "title": "Bid and cancel unknown-response durable replay", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RACE-02", "title": "Bid-close race closes through UI, timeline and snapshot", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "RACE-03", "title": "Close lease expiry and stale-owner fencing", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "RACE-04", "title": "Outbox unknown ACK and aggregate ordering", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "MIGRATE-01", "title": "V1 unitCount and winner Award mapping", "dimension": "E", "weight": 2.5, "prerequisites": ["V1", "FINAL"], "blockedAssertions": [{ "id": "frozen-v1-winner-checkpoint", "blockedBy": "SPEC-GAP-AG-05", "policy": "fail-closed-diagnostic" }] },
+    { "id": "MIGRATE-02", "title": "Pending Close Work and effective deadline preservation", "dimension": "E", "weight": 2.5, "prerequisites": ["V1", "FINAL"], "blockedAssertions": [{ "id": "frozen-v1-work-checkpoint", "blockedBy": "SPEC-GAP-AG-05", "policy": "fail-closed-diagnostic" }] },
+    { "id": "MIGRATE-03", "title": "V1 seed atomicity, replay and FINAL compatibility", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "MIGRATE-04", "title": "Old and new Auction evidence across OpenAPI, UI and snapshot", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "LOAD-01", "title": "Twenty hot Auctions under sustained bidding", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "LOAD-02", "title": "Consistent reads of live Auctions", "dimension": "E", "weight": 2.5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "LOAD-03", "title": "Two thousand due Auction close recovery", "dimension": "C", "weight": 5, "prerequisites": ["FINAL", "PERF"] },
+    { "id": "LOAD-04", "title": "Post-load Auction, Award and Event reconciliation", "dimension": "D", "weight": 3, "prerequisites": ["FINAL", "PERF"] }
+  ]
+}

@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 2,
+  "taskId": "seatreserve",
+  "cases": [
+    {
+      "caseId": "A-01",
+      "requirement": {
+        "id": "SR-R-A01",
+        "source": "README Inventory, holds, and pricing",
+        "summary": "Atomic multi-seat Hold, database TTL, frozen price, exact total, and side-effect-free rejection."
+      },
+      "publicFeedbackCategory": "hold-atomicity",
+      "privateFailureCodePrefix": "SR_A01_"
+    },
+    {
+      "caseId": "A-02",
+      "requirement": {
+        "id": "SR-R-A02",
+        "source": "README Checkout and uncertain payment",
+        "summary": "Checkout preserves one frozen total and one provider identity through UNKNOWN and reconciliation."
+      },
+      "publicFeedbackCategory": "payment-uncertainty",
+      "privateFailureCodePrefix": "SR_A02_"
+    },
+    {
+      "caseId": "A-03",
+      "requirement": {
+        "id": "SR-R-A03",
+        "source": "README Domain, states, and Work",
+        "summary": "Expiry releases only eligible Hold ownership while terminal Order ownership and immutable history remain."
+      },
+      "publicFeedbackCategory": "seat-conservation",
+      "privateFailureCodePrefix": "SR_A03_"
+    },
+    {
+      "caseId": "A-04",
+      "requirement": {
+        "id": "SR-R-A04",
+        "source": "Manager waitlist matching rules",
+        "summary": "FIFO entries choose one deterministic same-zone same-row strictly contiguous set without partial ownership."
+      },
+      "publicFeedbackCategory": "waitlist-order",
+      "privateFailureCodePrefix": "SR_A04_"
+    },
+    {
+      "caseId": "A-05",
+      "requirement": {
+        "id": "SR-R-A05",
+        "source": "Manager SeatOffer lifecycle",
+        "summary": "Offer freezes every seat price for 120 seconds and accept, decline, cancel, and expiry close atomically."
+      },
+      "publicFeedbackCategory": "offer-state",
+      "privateFailureCodePrefix": "SR_A05_"
+    },
+    {
+      "caseId": "B-01",
+      "requirement": {
+        "id": "SR-R-B01",
+        "source": "README durable idempotency",
+        "summary": "Lost and concurrent Hold or checkout responses replay one persisted status, body, and semantic effect."
+      },
+      "publicFeedbackCategory": "idempotency",
+      "privateFailureCodePrefix": "SR_B01_"
+    },
+    {
+      "caseId": "B-02",
+      "requirement": {
+        "id": "SR-R-B02",
+        "source": "README live seat owner invariant",
+        "summary": "Overlapping multi-seat requests across APIs linearize without oversell or partial acquisition."
+      },
+      "publicFeedbackCategory": "hold-contention",
+      "privateFailureCodePrefix": "SR_B02_"
+    },
+    {
+      "caseId": "B-03",
+      "requirement": {
+        "id": "SR-R-B03",
+        "source": "README receipt, reconcile, expiry commutativity",
+        "summary": "Equivalent external payment facts converge to one legal terminal payment, order, and seat history."
+      },
+      "publicFeedbackCategory": "payment-commutativity",
+      "privateFailureCodePrefix": "SR_B03_"
+    },
+    {
+      "caseId": "B-04",
+      "requirement": {
+        "id": "SR-R-B04",
+        "source": "Manager concurrent release and match",
+        "summary": "Concurrent releases preserve FIFO eligibility, one active Offer per Entry, and one live owner per Seat."
+      },
+      "publicFeedbackCategory": "waitlist-contention",
+      "privateFailureCodePrefix": "SR_B04_"
+    },
+    {
+      "caseId": "B-05",
+      "requirement": {
+        "id": "SR-R-B05",
+        "source": "Manager Offer lifecycle and fences",
+        "summary": "Accept, decline, cancel, and expiry race to one legal terminal result and at most one Hold."
+      },
+      "publicFeedbackCategory": "offer-race",
+      "privateFailureCodePrefix": "SR_B05_"
+    },
+    {
+      "caseId": "C-01",
+      "requirement": {
+        "id": "SR-R-C01",
+        "source": "README HOLD_EXPIRY lease recovery",
+        "summary": "SIGKILL after claim permits reclaim while stale work cannot release twice or lose terminal Work."
+      },
+      "publicFeedbackCategory": "hold-recovery",
+      "privateFailureCodePrefix": "SR_C01_"
+    },
+    {
+      "caseId": "C-02",
+      "requirement": {
+        "id": "SR-R-C02",
+        "source": "README Provider identity recovery",
+        "summary": "A persisted provider effect with an unknown response recovers through the original identity after worker death."
+      },
+      "publicFeedbackCategory": "payment-recovery",
+      "privateFailureCodePrefix": "SR_C02_"
+    },
+    {
+      "caseId": "C-03",
+      "requirement": {
+        "id": "SR-R-C03",
+        "source": "Manager WAITLIST_MATCH and OFFER_EXPIRY Work",
+        "summary": "Killed matching or expiry workers are reclaimed without duplicate Offer, owner, or expired Entry revival."
+      },
+      "publicFeedbackCategory": "waitlist-recovery",
+      "privateFailureCodePrefix": "SR_C03_"
+    },
+    {
+      "caseId": "C-04",
+      "requirement": {
+        "id": "SR-R-C04",
+        "source": "README Event dispatch unknown acknowledgement",
+        "summary": "Committed seat and payment events retry with stable identity, canonical body, and aggregate sequence."
+      },
+      "publicFeedbackCategory": "outbox",
+      "privateFailureCodePrefix": "SR_C04_"
+    },
+    {
+      "caseId": "D-01",
+      "requirement": {
+        "id": "SR-R-D01",
+        "source": "README Public HTTP and Manager routes",
+        "summary": "Runtime exposes exact V1 and Manager resource wires, strict inputs, stable errors, and tenant isolation."
+      },
+      "publicFeedbackCategory": "api-contract",
+      "privateFailureCodePrefix": "SR_D01_"
+    },
+    {
+      "caseId": "D-02",
+      "requirement": {
+        "id": "SR-R-D02",
+        "source": "README production React booking flow",
+        "summary": "Chromium uses visible controls and public HTTP to Hold, checkout, reconcile UNKNOWN, and refresh availability."
+      },
+      "publicFeedbackCategory": "browser-v1",
+      "privateFailureCodePrefix": "SR_D02_"
+    },
+    {
+      "caseId": "D-03",
+      "requirement": {
+        "id": "SR-R-D03",
+        "source": "Manager waitlist and Offer UI",
+        "summary": "Create and cancel an Entry through real browser HTTP; check known Offer timer and frozen totals, with known-ID controls when available. No unprovided Entry/Offer discovery or refresh route is required."
+      },
+      "publicFeedbackCategory": "browser-manager",
+      "privateFailureCodePrefix": "SR_D03_",
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "caseId": "D-04",
+      "requirement": {
+        "id": "SR-R-D04",
+        "source": "README verification snapshot and Manager resource union",
+        "summary": "One authorized snapshot is exact, sorted, secret-free, and closes every live owner and frozen amount."
+      },
+      "publicFeedbackCategory": "snapshot",
+      "privateFailureCodePrefix": "SR_D04_"
+    },
+    {
+      "caseId": "E-01",
+      "requirement": {
+        "id": "SR-R-E01",
+        "source": "public policy learning-final-system-2026-09-08.1; current README and Manager requirements",
+        "summary": "Current seat ownership, UNKNOWN payment and replay survive FINAL restart. Exercise only the current public API and legal seed on one FINAL submission; verify durable business state, identity and replay without historical binary, old database or synthetic migration-only wrappers."
+      },
+      "publicFeedbackCategory": "final-system-persistence",
+      "privateFailureCodePrefix": "SR_E01_"
+    },
+    {
+      "caseId": "E-02",
+      "requirement": {
+        "id": "SR-R-E02",
+        "source": "README seat-hold-ingest formal scenario",
+        "summary": "Fifty thousand disjoint public Holds meet throughput and p95 while retaining post-load invariants."
+      },
+      "publicFeedbackCategory": "perf-hold-ingest",
+      "privateFailureCodePrefix": "SR_E02_"
+    },
+    {
+      "caseId": "E-03",
+      "requirement": {
+        "id": "SR-R-E03",
+        "source": "README hot-seat-contention formal scenario",
+        "summary": "Twenty thousand public attempts against one thousand Seats meet limits with exactly one live owner each."
+      },
+      "publicFeedbackCategory": "perf-hot-contention",
+      "privateFailureCodePrefix": "SR_E03_"
+    },
+    {
+      "caseId": "E-04",
+      "requirement": {
+        "id": "SR-R-E04",
+        "source": "README payment-expiry-recovery formal scenario",
+        "summary": "Five thousand uncertain payments close within ninety seconds after two SIGKILLs and four replacements."
+      },
+      "publicFeedbackCategory": "perf-payment-recovery",
+      "privateFailureCodePrefix": "SR_E04_"
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

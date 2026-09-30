@@ -1,0 +1,31 @@
+{
+  "seedKeys": ["tenants","ruleSets","ruleVersions","riskEvents","assessments","ruleHits","reviewCases","reviewDecisions","ruleRollbacks","auditEntries"],
+  "publicPaths": [
+    "/api/v1/tenants","/api/v1/rule-sets","/api/v1/rule-sets/:ruleSetId/versions",
+    "/api/v1/rule-versions/:ruleVersionId/activate","/api/v1/rule-sets/:ruleSetId/rollback",
+    "/api/v1/risk-events","/api/v1/assessments/:assessmentId","/api/v1/review-cases",
+    "/api/v1/review-cases/:reviewCaseId/claim","/api/v1/review-cases/:reviewCaseId/decisions",
+    "/api/v1/audit","/api/v1/verification-snapshot",
+    "/api/v1/remediation-runs","/api/v1/remediation-runs/:runId","/api/v1/remediation-runs/:runId/cancel"
+  ],
+  "snapshot": {
+    "resources": [
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"ruleSets","shape":"RuleSet","sort":["ruleSetId"]},
+      {"key":"ruleVersions","shape":"RuleVersion","sort":["ruleSetId","version"]},
+      {"key":"riskEvents","shape":"RiskEvent","sort":["riskEventId"]},
+      {"key":"assessments","shape":"Assessment","sort":["assessmentId"]},
+      {"key":"ruleHits","shape":"RuleHit","sort":["assessmentId","priority","ruleId"]},
+      {"key":"reviewCases","shape":"ReviewCase","sort":["reviewCaseId"]},
+      {"key":"reviewDecisions","shape":"ReviewDecision","sort":["reviewDecisionId"]},
+      {"key":"ruleRollbacks","shape":"RuleRollback","sort":["rollbackId"]},
+      {"key":"auditEntries","shape":"AuditEntry","sort":["tenantId","sequence"]}
+    ],
+    "managerResources": [
+      {"key":"remediationRuns","shape":"RemediationRun","sort":["remediationRunId"]},
+      {"key":"assessmentCorrections","shape":"AssessmentCorrection","sort":["remediationRunId","assessmentId"]}
+    ]
+  },
+  "workKinds": {"v1":["RISK_ASSESSMENT","REVIEW_EXPIRY","AUDIT_DELIVERY"],"manager":["REMEDIATION_RECHECK"]},
+  "perfScenarios": [{"id":"risk-event-ingest"},{"id":"hot-subject-review"},{"id":"rollback-boundary-recovery"}]
+}

@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-exports" | "read-export" | "create-export" | "cancel-export" | "create-download-grant" | "revoke-download-grant" | "download-grant-content" | "read-export-sections" | "list-domain-events" | "verification-snapshot";

@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "deliveries-list" | "delivery-get" | "delivery-create" | "offer-accept" | "delivery-cancel" | "delivery-pickup" | "delivery-complete" | "delivery-offers" | "courier-get" | "assignment-ready" | "domain-events" | "verification-snapshot";

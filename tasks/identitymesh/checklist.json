@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "personaId": "identitymesh-security-lead",
+  "taskId": "identitymesh",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, worker, dispatcher, and production UI using only published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"contract-and-secret-boundary","category":"correctness","requirement":"OpenAPI, validation, identity state, and responses agree with the contract while credentials, tokens, assertions, nonces, and private keys never leak.","weight":10,"testGates":["H-02","H-03"]},
+    {"id":"session-rotation","category":"correctness","requirement":"One successful login creates one Session; refresh is single-use and prior-token reuse revokes the complete family atomically.","weight":13,"testGates":["H-03","H-04","H-05"]},
+    {"id":"device-trust","category":"correctness","requirement":"Device trust is bound to one user, fingerprint, nonce, and expiry; replay, cross-user use, and concurrent revoke cannot restore trust.","weight":10,"testGates":["H-06","H-07"]},
+    {"id":"key-and-revocation","category":"correctness","requirement":"Key rotation has one ACTIVE issuer, bounded verification overlap, durable retirement, and monotonic revocation fencing across processes.","weight":13,"testGates":["H-08","H-09"]},
+    {"id":"audit-chain","category":"correctness","requirement":"Every security transition commits one secret-free immutable AuditEntry whose tenant sequence and digest chain detect mutation or deletion.","weight":12,"testGates":["H-10","H-11"]},
+    {"id":"manager-quarantine","category":"correctness","requirement":"Manager compromise quarantine and recovery use captured approval policy, revoke old identity state once, and never revive prior credentials or keys.","weight":12,"testGates":["H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three fixed sustained scenarios meet throughput, latency, propagation, recovery, chain, and secret-boundary requirements.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The repository owns meaningful unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, security invariant, and performance commands.","weight":7,"testGates":["H-13"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains trust boundaries, state, propagation, cryptographic lifecycle, recovery, and review findings clearly.","weight":3},
+    {"id":"evidence-quality","category":"persona","requirement":"Every stage and final handoff reports actual commands, results, risks, and checks not run accurately.","weight":5}
+  ]
+}

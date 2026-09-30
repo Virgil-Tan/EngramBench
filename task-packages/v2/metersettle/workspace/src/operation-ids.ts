@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-statements" | "get-statement" | "create-usage-batch" | "advance-watermark" | "get-watermark" | "meter-usage" | "domain-events" | "create-correction-batch" | "get-statement-revision" | "verification-snapshot";

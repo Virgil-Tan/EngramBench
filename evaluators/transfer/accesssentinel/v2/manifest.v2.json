@@ -1,0 +1,575 @@
+{
+  "schemaVersion": 2,
+  "taskId": "accesssentinel",
+  "profile": "transfer-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Public privileged-access contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Authority idempotency and concurrency",
+      "weight": 25
+    },
+    "C": {
+      "title": "Worker recovery and durable evidence",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI browser and evidence closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration performance and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "PRODUCTION_BOOT",
+      "cap": 25,
+      "publicInvariant": "The clean production stack migrates builds boots and terminates through published commands."
+    },
+    {
+      "id": "AUTHORITY_CORRECTNESS",
+      "cap": 35,
+      "publicInvariant": "Frozen authority risk Audit grant uniqueness and atomic rejection remain correct."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Durable replay never creates a second effect or token family."
+    },
+    {
+      "id": "TRANSACTIONAL_EVIDENCE",
+      "cap": 40,
+      "publicInvariant": "Security state Audit Event and Work commit atomically with stable identity."
+    },
+    {
+      "id": "WORK_FENCING",
+      "cap": 40,
+      "publicInvariant": "Pending Work survives process loss and an expired lease cannot commit."
+    },
+    {
+      "id": "REVOCATION_FAIL_CLOSED",
+      "cap": 35,
+      "publicInvariant": "After a revocation fence commits no API can return active authority."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "V1 history replay Audit links Events and pending Work migrate unchanged."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "AS-GAP-02",
+      "summary": "No public V1 Region revocation authority mutation exists."
+    },
+    {
+      "id": "AS-GAP-05",
+      "summary": "No controllable clock or stable late-review error is published."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Clean commands and boot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Repeatable populated migration",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Strict atomic seed",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "HTTP/OpenAPI/error contract",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Tenant isolation and read routes",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-06",
+      "title": "Snapshot and Audit chain",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-07",
+      "title": "Session create/refresh/reuse/revoke",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-08",
+      "title": "Device trust and revocation epochs",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-09",
+      "title": "Policy publish/rollback and frozen basis",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-10",
+      "title": "Location observation/replay",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-11",
+      "title": "Access request and atomic batch",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-12",
+      "title": "Risk and policy decision",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": []
+    },
+    {
+      "id": "A-13",
+      "title": "Grant lifecycle and checks",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-14",
+      "title": "Work, Events and transition evidence",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-15",
+      "title": "FINAL BreakGlass quorum and scoped authorization",
+      "weight": 1,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": []
+    },
+    {
+      "id": "A-16",
+      "title": "FINAL quarantine and guarded release",
+      "weight": 1,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": []
+    },
+    {
+      "id": "B-01",
+      "title": "Session rotation/reuse contention",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Trust publication versus revoke",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Policy revision freeze under races",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Deterministic location convergence",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Risk-score boundary oracle",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-06",
+      "title": "Batch/idempotency/unknown response",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-07",
+      "title": "Same-key multi-API authority",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-08",
+      "title": "Grant/revoke races",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-09",
+      "title": "Cross-process revocation fence",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-10",
+      "title": "Manager quorum/quarantine/release races",
+      "weight": 2.5,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Work lifecycle/retention",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "SIGKILL after worker.claimed",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "SIGKILL at worker.before-effect",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Expired lease fencing",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-05",
+      "title": "Location replay recovery",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-06",
+      "title": "Revocation/expiry recovery",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-07",
+      "title": "Unknown webhook ACK",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-08",
+      "title": "Transactional Audit/Event and ordering",
+      "weight": 2.5,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "OpenAPI validates live traffic",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": []
+    },
+    {
+      "id": "D-02",
+      "title": "Browser identity/policy lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Browser access/review/grant lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": []
+    },
+    {
+      "id": "D-04",
+      "title": "Browser location/revocation/Audit",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-05",
+      "title": "Manager UI",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": []
+    },
+    {
+      "id": "D-06",
+      "title": "Accessibility/recovery/security",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-07",
+      "title": "Project gates not fake green",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-08",
+      "title": "README-to-evidence closure",
+      "weight": 1,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": []
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1→FINAL migration",
+      "weight": 1.5,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "V1_CHECKPOINT"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved replay/Audit/Event compatibility",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "V1_CHECKPOINT"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Work/delivery migration",
+      "weight": 1,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "V1_CHECKPOINT"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "session-refresh-storm",
+      "weight": 0.75,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-05",
+      "title": "access-decision-ingest",
+      "weight": 0.75,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-06",
+      "title": "policy-evaluation-hotset",
+      "weight": 0.75,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-07",
+      "title": "location-replay-convergence",
+      "weight": 0.75,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-08",
+      "title": "grant-revocation-fanout",
+      "weight": 0.75,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-09",
+      "title": "audit-chain-append",
+      "weight": 0.625,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-10",
+      "title": "outbox-ack-recovery",
+      "weight": 0.625,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-11",
+      "title": "Revocation-fence recovery and cleanup",
+      "weight": 1.5,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ]
+}

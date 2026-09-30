@@ -1,0 +1,486 @@
+# MergeBoard — Complete system requirements
+
+Public scope revision: **learning-final-system-2026-09-08.1**. This is a single final-system task, not a historical upgrade benchmark.
+
+## Scope and authority
+
+- Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.
+- V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.
+- Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.
+- Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.
+- Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.
+- Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.
+- No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.
+- Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes.
+
+The original source documents are retained under frontal-legacy/ only for provenance. The complete active business requirements are reproduced below; the withdrawn historical orchestration and cross-version-only clauses are not a second source of obligations. contract/ fixes public representation.
+
+## Base product requirements
+
+# MergeBoard
+
+Build MergeBoard from this intentionally blank repository. This README is the complete product
+contract. Do not invent behavior outside it. Ask before making a product choice that the contract
+does not settle.
+
+## Required stack
+
+- Node.js 22, TypeScript, React, PostgreSQL 16, npm, and the preinstalled Chromium.
+- PostgreSQL is the sole authority for business state, idempotency, leases, events, and ordering.
+- The production UI must use the public HTTP API; no mock, in-memory database, or browser-only state
+  may provide correctness.
+- Use integer domain quantities and UTC ISO-8601 timestamps. Do not use floating point for money,
+  capacity, sequence, duration units, or conserved quantities.
+
+## Required non-interactive commands
+
+| Command | Contract |
+| --- | --- |
+| 'npm run db:migrate' | Apply all versioned migrations repeatedly and safely. |
+| 'npm run db:seed -- --file <path>' | Atomically import the versioned JSON seed. |
+| 'npm run dev' | Start development API and UI. |
+| 'npm run build' | Produce the production API, worker, dispatcher, and UI assets. |
+| 'npm run start:api' | Start one production API/UI process. |
+| 'npm run start:worker' | Start one Snapshot Task worker. |
+| 'npm run start:dispatcher' | Start the Domain Event webhook dispatcher. |
+| 'npm run test:unit' | Run pure logic and boundary tests. |
+| 'npm run test:integration' | Run real PostgreSQL plus public HTTP integration tests. |
+| 'npm run test:e2e' | Run production-build Chromium tests through visible controls. |
+| 'npm run test:concurrency' | Run at least two API and two worker processes against one database. |
+| 'npm run test:recovery' | Use observable barriers, SIGKILL, restart, and persistent recovery. |
+| 'npm run test:all' | Run every non-performance gate above from a clean database. |
+| 'npm run test:perf' | Run the fixed sustained load and verify all post-load invariants. |
+
+Every command exits non-zero on failure, cleans up its own child processes, and requires no prompts.
+
+## Environment
+
+| Variable | Default | Rules |
+| --- | --- | --- |
+| 'DATABASE_URL' | 'postgresql://postgres@127.0.0.1:5432/mergeboard' | Production/development authority. |
+| 'TEST_DATABASE_URL' | 'postgresql://postgres@127.0.0.1:5432/mergeboard_test' | Required by all stateful tests. |
+| 'PORT' | '3000' | Integer 1-65535; API and production UI origin. |
+| 'ADMIN_TOKEN' | task-local value | Required only for documented admin mutation routes; never log it. |
+| 'WEBHOOK_URL' | 'http://127.0.0.1:4010/events' | HTTP endpoint for Domain Event delivery. |
+| 'WORK_LEASE_SECONDS' | '3' | Integer 1-60; persisted lease duration used by workers and recovery tests. |
+| 'CHROMIUM_PATH' | '/usr/bin/chromium' | Browser executable for project-owned E2E. |
+| 'MANAGED_DATA_ROOT' | '/tmp/mergeboard-data' | Writable root for staged or generated bytes; never serve a path directly. |
+| 'TEST_BARRIER_URL' | empty | Optional localhost HTTP receiver used only by controlled recovery tests. |
+| 'TEST_BARRIER_TOKEN' | empty | Required barrier header value when the URL is set; never log it. |
+
+Bind only to '127.0.0.1'. Logs must not contain tokens, idempotency keys, raw seed input, webhook
+bodies, or private absolute paths.
+
+## Domain and V1 behavior
+
+| Term | Canonical definition | Avoid |
+| --- | --- | --- |
+| Document | A stable ordered block collection with one head revision in V1. | File, page |
+| Revision | An immutable canonical Document state identified by documentId and integer revision. | Version, save |
+| Change | A client-authored ordered list of block operations against one baseRevision. | Patch, edit |
+| Conflict | A deterministic explanation that a Change cannot be safely applied to current head. | Error, merge |
+| Snapshot Task | Durable leased work compacting an operation prefix into a verified Snapshot. | Job, backup |
+| Client Sequence | A per-client monotonically increasing number used for offline replay. | Idempotency key, timestamp |
+
+Change: PENDING -> APPLIED | CONFLICTED | REJECTED; Document revisions are immutable and strictly increasing.
+
+1. Create Documents and apply exact block insert, replace, move, and delete Changes with optimistic baseRevision.
+2. Deduplicate offline Changes by document, client, and Client Sequence across instances and restarts.
+3. Rebase non-overlapping Changes deterministically and persist explicit Conflicts for overlapping edits.
+4. Generate and verify Snapshots asynchronously while revision reads remain consistent through worker death.
+5. Expose editing, offline replay, revision history, diffs, conflicts, and event delivery in a real UI.
+
+### Deterministic policy
+
+1. A Document title has 1..120 Unicode scalar values and initial blocks has 0..1000 members with unique blockId values; creation produces immutable revision 0 and its canonical digest.
+2. A Change has 1..100 operations applied in array order. clientSequence begins at 1 and must be exactly the next value for that documentId,clientId; an identical prior sequence replays and differing content conflicts.
+3. At head=baseRevision, INSERT_AFTER requires an existing anchor or null start and unused blockId; REPLACE/DELETE require exact expectedText; MOVE requires both IDs distinct, present, and current predecessor equal expectedAfterBlockId.
+4. When head advanced, rebase succeeds operation-by-operation only if those same preconditions still hold in current head. Any failure records all deterministic Conflicts in operationIndex order and applies none of the Change.
+5. Concurrent INSERT_AFTER operations sharing an anchor are ordered by their committed revision then operationIndex then blockId. Revision digest is SHA-256 of RFC 8785 {documentId,revision,blocks}.
+6. A DocumentDiff examines the union of block IDs in bytewise order. A from-only or to-only Block emits DELETE or INSERT; a shared Block emits REPLACE when text differs, then MOVE when its zero-based index differs. Items sort by blockId with REPLACE before MOVE, and nullable index/text fields describe the two selected revisions exactly.
+
+## Mandatory invariants
+
+1. Document revision numbers are contiguous and each applied Change creates exactly one next revision.
+2. One client sequence maps to one semantic Change and stable response forever.
+3. Replaying the same accepted Change cannot duplicate, lose, or reorder blocks.
+4. A Snapshot digest equals the canonical state obtained by replaying its exact operation prefix.
+5. A conflicted or rejected Change does not mutate head state or emit document.changed.
+
+These invariants must hold after success, validation failure, unknown HTTP outcome, duplicate request,
+concurrent request, worker or dispatcher SIGKILL, restart, migration, and sustained load.
+
+## HTTP and OpenAPI 3.1
+
+Serve canonical OpenAPI at 'GET /openapi.json' and health at 'GET /healthz'. The OpenAPI document and
+runtime behavior must agree. API routes use JSON except explicitly documented raw content. Reject an
+unsupported media type with 415 'UNSUPPORTED_MEDIA_TYPE', malformed JSON with 400 'MALFORMED_JSON',
+unknown object keys with 400 'UNKNOWN_FIELD', and a shape or range violation without a more specific
+published code with 400 'INVALID_REQUEST'. Semantic or state conflicts use their published 409 code. A
+missing, malformed, or incorrect Bearer token on a documented ADMIN_TOKEN route returns 401
+'ADMIN_AUTH_REQUIRED'.
+
+Successful paginated collection reads return '{items,nextCursor}'. 'limit' defaults to 50 and is an
+integer from 1 through 100. Cursor order is stable and opaque; malformed cursors return 400
+'INVALID_CURSOR'. Fields typed 'uuid' are lowercase UUID strings; untyped string identifiers retain
+their published syntax. Timestamps are UTC with a trailing 'Z'. A resource miss returns 404 'NOT_FOUND'.
+
+Errors use exactly:
+
+~~~json
+{"error":{"code":"STABLE_CODE","message":"human-readable text","details":{}}}
+~~~
+
+Wire notation below is normative: 'uuid' is lowercase RFC 4122 text, 'int' is a JSON safe integer,
+'timestamp' is UTC ISO-8601 with millisecond precision and trailing Z, 'date' is strict YYYY-MM-DD,
+'sha256' is 64 lowercase hex, 'currency' is three uppercase ASCII letters, and 'json' is any value
+accepted by RFC 8785. 'http-url' is an absolute http or https URL without credentials or a fragment.
+'interval' is exactly '{startAt:timestamp,endAt:timestamp}', has startAt before endAt, and denotes the
+half-open range '[startAt,endAt)'. A '|null' field is required and nullable. Every unlisted field is
+rejected and arrays preserve their stated order. Responses use exactly these resource shapes:
+
+Successful response contracts are closed:
+
+- A mutation route without a literally stated success status returns 200.
+- Unless a route literally publishes another object, array, or empty body, a success described by a named resource, named resource state, or named resource fields returns that exact resource shape at the JSON top level. Any response-only fields literally named by the route are additional top-level fields.
+- If a mutation publishes no success body, it returns the exact current shape of the single primary resource created or changed by that route at the JSON top level.
+- When a route explicitly returns multiple named resources, the body is one object keyed by their lower-camel resource names unless the route publishes another literal shape.
+- Wrappers such as `{data:...}`, `{result:...}`, or an extra single-resource envelope are invalid unless the route literally declares them. OpenAPI must publish the same success status and closed response schema as runtime.
+
+- Block = {blockId:uuid,text:string}; text is UTF-8 with 0..10000 Unicode scalar values
+- Operation = {op:INSERT_AFTER,afterBlockId:uuid|null,block:Block}|{op:REPLACE,blockId:uuid,expectedText:string,newText:string}|{op:MOVE_AFTER,blockId:uuid,afterBlockId:uuid|null,expectedAfterBlockId:uuid|null}|{op:DELETE,blockId:uuid,expectedText:string}
+- Document = {documentId:uuid,title:string,headRevision:int,blocks:[Block],canonicalDigest:sha256,createdAt:timestamp,sequence:int}
+- Change = {changeId:uuid,documentId:uuid,clientId:uuid,clientSequence:int,baseRevision:int,operations:[Operation],state:APPLIED|CONFLICTED|REJECTED,revision:int|null,conflicts:[Conflict],createdAt:timestamp}
+- Conflict = {conflictId:uuid,changeId:uuid,operationIndex:int,code:TARGET_MISSING|TARGET_CHANGED|ANCHOR_MISSING|BLOCK_ID_EXISTS|MOVE_BASE_CHANGED,path:string,baseValue:string|null,headValue:string|null}
+- DocumentRevision = {documentId:uuid,revision:int,blocks:[Block],changeId:uuid|null,canonicalDigest:sha256,createdAt:timestamp}
+- DocumentDiff = {documentId:uuid,fromRevision:int,toRevision:int,items:[{blockId:uuid,kind:DELETE|INSERT|REPLACE|MOVE,fromIndex:int|null,toIndex:int|null,fromText:string|null,toText:string|null}]}
+
+The public aggregate routes are:
+
+- 'GET /api/v1/documents?limit&cursor' and
+  'GET /api/v1/documents/:documentId'.
+- POST /api/v1/documents/:documentId/changes with {clientId,clientSequence,baseRevision,operations}; return 201 APPLIED with revision and canonical operations, or 409 CHANGE_CONFLICT with deterministic conflict details.
+- POST /api/v1/documents with {title,blocks:[Block]} returns 201 Document at revision 0 and emits document.created.
+- POST /api/v1/documents/:documentId/conflicts/:conflictId/resolve with {expectedHeadRevision,resolutionOperations} resolves the Conflict's owning Change and creates one normal next revision.
+- GET /api/v1/documents/:documentId/revisions/:revision returns canonical blocks and snapshot/operation provenance.
+- GET /api/v1/documents/:documentId/diff?fromRevision&toRevision returns the exact deterministic DocumentDiff.
+- GET /api/v1/documents/:documentId/changes?limit&cursor returns exact Change objects in createdAt then changeId order.
+- 'GET /api/v1/domain-events?aggregateId&afterSequence&limit' returns committed events in sequence.
+- 'GET /api/v1/verification-snapshot' requires 'Authorization: Bearer <ADMIN_TOKEN>' and returns one
+  serializable snapshot '{asOf:timestamp,resources:{...},work:[Work],events:[DomainEvent]}'.
+
+### V1 verification snapshot
+
+The complete snapshot is read from one PostgreSQL point-in-time; 'asOf', every resource array, 'work',
+and 'events' must describe that same database snapshot. The V1 'resources' object has exactly these keys
+and no others:
+
+- 'documents' uses exact shape 'Document' and sorts ascending by scalar field-path tuple 'documentId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'documentRevisions' uses exact shape 'DocumentRevision' and sorts ascending by scalar field-path tuple 'documentId', 'revision', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'changes' uses exact shape 'Change' and sorts ascending by scalar field-path tuple 'documentId', 'changeId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'conflicts' uses exact shape 'Conflict' and sorts ascending by scalar field-path tuple 'changeId', 'operationIndex', 'conflictId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'documentSnapshots' uses exact shape 'DocumentSnapshot = {documentId:uuid,revision:int,canonicalDigest:sha256,createdAt:timestamp}' and sorts ascending by scalar field-path tuple 'documentId', 'revision', then by RFC 8785 canonical JSON as the tie-breaker.
+
+Each resource array contains every current or immutable instance named by its declared shape exactly
+once. Each listed sort path resolves to a scalar. Scalar order is null first, then false before true,
+integers numerically, and every other string-form scalar by UTF-8 bytes. Sort ascending by the complete
+tuple, then use RFC 8785 canonical JSON only as the tie-breaker.
+Recursively omit every object field whose name ends in 'Token', at every nesting depth.
+
+'Work' is exactly
+'{workId:uuid,kind:SNAPSHOT_COMPACTION,aggregateId:uuid,state:PENDING|LEASED|SUCCEEDED|FAILED|CANCELLED,terminal:boolean,attempt:int,leaseOwner:string|null,leaseExpiresAt:timestamp|null}'.
+'kind' is one of exactly 'SNAPSHOT_COMPACTION'. Both lease fields are non-null exactly
+when state is 'LEASED' and are null in every other state. 'terminal' is true exactly when state is
+'SUCCEEDED', 'FAILED', or 'CANCELLED'; terminal Work is retained.
+A backlog is drained exactly when no matching Work has 'terminal:false'. The 'work' array sorts by
+workId.
+
+'events' contains exact Domain Event objects sorted by aggregateId, then sequence, then eventId. Apply
+the same recursive '*Token' omission to every event payload. Omit authentication and business fencing
+tokens, idempotency keys, raw webhook bodies, private filesystem paths, and secrets. This is the
+external invariant query surface.
+
+Domain errors below are exhaustive for well-formed requests, in addition to the common errors published
+above plus 400 'INVALID_REQUEST', 400 'INVALID_CURSOR', 404 'NOT_FOUND', and 409
+'IDEMPOTENCY_CONFLICT':
+
+| HTTP | Code | Exact trigger |
+| ---: | --- | --- |
+| 400 | INVALID_DOCUMENT | title, initial block count, block ID uniqueness, or block text is invalid |
+| 409 | CLIENT_SEQUENCE_GAP | clientSequence is greater than the next expected value |
+| 409 | CLIENT_SEQUENCE_CONFLICT | a prior sequence has different semantic content |
+| 409 | CHANGE_CONFLICT | one or more operation preconditions fail at current head |
+| 409 | HEAD_REVISION_CHANGED | conflict resolution expectedHeadRevision is stale |
+| 400 | INVALID_OPERATION | operation shape, cardinality, ID, or text is invalid |
+
+### Durable idempotency
+
+Every mutation requires 'Idempotency-Key', 1-128 visible ASCII characters. Scope is method, canonical
+path, and key. Persist a canonical semantic request
+fingerprint and the complete status/body before acknowledging success. An identical retry, including
+after restart or unknown response loss, returns the original status and semantic JSON with no second
+effect. Reusing a key with different semantics returns 409 'IDEMPOTENCY_CONFLICT'. Concurrent identical
+requests converge on one result; a process-local map is not authority. Do not expire records during the
+benchmark or rewrite saved replay bodies during migration.
+
+## Seed contract
+
+'npm run db:seed -- --file <path>' accepts exactly:
+
+'{schemaVersion:1,seedVersion,documents,changes,snapshots}; block IDs are unique per Document, seeded revisions are contiguous, client sequences are increasing, and replayed canonical digests must match.'
+
+Member schemas are exact:
+
+- documents[] = {documentId:uuid,title:string,initialBlocks:[Block],createdAt:timestamp}
+- changes[] use exact Change fields and operations; seeded applied Changes must replay to contiguous revisions and conflicted Changes must have revision null
+- snapshots[] = {documentId:uuid,revision:int,canonicalDigest:sha256,assetPath:string}; assetPath is a non-symlink relative file under <seed-directory>/assets containing exactly the UTF-8 RFC 8785 bytes of {documentId,revision,blocks} for that revision, and canonicalDigest is the SHA-256 of those exact bytes
+
+'seedVersion' is a non-empty string up to 64 characters. The importer records the canonical file digest.
+The same version and digest is a no-op replay; the same version with different content fails with
+'SEED_VERSION_CONFLICT'. Reject unknown keys, duplicate IDs, missing references, invalid states, broken
+invariants, out-of-range integers, and malformed times. Any invalid member rejects the complete import
+without changing business rows, tasks, idempotency, or Domain Events.
+
+## Workers, events, and recovery
+
+Workers claim bounded persisted leases using 'WORK_LEASE_SECONDS'. Lease ownership must be proven again
+inside the short transaction that commits a result. Do not hold a database transaction while waiting on
+HTTP, files, clocks, or another process. An expired lease is reclaimable, but a stale token cannot commit.
+
+Business state and its Domain Event commit in one transaction. Event fields are 'eventId', 'aggregateId',
+positive integer 'sequence', 'type', 'occurredAt', 'schemaVersion:1', and 'payload'. Required event types:
+`document.created`, `document.changed`, `change.conflicted`, `conflict.resolved`, `snapshot.created`. 'payload' is exactly '{}' for every V1 event; a later Manager event also uses '{}' unless
+its published contract literally supplies another payload shape. A rollback creates no event. Sequence
+is contiguous per aggregate.
+
+The dispatcher sends JSON with 'X-MergeBoard-Event-Id' and 'X-MergeBoard-Event-Type'. Network errors,
+timeouts, and non-2xx responses retry indefinitely with bounded backoff. Every retry keeps the same
+eventId and semantic body. Successful delivery order is increasing aggregate sequence. At-least-once
+delivery may repeat a request; it must not invent another event identity.
+
+### Controlled recovery barrier
+
+When 'TEST_BARRIER_URL' is empty, no barrier request exists. When both test variables are set, workers
+POST before continuing at 'worker.claimed', 'worker.effect-complete', and 'worker.before-commit'; the
+dispatcher posts at 'dispatcher.response-received'. The exact JSON is
+'{schemaVersion:1,processRole:worker|dispatcher,point,workId,aggregateId,attempt,leaseTokenHash}' and the
+header is 'X-Test-Barrier-Token: <TEST_BARRIER_TOKEN>'. IDs and point stay identical across retries;
+leaseTokenHash is SHA-256 of the token, never the token. A 204 response releases the process. A held
+response pauses it without an open database transaction. Connection loss or non-204 retries every
+100 ms with the same body until lease loss or process termination. Only localhost URLs are accepted.
+
+## Real UI
+
+Provide desktop and mobile flows for creating the V1 aggregate, viewing collections and detail,
+performing every public user action, observing asynchronous Snapshot Task progress, browsing event and
+history evidence, and recovering after refresh. Show loading, empty, validation, conflict, stale,
+offline/retry, terminal, and permission-error states. Use visible semantic controls, keyboard navigation,
+associated labels, focus management, and WCAG AA contrast. Never require devtools or direct API calls to
+complete the primary flow.
+
+## Project-owned verification
+
+- Unit tests cover deterministic policy, state transitions, canonicalization, and boundary values.
+- Integration tests start real PostgreSQL and real HTTP processes; they never call internal services.
+- Browser E2E uses the production build, real Chromium, real API/database/workers, and visible controls.
+- Concurrency tests use at least two API processes and two workers against one PostgreSQL database.
+- Recovery tests use a public test-only barrier to observe claim/commit or receiver/ACK boundaries before
+  SIGKILL; random sleeps are not fault control.
+- Performance tests run the production build for the fixed intervals below, report p50/p95/p99, throughput,
+  successful mutations, expected conflicts, unexpected 5xx, backlog drain, and post-load invariants.
+
+Fixed V1-compatible performance scenarios:
+
+### Scenario 'non-overlapping-change-apply'
+
+- Target: apply 300 non-overlapping Changes/s with p95 <= 250 ms
+- Mode: 'http'
+- Method: 'POST'
+- Path: '/api/v1/documents/:documentId/changes'
+- Setup: Use disjoint warm-up and measured Document sets, each with at least one dedicated Block. Keep at most one in-flight Change per Document.
+- Selector: Round-robin documentId bytewise; clientSequence and baseRevision advance from the preceding successful response for that Document.
+- Request: One REPLACE operation per Change targeting the dedicated block, with exact expectedText and a deterministic 64-ASCII-byte newText; use a fresh key.
+- Concurrency: 64
+- Warm-up seconds: 10
+- Measure seconds: 60
+- Success: Only 201 APPLIED responses count; each creates one gapless revision with the expected canonicalDigest and no Conflict.
+- Threshold: At least 300 successful Changes/s for 60 seconds and p95 <= 250 ms; conflicts, revision gaps, and unexpected 5xx are zero.
+- Timer: The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.
+
+### Scenario 'document-revision-read'
+
+- Target: serve 400 revision reads/s with p95 <= 120 ms
+- Mode: 'http'
+- Method: 'GET'
+- Path: '/api/v1/documents/:documentId/revisions/:revision'
+- Setup: Use all seeded DocumentRevision identities; reads do not trigger compaction.
+- Selector: Round-robin documentId then revision in bytewise/numeric order.
+- Request: No body or query parameters.
+- Concurrency: 64
+- Warm-up seconds: 10
+- Measure seconds: 60
+- Success: Only 200 responses whose Blocks recompute the published canonicalDigest and provenance count.
+- Threshold: At least 400 successful reads/s for 60 seconds and p95 <= 120 ms; digest mismatch and unexpected 5xx counts are zero.
+- Timer: The throughput window starts with the first measured request after warm-up; each latency sample runs from request dispatch through the complete response body.
+
+### Scenario 'snapshot-compaction-recovery'
+
+- Target: compact 1,000,000 operations into verified Snapshots within 120 s after recovery
+- Mode: 'worker'
+- Method: 'N/A'
+- Path: 'work:SNAPSHOT_COMPACTION'
+- Setup: Exactly 10,000 Documents have one pending compaction Work each, covering exactly 100 APPLIED one-operation Changes per Document and 1,000,000 operations total. Hold two workers at worker.claimed, SIGKILL, wait for lease expiry, then start two replacements.
+- Selector: Compact by documentId and include Changes through the Work's captured revision without deleting operation history.
+- Request: No measured client request is issued; setup uses only the published seed and public APIs before the worker timer starts.
+- Concurrency: 2
+- Warm-up seconds: 0
+- Measure seconds: 120
+- Success: Exactly 10,000 verified DocumentSnapshots cover all 1,000,000 operations, no Work remains nonterminal, replay equals each snapshot digest, and stale workers cannot publish.
+- Threshold: Compaction finishes in <= 120 seconds after replacement spawn with zero missing operation, digest mismatch, stale commit, or unexpected failure.
+- Timer: Start when both replacements spawn and stop only after snapshot files, database snapshot rows, and full replay verification prove every postcondition.
+
+Fixed performance seed: seedVersion perf-v1 contains exactly 10,000 documents, 1,000,000 APPLIED changes with one operation each, and zero snapshots; exactly one pending Snapshot Task per Document covers all 1,000,000 operations.
+
+The three scenarios are independent runs from a freshly migrated database and the exact seed above;
+complete each scenario's Setup before its Timer begins. Mode 'http' means 'method' and 'path' name the
+only measured public request operations and 'concurrency' is the exact closed-loop client count. Mode
+'worker' means method 'N/A', 'path' names the measured Work kinds, and 'concurrency' is the exact worker
+process count. Use exactly each scenario's Selector and Request; there is no inferred mixed workload.
+Run exactly 'warmupSeconds' unmeasured seconds, then exactly 'measureSeconds' measured seconds or until
+the Timer's stated terminal condition. Stateful warm-up and measured identities must be disjoint. Count
+complete HTTP response bodies for latency. Expected published conflicts are reported separately unless
+the scenario's Success and Threshold explicitly count them.
+
+The benchmark container has 4 logical CPUs and 8 GiB RAM; PostgreSQL 16, Chromium, two API processes,
+the specified workers, and one dispatcher share that limit. Every later compatible binary must rerun
+these same three scenarios without changing any field or threshold.
+
+Unexpected 5xx count must be zero. Meeting latency or throughput while any mandatory invariant is false
+is a failed performance run.
+
+## Out of scope
+
+- rich-text rendering
+- presence cursors
+- real-time sockets
+- binary attachments
+- access control
+
+## Handoff
+
+Keep README and OpenAPI current. Finish with a findings-first review and report architecture, module and
+process ownership, public interfaces, success/failure data flow, transaction and lease boundaries,
+migrations, compatibility, exact commands run, test and performance results, recovery evidence, known
+risks, and every check not run. Do not claim a check that was not actually executed.
+
+## Additional product requirements — required in the same final system
+
+
+
+
+完整系统包含“branches and review-gated merges”。
+以下业务规则、wire schema、接口和错误全部是公开产品合同。
+
+业务规则：
+
+1. A Document may have named Branches, each with its own contiguous head based on an immutable source revision.
+2. Changes target one Branch and preserve existing client sequence semantics within that Branch.
+3. A Merge Request captures source and target heads, computes a deterministic merge result, and records explicit conflicts.
+4. Approval requires 1-5 distinct Reviewers from a captured policy
+simultaneous final approval creates one merge eligibility transition.
+5. Merge succeeds only if target head still matches the reviewed head and creates exactly one target revision
+otherwise it becomes STALE.
+6. The base document history belongs to branch main
+legacy endpoints continue to imply main while new APIs expose branches[] and merge requests.
+
+8. Pending Snapshot Tasks remain bound to the same revision prefix on main.
+9. Old clients can continue editing and reading main without branch fields in legacy responses.
+10. The versioned seed schema remains exactly V1
+Manager-only state is created through the public APIs above, and tests must not require unpublished seed members.
+11. The only new Domain Event type names are those written literally in the Manager rules or contracts above.
+Other Manager transitions reuse a V1 event type only for the same aggregate transition and otherwise emit no Domain Event.
+12. Update OpenAPI and runtime API, workers, real UI, Integration Test, production Chromium E2E, multi-process concurrency, SIGKILL recovery, and sustained performance coverage.
+13. Preserve all V1 data, public error semantics, saved idempotency replay results, and already committed event identity, body, and sequence unless a rule above explicitly changes a new response field.
+
+新增 wire schema：
+
+- Branch = {branchId:uuid,documentId:uuid,name:string,sourceBranchId:uuid|null,sourceRevision:int,headRevision:int,state:ACTIVE,createdAt:timestamp}
+name matches [a-z][a-z0-9-]{0,31} and is unique per Document.
+A non-main Branch starts at local revision 0 whose blocks equal its immutable source revision
+- MergeApproval = {approvalId:uuid,mergeRequestId:uuid,reviewerId:uuid,resultDigest:sha256,approvedAt:timestamp}
+approvals are unique by mergeRequestId plus reviewerId and responses sort them by reviewerId
+- MergeOperation = {sourceRevision:int,sourceOperationIndex:int,operation:Operation}
+the pair is unique and arrays sort by sourceRevision then sourceOperationIndex
+- MergeConflict = {sourceRevision:int,sourceOperationIndex:int,code:TARGET_MISSING|TARGET_CHANGED|ANCHOR_MISSING|BLOCK_ID_EXISTS|MOVE_BASE_CHANGED,path:string,baseValue:string|null,headValue:string|null}
+the source pair identifies the failing MergeOperation
+- MergeRequest = {mergeRequestId:uuid,documentId:uuid,sourceBranchId:uuid,targetBranchId:uuid,sourceHeadRevision:int,targetHeadRevision:int,state:CONFLICTED|IN_REVIEW|APPROVED|MERGED|STALE,reviewPolicy:{reviewerIds:[uuid],requiredApprovals:int},approvals:[MergeApproval],mergeOperations:[MergeOperation],conflicts:[MergeConflict],resultDigest:sha256|null,mergedTargetRevision:int|null,createdAt:timestamp,terminalAt:timestamp|null}
+- Change adds branchId:uuid and its baseRevision, revision, and clientSequence are Branch-local
+DocumentRevision adds branchId:uuid and mergeRequestId:uuid|null.
+Legacy endpoints imply main and retain V1 response bodies
+
+新增或变更接口：
+
+- POST /api/v1/documents/:documentId/branches with {name,sourceBranchId,sourceRevision} returns 201 Branch after verifying the immutable source revision
+GET /api/v1/documents/:documentId/branches returns main first then other Branches by name and branchId.
+- POST /api/v1/documents/:documentId/branches/:branchId/changes uses V1 Change request and operation rules, scopes clientSequence by documentId,branchId,clientId, and creates exactly one next Branch-local revision.
+- POST /api/v1/documents/:documentId/merge-requests with {sourceBranchId,targetBranchId,expectedSourceHeadRevision,expectedTargetHeadRevision,reviewPolicy:{reviewerIds,requiredApprovals}} requires targetBranchId equal the source Branch's immutable sourceBranchId and captures both heads.
+- Merge Request creation wraps every canonical operation from source revisions 1 through sourceHeadRevision as MergeOperation, sorts by sourceRevision then sourceOperationIndex, and rebases them onto captured target using V1 preconditions.
+Failures become MergeConflict objects with the same source pair and sort order and state CONFLICTED
+otherwise state is IN_REVIEW and resultDigest is the preview DocumentRevision digest.
+- POST /api/v1/merge-requests/:mergeRequestId/approvals with {reviewerId} accepts only a captured Reviewer, stores at most one Approval per Reviewer for resultDigest, and returns MergeRequest.
+The request reaching requiredApprovals performs exactly one transition to APPROVED and emits one merge-request.approved event.
+- POST /api/v1/merge-requests/:mergeRequestId/merge with {} succeeds only from APPROVED while current Branch heads equal captured heads
+it creates targetHeadRevision+1 from stored preview blocks, leaves source unchanged, schedules one Snapshot Task, and emits document.changed followed by merge-request.merged.
+- GET /api/v1/merge-requests/:mergeRequestId returns captured heads, policy, sorted approvals, operations, conflicts, digest, and merged revision
+GET /api/v1/documents/:documentId/branches/:branchId/revisions/:revision returns the Branch-local DocumentRevision.
+
+新增稳定错误：
+
+- 400 INVALID_REVIEW_POLICY: reviewerIds are empty, duplicated, or over 20, or requiredApprovals is outside 1..5 or exceeds reviewer count
+- 400 MERGE_TARGET_NOT_SOURCE_BRANCH: targetBranchId is not the source Branch's immutable sourceBranchId
+- 409 BRANCH_HEAD_CHANGED: an expected source or target head is stale when creating the Merge Request
+- 409 REVIEWER_NOT_ELIGIBLE: reviewerId is not captured or the Merge Request is not reviewable
+- 409 MERGE_REQUEST_CONFLICTED: approval or merge is attempted for a conflicted Merge Request
+- 409 MERGE_REQUEST_NOT_APPROVED: merge is attempted before the approval threshold
+- 409 MERGE_REQUEST_STALE: source or target head changed after review
+state becomes STALE with no target revision
+
+FINAL snapshot 与性能兼容合同：
+
+The FINAL verification snapshot 'resources' object has exactly the union of these V1 and Manager resource specifications, with no other keys:
+
+- 'documents' uses exact shape 'Document' and sorts ascending by scalar field-path tuple 'documentId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'documentRevisions' uses exact shape 'DocumentRevision' and sorts ascending by scalar field-path tuple 'documentId', 'revision', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'changes' uses exact shape 'Change' and sorts ascending by scalar field-path tuple 'documentId', 'changeId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'conflicts' uses exact shape 'Conflict' and sorts ascending by scalar field-path tuple 'changeId', 'operationIndex', 'conflictId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'documentSnapshots' uses exact shape 'DocumentSnapshot = {documentId:uuid,revision:int,canonicalDigest:sha256,createdAt:timestamp}' and sorts ascending by scalar field-path tuple 'documentId', 'revision', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'branches' uses exact shape 'Branch' and sorts ascending by scalar field-path tuple 'documentId', 'branchId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'mergeRequests' uses exact shape 'MergeRequest' and sorts ascending by scalar field-path tuple 'mergeRequestId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'branchDocumentSnapshots' uses exact shape 'BranchDocumentSnapshot = {documentId:uuid,branchId:uuid,revision:int,canonicalDigest:sha256,createdAt:timestamp}' and sorts ascending by scalar field-path tuple 'documentId', 'branchId', 'revision', then by RFC 8785 canonical JSON as the tie-breaker.
+
+The Manager-added resource specifications are exactly:
+
+- 'branches' uses exact shape 'Branch' and sorts ascending by scalar field-path tuple 'documentId', 'branchId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'mergeRequests' uses exact shape 'MergeRequest' and sorts ascending by scalar field-path tuple 'mergeRequestId', then by RFC 8785 canonical JSON as the tie-breaker.
+- 'branchDocumentSnapshots' uses exact shape 'BranchDocumentSnapshot = {documentId:uuid,branchId:uuid,revision:int,canonicalDigest:sha256,createdAt:timestamp}' and sorts ascending by scalar field-path tuple 'documentId', 'branchId', 'revision', then by RFC 8785 canonical JSON as the tie-breaker.
+
+The FINAL Work kind enum is exactly the union 'SNAPSHOT_COMPACTION'.
+The Manager-added Work kinds are exactly (none).
+All V1 snapshot point-in-time, recursive '*Token' omission, sorting, Work state/lease/retention/drain, and Domain Event rules remain mandatory.
+The FINAL binary reruns exactly these three V1-compatible scenarios:
+
+- 'non-overlapping-change-apply': apply 300 non-overlapping Changes/s with p95 <= 250 ms
+threshold: At least 300 successful Changes/s for 60 seconds and p95 <= 250 ms
+conflicts, revision gaps, and unexpected 5xx are zero.
+- 'document-revision-read': serve 400 revision reads/s with p95 <= 120 ms
+threshold: At least 400 successful reads/s for 60 seconds and p95 <= 120 ms
+digest mismatch and unexpected 5xx counts are zero.
+- 'snapshot-compaction-recovery': compact 1,000,000 operations into verified Snapshots within 120 s after recovery
+threshold: Compaction finishes in <= 120 seconds after replacement spawn with zero missing operation, digest mismatch, stale commit, or unexpected failure.
+
+Their published setup, selector, request, concurrency, warm-up, measurement, timer, success condition, and threshold remain unchanged.
+This Manager change adds correctness, concurrency, and recovery assertions only
+it does not replace or relax a performance scenario.
+
+
+

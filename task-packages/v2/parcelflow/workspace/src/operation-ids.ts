@@ -1,0 +1,1 @@
+export type OperationId = "health" | "production-ui" | "openapi" | "create-warehouse" | "create-sku" | "set-inventory" | "list-warehouses" | "list-skus" | "list-inventory" | "create-order" | "list-orders" | "get-order" | "cancel-order";

@@ -1,0 +1,35 @@
+{
+  "seedKeys":["tenants","venues","events","zones","seats","priceVersions","holds","holdSeats","orders","orderSeats","paymentIntents","providerReceipts"],
+  "publicPaths":[
+    "/api/v1/tenants","/api/v1/venues","/api/v1/events","/api/v1/events/:eventId/zones",
+    "/api/v1/events/:eventId/seats","/api/v1/zones/:zoneId/price-versions",
+    "/api/v1/price-versions/:priceVersionId/activate","/api/v1/events/:eventId/on-sale",
+    "/api/v1/events/:eventId/availability","/api/v1/holds","/api/v1/holds/:holdId",
+    "/api/v1/holds/:holdId/cancel","/api/v1/holds/:holdId/checkout","/api/v1/orders/:orderId",
+    "/api/v1/payment-intents/:paymentIntentId/reconcile","/api/v1/provider/receipts","/api/v1/verification-snapshot",
+    "/api/v1/waitlist-entries","/api/v1/waitlist-entries/:entryId/cancel",
+    "/api/v1/seat-offers/:offerId","/api/v1/seat-offers/:offerId/accept","/api/v1/seat-offers/:offerId/decline"
+  ],
+  "snapshot":{
+    "resources":[
+      {"key":"tenants","shape":"Tenant","sort":["tenantId"]},
+      {"key":"venues","shape":"Venue","sort":["venueId"]},
+      {"key":"events","shape":"Event","sort":["eventId"]},
+      {"key":"zones","shape":"Zone","sort":["zoneId"]},
+      {"key":"seats","shape":"Seat","sort":["seatId"]},
+      {"key":"priceVersions","shape":"PriceVersion","sort":["zoneId","version"]},
+      {"key":"holds","shape":"SeatHold","sort":["holdId"]},
+      {"key":"holdSeats","shape":"HoldSeat","sort":["holdId","seatId"]},
+      {"key":"orders","shape":"Order","sort":["orderId"]},
+      {"key":"orderSeats","shape":"OrderSeat","sort":["orderId","seatId"]},
+      {"key":"paymentIntents","shape":"PaymentIntent","sort":["paymentIntentId"]},
+      {"key":"providerReceipts","shape":"ProviderReceipt","sort":["providerReceiptId"]}
+    ],
+    "managerResources":[
+      {"key":"waitlistEntries","shape":"WaitlistEntry","sort":["createdAt","waitlistEntryId"]},
+      {"key":"seatOffers","shape":"SeatOffer","sort":["seatOfferId"]}
+    ]
+  },
+  "workKinds":{"v1":["HOLD_EXPIRY","PAYMENT_CAPTURE","PAYMENT_RECONCILE"],"manager":["WAITLIST_MATCH","OFFER_EXPIRY"]},
+  "perfScenarios":[{"id":"seat-hold-ingest"},{"id":"hot-seat-contention"},{"id":"payment-expiry-recovery"}]
+}

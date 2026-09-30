@@ -1,0 +1,545 @@
+{
+  "schemaVersion": 2,
+  "taskId": "incidentrelay",
+  "profile": "transfer-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "Public incident and escalation contract",
+      "weight": 30
+    },
+    "B": {
+      "title": "Dedup quorum and concurrency correctness",
+      "weight": 25
+    },
+    "C": {
+      "title": "Worker delivery and recovery",
+      "weight": 20
+    },
+    "D": {
+      "title": "OpenAPI browser and cross-layer closure",
+      "weight": 15
+    },
+    "E": {
+      "title": "Migration performance and operability",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "PRODUCTION_BOOT",
+      "cap": 25,
+      "publicInvariant": "The clean production stack migrates builds boots and terminates through published commands."
+    },
+    {
+      "id": "INCIDENT_TERMINAL_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Active dedup single winner terminal suppression and rejected mutations preserve one Incident authority."
+    },
+    {
+      "id": "IDEMPOTENCY_CORRECTNESS",
+      "cap": 30,
+      "publicInvariant": "Unknown and concurrent replay preserves one response effect delivery and acknowledgement vote."
+    },
+    {
+      "id": "EVENT_TRANSACTIONALITY",
+      "cap": 40,
+      "publicInvariant": "Published successful transitions commit one stable ordered Domain Event while rollback commits none."
+    },
+    {
+      "id": "STALE_WORK_OR_LOST_DELIVERY",
+      "cap": 40,
+      "publicInvariant": "Escalation and expiry Work plus Notification delivery survive process death and stale leases cannot commit."
+    },
+    {
+      "id": "QUORUM_AUTHORITY",
+      "cap": 35,
+      "publicInvariant": "Distinct delivered responders form one immutable quorum and at most one Step wins acknowledgement."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "V1 acknowledgements delivery replay Work Events and client behavior migrate without identity change."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "SPEC-GAP-01",
+      "summary": "Legacy acknowledge status and error for group policies are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-02",
+      "summary": "Post-notification-quorum fate of remaining deliveries is unpublished."
+    },
+    {
+      "id": "SPEC-GAP-03",
+      "summary": "Exact attemptCompletedAt used by retry timing is not public."
+    },
+    {
+      "id": "SPEC-GAP-04",
+      "summary": "Acknowledgement accepted or duplicate has no published new Domain Event type."
+    },
+    {
+      "id": "SPEC-GAP-05",
+      "summary": "Resolve outsider status and error after acknowledgement are unpublished."
+    },
+    {
+      "id": "SPEC-GAP-06",
+      "summary": "Immutable resolution quorum member record has no public shape or read seam."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "Published commands and production boot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Repeatable populated migration",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Atomic deterministic seed",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "OpenAPI 3.1 exact contract",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Common errors and scalar/cardinality boundaries",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-06",
+      "title": "Pagination, reads and point-in-time snapshot",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-07",
+      "title": "Immutable policy version CAS",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-08",
+      "title": "Incident create, active dedup and policy capture",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-09",
+      "title": "Persisted scheduling and business delivery",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-10",
+      "title": "Acknowledge and resolve V1",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "IR-A10-OUTSIDER-ERROR",
+          "blockedBy": "SPEC-GAP-05",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-11",
+      "title": "Expiry and terminal precedence",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-12",
+      "title": "Timeline and Domain Events",
+      "weight": 2,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-13",
+      "title": "FINAL group policy and notification quorum",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "IR-A13-REMAINDER-DELIVERY",
+          "blockedBy": "SPEC-GAP-02",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "A-14",
+      "title": "FINAL acknowledgement quorum and compatibility",
+      "weight": 3,
+      "dimension": "A",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "IR-A14-LEGACY-GROUP-ERROR",
+          "blockedBy": "SPEC-GAP-01",
+          "policy": "fail-closed-diagnostic"
+        },
+        {
+          "id": "IR-A14-RESOLUTION-RECORD",
+          "blockedBy": "SPEC-GAP-06",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "B-01",
+      "title": "Due, expiry and retry arithmetic oracle",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "IR-B01-EXACT-RETRY-TIMESTAMP",
+          "blockedBy": "SPEC-GAP-03",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "Active dedup lifecycle and eternal replay",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Atomic policy/incident rejection",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Unknown-response durable replay",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Same-key contention across two APIs",
+      "weight": 2,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-06",
+      "title": "Distinct-key active-dedup contention",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-07",
+      "title": "Acknowledge, resolve and expiry races",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-08",
+      "title": "Step delivery order and terminal suppression",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-09",
+      "title": "Group notification quorum contention",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-10",
+      "title": "Parallel acknowledgement quorum races",
+      "weight": 3,
+      "dimension": "B",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Work lifecycle, shape and retention",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "SIGKILL after `worker.claimed`",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "SIGKILL after business effect-complete",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "SIGKILL at `worker.before-commit`",
+      "weight": 2,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-05",
+      "title": "Expired-lease fencing",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-06",
+      "title": "Terminal transition closes obsolete work/delivery",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-07",
+      "title": "Unknown Domain Event webhook ACK",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-08",
+      "title": "Transactional event, ordering and quorum recovery",
+      "weight": 3,
+      "dimension": "C",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "IR-C08-ACK-EVENT-TYPE",
+          "blockedBy": "SPEC-GAP-04",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "Independent OpenAPI/live-traffic validation",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "Production-browser V1 lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "Production-browser group/quorum lifecycle",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "Loading, empty, conflict, stale, offline and permission",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-05",
+      "title": "Keyboard, labels, focus and mobile",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-06",
+      "title": "Project-owned gates are not fake green",
+      "weight": 2,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-07",
+      "title": "README-to-evidence closure",
+      "weight": 3,
+      "dimension": "D",
+      "prerequisites": [
+        "FINAL"
+      ],
+      "blockedAssertions": [
+        {
+          "id": "IR-D07-SPEC-GAPS",
+          "blockedBy": "SPEC-GAP-06",
+          "policy": "fail-closed-diagnostic"
+        }
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Populated V1→FINAL acknowledgement migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-02",
+      "title": "Saved replay and delivery identity migration",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "Pending Work and Domain delivery continuity",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "V1",
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "HTTP sustained performance",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-05",
+      "title": "Escalation recovery performance and operability",
+      "weight": 2,
+      "dimension": "E",
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ]
+}

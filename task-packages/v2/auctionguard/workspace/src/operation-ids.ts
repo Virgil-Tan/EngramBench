@@ -1,0 +1,1 @@
+export type OperationId = "health" | "openapi" | "production-ui" | "list-auctions" | "read-auction" | "create-auction" | "create-bid" | "cancel-auction" | "open-auction" | "list-bids" | "server-time" | "domain-events" | "verification-snapshot";

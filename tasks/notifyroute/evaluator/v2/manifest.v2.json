@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "taskId": "notifyroute",
+  "profile": "learning-v2",
+  "formalReady": false,
+  "maxScore": 100,
+  "acceptance": { "mode": "all_cases_pass" },
+  "dimensions": {
+    "A": { "title": "Requirements and domain correctness", "weight": 30 },
+    "B": { "title": "Data correctness, idempotency and concurrency", "weight": 25 },
+    "C": { "title": "Worker, recovery and persistence", "weight": 20 },
+    "D": { "title": "Public API, security and browser closure", "weight": 15 },
+    "E": { "title": "Migration, performance and operability", "weight": 10 }
+  },
+  "hardCaps": [
+    { "id": "CORRECTNESS_INVARIANT", "cap": 35, "publicInvariant": "Suppression may not be bypassed, a recipient effect duplicated, or a terminal state regress." },
+    { "id": "DURABLE_REPLAY_DUPLICATE", "cap": 30, "publicInvariant": "Durable replay may not create a second business effect." },
+    { "id": "WORK_FENCE_OR_LOSS", "cap": 40, "publicInvariant": "A stale lease may not commit and valid durable Work may not be lost." },
+    { "id": "MIGRATION_IDENTITY_REWRITE", "cap": 35, "publicInvariant": "Migration may not rewrite V1 identity, event history, Work, or saved replay." }
+  ],
+  "specGaps": [
+    { "id": "SPEC-GAP-NR-01", "summary": "Campaign wire shapes, mutation bodies, reads, controls and stable errors are unpublished." },
+    { "id": "SPEC-GAP-NR-02", "summary": "No Campaign Domain Event type or payload is published." },
+    { "id": "SPEC-GAP-NR-03", "summary": "No fixed performance dataset, selector, timing or threshold is public." }
+  ],
+  "cases": [
+    { "id": "A-01", "title": "Notification freezes TemplateVersion, data and RoutePolicy", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-02", "title": "Suppression fence precedes Provider call", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-03", "title": "Two-level rate windows and ordered fallback", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-04", "title": "UNKNOWN receipt and reconcile convergence", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"] },
+    { "id": "A-05", "title": "Campaign atomically freezes a deduplicated audience", "dimension": "A", "weight": 6, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "campaign-create-read-wire", "blockedBy": "SPEC-GAP-NR-01", "policy": "fail-closed-diagnostic" }] },
+
+    { "id": "B-01", "title": "Notification mutation durable replay", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-02", "title": "Multi-process Provider send keeps one identity", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-03", "title": "Suppression and send claim serialize", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-04", "title": "Receipt and reconcile commute under duplicates", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "B-05", "title": "Campaign pause resume and cancel serialize with fan-out", "dimension": "B", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "campaign-control-wire", "blockedBy": "SPEC-GAP-NR-01", "policy": "fail-closed-diagnostic" }] },
+
+    { "id": "C-01", "title": "UNKNOWN Provider outcome survives process crash", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-02", "title": "Outbox unknown acknowledgement preserves event body and order", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"] },
+    { "id": "C-03", "title": "Campaign fan-out lease recovery closes recipients", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "campaign-fanout-recovery-wire", "blockedBy": "SPEC-GAP-NR-01", "policy": "fail-closed-diagnostic" }] },
+    { "id": "C-04", "title": "Campaign cancel fence survives crash boundaries", "dimension": "C", "weight": 5, "prerequisites": ["FINAL"], "blockedAssertions": [{ "id": "campaign-cancel-recovery-wire", "blockedBy": "SPEC-GAP-NR-01", "policy": "fail-closed-diagnostic" }] },
+
+    { "id": "D-01", "title": "V1 runtime wire errors pagination and tenant scope", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "D-02", "title": "Webhook HMAC and receipt replay boundary", "dimension": "D", "weight": 4, "prerequisites": ["FINAL"] },
+    { "id": "D-03", "title": "Production browser closes notification and consent flow", "dimension": "D", "weight": 4, "prerequisites": ["FINAL", "CHROMIUM"] },
+    { "id": "D-04", "title": "Production browser closes Campaign control and progress", "dimension": "D", "weight": 3, "prerequisites": ["FINAL", "CHROMIUM"], "blockedAssertions": [{ "id": "campaign-browser-wire", "blockedBy": "SPEC-GAP-NR-01", "policy": "fail-closed-diagnostic" }] },
+
+    { "id": "E-01", "title": "Populated V1 compatibility migration", "dimension": "E", "weight": 3, "prerequisites": ["V1", "FINAL"] },
+    { "id": "E-02", "title": "Fixed sustained Notification ingest", "dimension": "E", "weight": 3, "prerequisites": ["FINAL", "PERF"], "blockedAssertions": [{ "id": "notification-ingest-workload", "blockedBy": "SPEC-GAP-NR-03", "policy": "fail-closed-diagnostic" }] },
+    { "id": "E-03", "title": "Fixed hot-recipient quota contention", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF"], "blockedAssertions": [{ "id": "hot-recipient-workload", "blockedBy": "SPEC-GAP-NR-03", "policy": "fail-closed-diagnostic" }] },
+    { "id": "E-04", "title": "Fixed Delivery recovery workload", "dimension": "E", "weight": 2, "prerequisites": ["FINAL", "PERF"], "blockedAssertions": [{ "id": "delivery-recovery-workload", "blockedBy": "SPEC-GAP-NR-03", "policy": "fail-closed-diagnostic" }] }
+  ]
+}

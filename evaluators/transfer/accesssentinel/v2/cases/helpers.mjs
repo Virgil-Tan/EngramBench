@@ -1,0 +1,80 @@
+import assert from "node:assert/strict";
+const { observeBrowserWait } = await import(new URL("browser.mjs", process.env.FRONTAL_V2_SHARED_ROOT_URL ?? new URL("../../../../../src/task-evaluator-v2/", import.meta.url)));
+import { CaseExcluded } from "../lib/execution.mjs";
+import { assertAuditChain, assertOpenApi, assertPublicError, assertSecretFree, assertSnapshot, canonicalJson } from "../oracles/index.mjs";
+
+export function defineCase(id, fixtureFamily, action, oracle, seams, run) { return Object.freeze({ id, taskId: "accesssentinel", fixtureFamily, action, oracle, seams: Object.freeze([...seams]), run }); }
+export function caseResult(ctx, details = {}, diagnostics = []) { return ctx.pass({ evidence: [{ taskId: "accesssentinel", caseId: ctx.caseId, ...details }], ...(diagnostics.length ? { diagnostics } : {}) }); }
+export function gap(assertionId, blockedBy) { return { assertionId, blockedBy, status: "partial" }; }
+export async function assertStoredReview(ctx, baseUrl, accessRequestId, body, response) {
+  const review = requireStatus(ctx, response, 200, "independent AccessReview");
+  ctx.equal(Object.keys(review).sort(), ['accessReviewId', 'accessRequestId', 'tenantId', 'reviewerId', 'decision', 'comment', 'createdAt'].sort(), "published AccessReview fields");
+  for (const [key, value] of Object.entries({ ...body, accessRequestId })) ctx.equal(review[key], value, `AccessReview ${key}`);
+  const state = await snapshot(ctx, baseUrl);
+  const request = byId(state, 'accessRequests', 'accessRequestId', accessRequestId);
+  ctx.equal(review.tenantId, request.tenantId, "review tenant binding");
+  ctx.equal(byId(state, 'accessReviews', 'accessReviewId', review.accessReviewId), review, "review response is durably committed");
+  ctx.equal(request.state, body.decision === 'APPROVE' ? 'APPROVED' : 'DENIED', "review updates the request");
+  return state;
+}
+export function requireStatus(ctx, response, expected, label = "request", options = {}) { const statuses = Array.isArray(expected) ? expected : [expected]; ctx.ok(statuses.includes(response.status), `${label} expected ${statuses.join("/")}, got ${response.status}: ${response.text}`, options); return response.json; }
+export function expectError(ctx, response, status, code, options = {}) { ctx.assert(`${code} exact public error`, () => assertPublicError(response, status, code), options); return response; }
+
+export async function boot(ctx, options = {}) {
+  if (options.install) await ctx.command("npm", ["install", "--no-audit", "--no-fund"], { timeoutMs: 600_000 });
+  if (options.migrate !== false) await ctx.migrate({ timeoutMs: 300_000 });
+  if (options.build) await ctx.npm("build", [], { timeoutMs: 600_000 });
+  const family = options.family ?? ctx.fixtures.identity();
+  if (options.seed !== false) { const result = await ctx.seed(options.seed ?? family.seed, { timeoutMs: 300_000 }); ctx.equal(result.exitCode, 0, "strict seed exit"); }
+  const apis = [];
+  for (let index = 0; index < (options.apiCount ?? 1); index += 1) apis.push(await ctx.startApi({ healthTimeoutMs: 90_000 }));
+  return { family, apis, api: apis[0] };
+}
+
+export async function snapshot(ctx, baseUrl, options = {}) { const value = await ctx.snapshot(baseUrl, options); ctx.assert("AccessSentinel point-in-time snapshot", () => assertSnapshot(value, { final: options.final ?? true }), options.assertionOptions); return value; }
+export async function waitSnapshot(ctx, baseUrl, predicate, options = {}) { return ctx.waitFor(async () => { const value = await ctx.snapshot(baseUrl, { timeoutMs: options.requestTimeoutMs }); return predicate(value) ? value : undefined; }, { timeoutMs: options.timeoutMs ?? 180_000, intervalMs: options.intervalMs ?? 100, label: options.label ?? "AccessSentinel durable state", processes: options.processes ?? [] }); }
+export function resources(state, name) { assert.ok(Array.isArray(state.resources?.[name]), `snapshot missing resources.${name}`); return state.resources[name]; }
+export function byId(state, name, key, id) { const value = resources(state, name).find((item) => item[key] === id); assert.ok(value, `${name}.${key} ${id}`); return value; }
+export function identity(value, names) { const find = (member, name) => { if (!member || typeof member !== "object") return undefined; if (typeof member[name] === "string") return member[name]; for (const child of Object.values(member)) { const result = find(child, name); if (result !== undefined) return result; } }; for (const name of names) { const result = find(value, name); if (result !== undefined) return result; } throw new TypeError(`response missing identity ${names.join("/")}`); }
+export function stableSemantic(ctx, responses, label, options = {}) { ctx.ok(responses.length > 0, `${label} responses`); ctx.equal(new Set(responses.map(({ status }) => status)).size, 1, `${label} status`, options); ctx.equal(new Set(responses.map(({ json }) => canonicalJson(json))).size, 1, `${label} semantic body`, options); return responses[0]; }
+export async function createRequest(ctx, baseUrl, family, label, overrides = {}, options = {}) { const response = await ctx.createAccessRequest(baseUrl, family.requestBody(label, overrides), { key: options.key ?? ctx.key(`request:${label}`) }); requireStatus(ctx, response, options.expected ?? 200, `${label} access request`, options.assertionOptions); return { response, accessRequestId: identity(response.json, ["accessRequestId"]) }; }
+export async function waitRisk(ctx, baseUrl, accessRequestId, processes = []) { return waitSnapshot(ctx, baseUrl, (state) => resources(state, "riskDecisions").some((item) => item.accessRequestId === accessRequestId) ? state : undefined, { label: `RiskDecision ${accessRequestId}`, processes }); }
+export async function issueLowGrant(ctx, baseUrl, accessRequestId, state, options = {}) { const request = byId(state, "accessRequests", "accessRequestId", accessRequestId); const response = await ctx.grantAccess(baseUrl, accessRequestId, { expectedState: request.state }, { key: options.key ?? ctx.key(`grant:${accessRequestId}`) }); requireStatus(ctx, response, options.expected ?? 200, "issue AccessGrant", options.assertionOptions); return { response, grantId: identity(response.json, ["grantId"]) }; }
+export async function requestRiskGrant(ctx, baseUrl, family, label, options = {}) { const created = await createRequest(ctx, baseUrl, family, label, options.requestOverrides, options); const workers = []; for (let index = 0; index < (options.workerCount ?? 1); index += 1) workers.push(await ctx.startWorker()); const decided = await waitRisk(ctx, baseUrl, created.accessRequestId, workers); const decision = resources(decided, "riskDecisions").find((item) => item.accessRequestId === created.accessRequestId); ctx.equal(decision.level, options.expectedLevel ?? "LOW", `${label} risk level`); const grant = await issueLowGrant(ctx, baseUrl, created.accessRequestId, decided, options); return { ...created, ...grant, decision, workers, state: decided };
+}
+export async function createReadyBreakGlass(ctx, baseUrl, family, options = {}) { const created = await ctx.createBreakGlass(baseUrl, family.breakGlassBody(options.overrides), { key: ctx.key(`${options.label ?? "breakglass"}:create`) }); requireStatus(ctx, created, 200, "create BreakGlassSession"); const id = identity(created.json, ["breakGlassSessionId"]); for (const [index, reviewer] of [family.reviewerA, family.reviewerB].entries()) { const approval = await ctx.approveBreakGlass(baseUrl, id, { approverId: reviewer.principalId, decision: "APPROVE", comment: `independent approval ${index + 1}` }, { key: ctx.key(`${options.label ?? "breakglass"}:approval:${index}`) }); requireStatus(ctx, approval, 200, "BreakGlass approval"); } const active = await ctx.activateBreakGlass(baseUrl, id, { expectedState: "READY" }, { key: ctx.key(`${options.label ?? "breakglass"}:activate`) }); requireStatus(ctx, active, 200, "activate BreakGlassSession"); return { created, active, breakGlassSessionId: id }; }
+export function uiAutomationError(code, message) { return Object.assign(new Error(message), { origin: "evaluator", code: `EVALUATOR_UI_${code}` }); }
+export async function uniqueUiTarget(locator, label) {
+  const count = await locator.count();
+  if (count !== 1) throw uiAutomationError(count ? "TARGET_AMBIGUOUS" : "TARGET_UNRESOLVED", `${count ? "Ambiguous" : "Missing"} ${label}`);
+  return locator;
+}
+export async function loadProtectedSnapshot(ctx, page, options = {}) {
+  const inputs = page.getByLabel(/^\s*admin(?:istrator)?\s+token\s*$/i).and(page.locator("input:visible"));
+  if (await inputs.count()) {
+    if (typeof ctx.adminToken !== "string" || !ctx.adminToken.length) throw uiAutomationError("CONFIGURATION", "Existing administrator credential unavailable");
+    const input = await uniqueUiTarget(inputs, "visible Admin Token");
+    const button = await uniqueUiTarget(page.getByRole("button", { name: /^(?:load\s+snapshot|reload|refresh\s+snapshot)$/i }).and(page.locator(":visible")), "load protected snapshot");
+    await input.fill(ctx.adminToken);
+    const response = observeBrowserWait(page.waitForResponse(item => item.request().method() === "GET" && new URL(item.url()).pathname === "/api/v1/verification-snapshot"));
+    await button.click();
+    const wire = await response;
+    ctx.equal(wire.status(), 200, "UI snapshot authentication");
+    await wire.finished();
+    await page.waitForLoadState("networkidle");
+  }
+  if (options.tenantId === undefined) return;
+  // Global context is separate from the Tenant controls inside action forms.
+  const tenants = page.getByRole("combobox", { name: /^\s*(?:(?:selected|current|active|global)\s+)?tenant\b/i }).and(page.locator('select:visible:not(form select, [role="form"] select, fieldset select)'));
+  if (!await tenants.count()) return;
+  const tenant = await uniqueUiTarget(tenants, "visible global Tenant");
+  await tenant.selectOption(options.tenantId);
+  await page.waitForLoadState("networkidle");
+}
+export async function launchBrowser(ctx, api, options = {}) { const chromium = await ctx.loadChromium(); const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? "/usr/bin/chromium", headless: true }); ctx.defer(() => browser.close()); const page = await browser.newPage({ viewport: options.viewport ?? { width: 1280, height: 900 } }); await page.goto(api.baseUrl, { waitUntil: "networkidle" }); await loadProtectedSnapshot(ctx, page, options); return { browser, page }; }
+export function openApi(ctx, document, options = {}) { ctx.assert("AccessSentinel OpenAPI 3.1 contract", () => assertOpenApi(document, options)); return document; }
+export function requireV1Workspace(ctx) { if (!ctx.v1Workspace) throw new CaseExcluded("missing_v1_checkpoint"); return ctx.forWorkspace(ctx.v1Workspace); }
+export async function publishedGate(ctx, script, timeoutMs = 900_000) { const result = await ctx.npm(script, [], { timeoutMs }); ctx.equal(result.exitCode, 0, `${script} exit`); ctx.ok(result.durationMs > 0, `${script} executed`); return result; }
+export async function crashAtBarrier(ctx, baseUrl, point, options = {}) { let hold = true; const barrier = await ctx.barrier({ hold: ({ processRole, point: observed }) => hold && processRole === "worker" && observed === point }); const worker = await ctx.startWorker({ env: { TEST_BARRIER_URL: barrier.url, TEST_BARRIER_TOKEN: barrier.token } }); const entry = await barrier.waitFor(({ json }) => json.point === point, { timeoutMs: 120_000, processes: [worker] }); const before = await ctx.snapshot(baseUrl); await ctx.kill(worker); hold = false; await ctx.sleep(options.leaseWaitMs ?? 3_300); const replacement = await ctx.startWorker(); const after = await waitSnapshot(ctx, baseUrl, (state) => state.work.some(({ workId, terminal }) => workId === entry.json.workId && terminal) ? state : undefined, { label: `${point} replacement`, timeoutMs: options.timeoutMs, processes: [replacement] }); return { barrier, entry, before, after, worker, replacement }; }
+export function audit(ctx, state) { ctx.assert("tamper-evident Audit chain", () => assertAuditChain(resources(state, "auditEntries")), { hardCapIds: ["AUTHORITY_CORRECTNESS", "TRANSACTIONAL_EVIDENCE"] }); return state; }
+export function noSecrets(ctx, value, sentinels = []) { ctx.assert("secret field boundary", () => assertSecretFree(value)); const text = typeof value === "string" ? value : canonicalJson(value); for (const sentinel of sentinels.filter(Boolean)) ctx.ok(!text.includes(sentinel), "raw secret value absent"); return value; }

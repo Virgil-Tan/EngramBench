@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 2,
+  "taskId": "exportvault",
+  "profile": "learning-v2",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "title": "公共合同与主流程",
+      "weight": 30
+    },
+    "B": {
+      "title": "数据正确性、幂等与并发",
+      "weight": 25
+    },
+    "C": {
+      "title": "持久工作、恢复与事件",
+      "weight": 20
+    },
+    "D": {
+      "title": "UI、OpenAPI、snapshot 跨层闭环",
+      "weight": 15
+    },
+    "E": {
+      "title": "兼容与合同形状性能",
+      "weight": 10
+    }
+  },
+  "hardCaps": [
+    {
+      "id": "PUBLICATION_ATOMICITY",
+      "cap": 35,
+      "publicInvariant": "READY and deletion become visible only with their complete immutable bytes, metadata, proof, and legal terminal state."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Replay, response loss, and restart cannot create a second Export, Grant, plan, Work, or saved response."
+    },
+    {
+      "id": "EVENT_ATOMICITY",
+      "cap": 40,
+      "publicInvariant": "Successful public transitions have one committed event while rolled-back transitions have none and retries preserve event identity."
+    },
+    {
+      "id": "STALE_WORK_OR_LOST_WORK",
+      "cap": 40,
+      "publicInvariant": "Persisted Export Work remains recoverable and an expired lease token cannot publish or delete."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "FINAL migration preserves every V1 byte, response replay, grant, task, and event identity/body/sequence."
+    }
+  ],
+  "specGaps": [
+    {
+      "id": "EV-GAP-01",
+      "summary": "Non-scoring scope note: The original singular Export public wire remains tested separately from explicitly created sharded Export representations."
+    },
+    {
+      "id": "EV-GAP-02",
+      "summary": "Non-scoring scope note: Zero-record ExportShard permits null throughRecordId while a Manifest member requires a UUID."
+    }
+  ],
+  "cases": [
+    {
+      "id": "A-01",
+      "title": "捕获 Dataset Revision 并生成确定性 JSONL/CSV",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-02",
+      "title": "Export 生命周期、读取与取消终态",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-03",
+      "title": "Download Grant、ETag 与精确 Range",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-04",
+      "title": "Retention cleanup 与 Deletion Proof",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "A-05",
+      "title": "Nonempty shard plan, Manifest and targeted Grants",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1",
+      "evaluationScope": "final-system"
+    },
+    {
+      "id": "B-01",
+      "title": "Object、Section、Manifest 三层摘要闭合",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-02",
+      "title": "活跃 Export 去重与 durable idempotency",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-03",
+      "title": "Generation publication 与 cancel 竞争",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-04",
+      "title": "Grant create/revoke/expiry 与 cleanup 竞争",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "B-05",
+      "title": "Shard fan-out 验证与 Manifest all-or-none",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "C-01",
+      "title": "Generation claim 后崩溃的租约恢复",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "C-02",
+      "title": "Staged bytes 完成后数据库提交前崩溃",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "C-03",
+      "title": "Cleanup 删除与 Proof 提交崩溃恢复",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "C-04",
+      "title": "Export/Grant Event transactional outbox 与 unknown ACK",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL",
+        "SIGKILL"
+      ]
+    },
+    {
+      "id": "D-01",
+      "title": "浏览器完成 V1 Export、Grant、Range 与撤销",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-02",
+      "title": "浏览器展示 Shard 进度、Manifest 与定向下载",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "chromium"
+      ]
+    },
+    {
+      "id": "D-03",
+      "title": "OpenAPI 与 FINAL snapshot 的精确联合合同",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "D-04",
+      "title": "请求到 bytes、Event、Proof 的跨层可追溯闭环",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "E-01",
+      "title": "Current export bytes, grants and saved replay survive FINAL restart",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ],
+      "policyRevision": "learning-final-system-2026-09-08.1"
+    },
+    {
+      "id": "E-02",
+      "title": "Range 下载持续吞吐与 byte oracle",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-03",
+      "title": "五百万记录生成时限与摘要闭合",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    },
+    {
+      "id": "E-04",
+      "title": "一万过期对象 cleanup 时限与 live 控制",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL",
+        "PERF"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system"
+}

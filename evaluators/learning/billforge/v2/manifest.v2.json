@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 2,
+  "taskId": "billforge",
+  "designVersion": "hidden-test-v2",
+  "maxScore": 100,
+  "acceptance": {
+    "mode": "all_cases_pass"
+  },
+  "dimensions": {
+    "A": {
+      "name": "billing-and-frozen-terms",
+      "weight": 30
+    },
+    "B": {
+      "name": "payments-refunds-and-ledger",
+      "weight": 25
+    },
+    "C": {
+      "name": "atomic-replay-and-recovery",
+      "weight": 20
+    },
+    "D": {
+      "name": "manager-cross-layer-contract",
+      "weight": 15
+    },
+    "E": {
+      "name": "final-system-lifecycle-and-snapshot",
+      "weight": 10
+    }
+  },
+  "specGaps": [],
+  "hardCaps": [
+    {
+      "id": "MONEY_OR_LEDGER_INVARIANT",
+      "cap": 35,
+      "publicInvariant": "Money stays safe and non-negative and every Posting is immutable and balanced by currency."
+    },
+    {
+      "id": "REFUND_OR_RESERVE_BOUND",
+      "cap": 35,
+      "publicInvariant": "Successful refunds and published reservations cannot exceed captured payment."
+    },
+    {
+      "id": "PROVIDER_IDENTITY_OR_UNKNOWN",
+      "cap": 40,
+      "publicInvariant": "UNKNOWN cannot be recaptured and one provider transaction cannot bind to two intents."
+    },
+    {
+      "id": "DURABLE_IDEMPOTENCY",
+      "cap": 30,
+      "publicInvariant": "Unknown outcomes and concurrent replay cannot create a second billing effect."
+    },
+    {
+      "id": "SETTLEMENT_IMMUTABILITY_OR_RECOVERY",
+      "cap": 40,
+      "publicInvariant": "A frozen or CLOSED settlement cannot be recomputed and stale workers cannot commit."
+    },
+    {
+      "id": "MIGRATION_COMPATIBILITY",
+      "cap": 35,
+      "publicInvariant": "Final-system lifecycle preserves identities, ledger, snapshots, events, Work, and saved replay."
+    }
+  ],
+  "cases": [
+    {
+      "id": "BILL-01",
+      "title": "Effective price selection and frozen published Invoice terms; no invented tax/discount configuration.",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "BILL-02",
+      "title": "Subscription change and cancellation produce replay-stable non-negative proration lines; exact rounding is not prescribed.",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "BILL-03",
+      "title": "Invoice, payment and settlement retain frozen exchange-rate identity and currency; no unpublished conversion formula.",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "BILL-04",
+      "title": "Finalized invoice line totals, safe non-negative amounts and frozen terms remain consistent.",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "BILL-05",
+      "title": "Invoice authority is unique and finalized facts are immutable",
+      "dimension": "A",
+      "weight": 6,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PAY-01",
+      "title": "PaymentIntent durable idempotency and exact replay",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PAY-02",
+      "title": "A publicly seeded UNKNOWN payment remains uncaptured and cannot be refunded without a successful provider fact.",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PAY-03",
+      "title": "Concurrent duplicate provider facts preserve a single payment posting and globally unique provider transaction.",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PAY-04",
+      "title": "Pending refunds reserve captured funds without changing successful refund balances or posting money.",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "PAY-05",
+      "title": "Every successful payment and refund creates one balanced immutable Posting",
+      "dimension": "B",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-01",
+      "title": "Lost mutation responses preserve atomic business replay",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-02",
+      "title": "Reconcile after a successful public provider fact commutes with duplicate webhook processing without extra postings or events.",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-03",
+      "title": "Concurrent refund and dispute creation serialize on the same captured reserve.",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "RACE-04",
+      "title": "Durable queued settlement work survives process replacement and closes to an immutable snapshot.",
+      "dimension": "C",
+      "weight": 5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "ADJUST-01",
+      "title": "Dispute creation, replay, OpenAPI and verification snapshot expose one reserved resource.",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "ADJUST-02",
+      "title": "WON releases reserve, LOST creates exactly one balanced chargeback, and the UI exposes durable identity.",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "ADJUST-03",
+      "title": "Concurrent refund/dispute reserve results remain conserved across the API, snapshot and production UI.",
+      "dimension": "D",
+      "weight": 4,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    },
+    {
+      "id": "ADJUST-04",
+      "title": "Only an append-only next-period Adjustment may correct original postings without altering CLOSED settlement history.",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "COMPAT-01",
+      "title": "Populated billing resources, ledger, work, events and exact replay survive same-final-system restart and repeated initialization.",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "COMPAT-02",
+      "title": "UNKNOWN identity survives same-final-system process replacement and later resolves through a public provider fact.",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "COMPAT-03",
+      "title": "Public seed replay and point-in-time snapshots remain atomic, sorted and accounting-consistent.",
+      "dimension": "E",
+      "weight": 2.5,
+      "prerequisites": [
+        "FINAL"
+      ]
+    },
+    {
+      "id": "COMPAT-04",
+      "title": "The final system exposes original billing and append-only next-period correction through public APIs, ledger and browser.",
+      "dimension": "D",
+      "weight": 3,
+      "prerequisites": [
+        "FINAL",
+        "CHROMIUM"
+      ]
+    }
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "semanticRevisions": [
+    {
+      "caseIds": [
+        "BILL-01",
+        "BILL-02",
+        "BILL-03",
+        "BILL-04"
+      ],
+      "summary": "Test stated frozen terms, proration presence/replay and safe-money conservation without choosing unpublished tax, discount, proration or FX formulas."
+    },
+    {
+      "caseIds": [
+        "PAY-02",
+        "PAY-04",
+        "RACE-02"
+      ],
+      "summary": "Use public UNKNOWN seed, successful webhook and pending-refund facts. No claim to inject provider TIMEOUT/RESET or an unpublished Refund UNKNOWN enum."
+    },
+    {
+      "caseIds": [
+        "RACE-04",
+        "COMPAT-01",
+        "COMPAT-02",
+        "COMPAT-04"
+      ],
+      "summary": "One final system: durable queued-work/process replacement and immutable history, not an intermediate V1 binary/database or unpublished internal-phase barrier."
+    }
+  ]
+}

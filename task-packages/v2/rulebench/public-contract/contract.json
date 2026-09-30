@@ -1,0 +1,2606 @@
+{
+  "taskId": "rulebench",
+  "title": "RuleBench",
+  "environmentVariables": [
+    "PORT",
+    "DATABASE_URL",
+    "TEST_DATABASE_URL",
+    "ADMIN_TOKEN",
+    "WEBHOOK_URL",
+    "WORK_LEASE_SECONDS",
+    "TEST_BARRIER_URL",
+    "TEST_BARRIER_TOKEN"
+  ],
+  "commands": [
+    "npm run db:migrate",
+    "npm run db:seed -- --file <path>",
+    "npm run dev",
+    "npm run build",
+    "npm run start:api",
+    "npm run start:worker",
+    "npm run start:dispatcher",
+    "npm run test:unit",
+    "npm run test:integration",
+    "npm run test:e2e",
+    "npm run test:concurrency",
+    "npm run test:recovery",
+    "npm run test:all",
+    "npm run test:perf"
+  ],
+  "seed": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "seedVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tenant"
+          }
+        },
+        "ruleSets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RuleSet"
+          }
+        },
+        "ruleSetVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RuleSetVersion"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Rule"
+          }
+        },
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evaluation"
+          }
+        },
+        "explanationNodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExplanationNode"
+          }
+        },
+        "replayRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReplayRun"
+          }
+        },
+        "conflictReports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ConflictReport"
+          }
+        },
+        "comparisonRuns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComparisonRun"
+          }
+        },
+        "comparisonResults": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComparisonResult"
+          }
+        },
+        "evaluationInputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evaluationId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "facts": {
+                "$ref": "#/$defs/Facts"
+              }
+            },
+            "required": [
+              "evaluationId",
+              "facts"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "seedVersion",
+        "importedAt",
+        "tenants",
+        "ruleSets",
+        "ruleSetVersions",
+        "rules",
+        "evaluations",
+        "explanationNodes",
+        "replayRuns",
+        "conflictReports",
+        "comparisonRuns",
+        "comparisonResults",
+        "evaluationInputs"
+      ],
+      "additionalProperties": false
+    },
+    "example": {
+      "schemaVersion": 1,
+      "seedVersion": "rulebench-public-v2-1",
+      "importedAt": "2031-04-05T06:07:08.000Z",
+      "tenants": [
+        {
+          "tenantId": "c42a0002-1030-4030-8030-000000000001",
+          "name": "Public Decisions"
+        }
+      ],
+      "ruleSets": [
+        {
+          "ruleSetId": "c42a0002-1030-4030-8030-000000000002",
+          "tenantId": "c42a0002-1030-4030-8030-000000000001",
+          "name": "Public Document Policy",
+          "currentRevision": 1,
+          "currentPublishedVersionId": "c42a0002-1030-4030-8030-000000000003",
+          "publicationRevision": 1,
+          "createdAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "ruleSetVersions": [
+        {
+          "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+          "ruleSetId": "c42a0002-1030-4030-8030-000000000002",
+          "tenantId": "c42a0002-1030-4030-8030-000000000001",
+          "revision": 1,
+          "state": "PUBLISHED",
+          "defaultDecision": "REVIEW",
+          "rulesDigest": "149e4702f4442f81404bf78e510280b36625fdaac687bb00de2cce999ada68b4",
+          "publishedAt": "2031-04-05T06:07:08.000Z"
+        }
+      ],
+      "rules": [
+        {
+          "ruleId": "c42a0002-1030-4030-8030-000000000004",
+          "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+          "priority": 10,
+          "name": "Public named document",
+          "condition": {
+            "op": "eq",
+            "path": "$.kind",
+            "value": "document"
+          },
+          "effect": {
+            "decision": "ALLOW",
+            "tags": [
+              "document"
+            ]
+          },
+          "terminal": true
+        }
+      ],
+      "evaluations": [],
+      "evaluationInputs": [],
+      "explanationNodes": [],
+      "replayRuns": [],
+      "conflictReports": [],
+      "comparisonRuns": [],
+      "comparisonResults": []
+    }
+  },
+  "schemas": {
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ]
+    },
+    "Tenant": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "tenantId",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "Health": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "const": "ok"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "OpenApi": {
+      "type": "object",
+      "required": [
+        "openapi",
+        "info",
+        "paths"
+      ],
+      "properties": {
+        "openapi": {
+          "const": "3.1.0"
+        },
+        "info": {
+          "type": "object"
+        },
+        "paths": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "Facts": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      }
+    },
+    "Expression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "all": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expression"
+              },
+              "minItems": 1,
+              "maxItems": 100
+            }
+          },
+          "required": [
+            "all"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "any": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expression"
+              },
+              "minItems": 1,
+              "maxItems": 100
+            }
+          },
+          "required": [
+            "any"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "not": {
+              "$ref": "#/$defs/Expression"
+            }
+          },
+          "required": [
+            "not"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": [
+                "eq",
+                "neq",
+                "lt",
+                "lte",
+                "gt",
+                "gte",
+                "in",
+                "exists"
+              ]
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^\\$\\.[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+            },
+            "value": {
+              "$ref": "#/$defs/JsonValue"
+            }
+          },
+          "required": [
+            "op",
+            "path",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Effect": {
+      "type": "object",
+      "properties": {
+        "decision": {
+          "anyOf": [
+            {
+              "enum": [
+                "ALLOW",
+                "DENY",
+                "REVIEW"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "decision",
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "RuleSet": {
+      "type": "object",
+      "properties": {
+        "ruleSetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "currentRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currentPublishedVersionId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publicationRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "ruleSetId",
+        "tenantId",
+        "name",
+        "currentRevision",
+        "currentPublishedVersionId",
+        "publicationRevision",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "RuleSetVersion": {
+      "type": "object",
+      "properties": {
+        "ruleSetVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "state": {
+          "enum": [
+            "DRAFT",
+            "PUBLISHED",
+            "RETIRED"
+          ]
+        },
+        "defaultDecision": {
+          "enum": [
+            "ALLOW",
+            "DENY",
+            "REVIEW"
+          ]
+        },
+        "rulesDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "publishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "ruleSetVersionId",
+        "ruleSetId",
+        "tenantId",
+        "revision",
+        "state",
+        "defaultDecision",
+        "rulesDigest",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Rule": {
+      "type": "object",
+      "properties": {
+        "ruleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "condition": {
+          "$ref": "#/$defs/Expression"
+        },
+        "effect": {
+          "$ref": "#/$defs/Effect"
+        },
+        "terminal": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ruleId",
+        "ruleSetVersionId",
+        "priority",
+        "name",
+        "condition",
+        "effect",
+        "terminal"
+      ],
+      "additionalProperties": false
+    },
+    "Evaluation": {
+      "type": "object",
+      "properties": {
+        "evaluationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "factsDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "enum": [
+                "ALLOW",
+                "DENY",
+                "REVIEW"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "matchedRuleIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "explanationDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "evaluationId",
+        "tenantId",
+        "ruleSetId",
+        "ruleSetVersionId",
+        "factsDigest",
+        "state",
+        "decision",
+        "tags",
+        "matchedRuleIds",
+        "explanationDigest",
+        "createdAt",
+        "completedAt",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ExplanationNode": {
+      "type": "object",
+      "properties": {
+        "evaluationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "ruleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "path": {
+          "type": "string"
+        },
+        "result": {
+          "enum": [
+            true,
+            false,
+            "SKIPPED"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "evaluationId",
+        "ordinal",
+        "ruleId",
+        "path",
+        "result",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "ReplayRun": {
+      "type": "object",
+      "properties": {
+        "replayRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "evaluationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "MATCHED",
+            "DIVERGED",
+            "FAILED"
+          ]
+        },
+        "resultDigest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "replayRunId",
+        "evaluationId",
+        "state",
+        "resultDigest",
+        "createdAt",
+        "completedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ConflictReport": {
+      "type": "object",
+      "properties": {
+        "conflictReportId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "ruleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "conflictReportId",
+        "ruleSetVersionId",
+        "priority",
+        "ruleId",
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "ComparisonRun": {
+      "type": "object",
+      "properties": {
+        "comparisonRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "baselineVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "candidateVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "evaluationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "minItems": 1,
+          "maxItems": 100000,
+          "uniqueItems": true
+        },
+        "corpusDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "COMPLETED",
+            "CANCELLED",
+            "FAILED"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "resultCounts": {
+          "type": "object",
+          "properties": {
+            "MATCH": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "DIFF": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "ERROR": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "MATCH",
+            "DIFF",
+            "ERROR"
+          ],
+          "additionalProperties": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cancelledAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promotedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "comparisonRunId",
+        "tenantId",
+        "ruleSetId",
+        "baselineVersionId",
+        "candidateVersionId",
+        "evaluationIds",
+        "corpusDigest",
+        "state",
+        "revision",
+        "resultCounts",
+        "createdAt",
+        "startedAt",
+        "completedAt",
+        "cancelledAt",
+        "promotedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ComparisonSide": {
+      "type": "object",
+      "properties": {
+        "decision": {
+          "enum": [
+            "ALLOW",
+            "DENY",
+            "REVIEW"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "explanationDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "decision",
+        "tags",
+        "explanationDigest"
+      ],
+      "additionalProperties": false
+    },
+    "ComparisonResult": {
+      "type": "object",
+      "properties": {
+        "comparisonRunId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "evaluationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "status": {
+          "enum": [
+            "MATCH",
+            "DIFF",
+            "ERROR"
+          ]
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComparisonSide"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComparisonSide"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resultDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "comparisonRunId",
+        "evaluationId",
+        "ordinal",
+        "status",
+        "baseline",
+        "candidate",
+        "errorCode",
+        "resultDigest"
+      ],
+      "additionalProperties": false
+    },
+    "Work": {
+      "type": "object",
+      "properties": {
+        "workId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "kind": {
+          "enum": [
+            "EVALUATION_EXECUTE",
+            "EVALUATION_REPLAY",
+            "COMPARISON_EXECUTE"
+          ]
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "state": {
+          "enum": [
+            "PENDING",
+            "LEASED",
+            "SUCCEEDED",
+            "FAILED",
+            "CANCELLED"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "leaseOwner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "leaseExpiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "workId",
+        "kind",
+        "aggregateId",
+        "state",
+        "terminal",
+        "attempt",
+        "leaseOwner",
+        "leaseExpiresAt"
+      ],
+      "additionalProperties": false
+    },
+    "DomainEvent": {
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "aggregateType": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "rule_version.published",
+            "evaluation.completed",
+            "evaluation.failed",
+            "replay.matched",
+            "replay.diverged",
+            "comparison.started",
+            "comparison.completed",
+            "comparison.cancelled",
+            "comparison.promoted"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "ruleSetId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "ruleSetVersionId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "evaluationId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "replayRunId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "comparisonRunId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "factsDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "explanationDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "resultDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "corpusDigest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "eventId",
+        "tenantId",
+        "aggregateId",
+        "aggregateType",
+        "type",
+        "sequence",
+        "occurredAt",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "RuleInput": {
+      "type": "object",
+      "properties": {
+        "ruleId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "condition": {
+          "$ref": "#/$defs/Expression"
+        },
+        "effect": {
+          "$ref": "#/$defs/Effect"
+        },
+        "terminal": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ruleId",
+        "priority",
+        "name",
+        "condition",
+        "effect",
+        "terminal"
+      ],
+      "additionalProperties": false
+    },
+    "CreateVersion": {
+      "type": "object",
+      "properties": {
+        "defaultDecision": {
+          "enum": [
+            "ALLOW",
+            "DENY",
+            "REVIEW"
+          ]
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RuleInput"
+          },
+          "maxItems": 5000
+        }
+      },
+      "required": [
+        "defaultDecision",
+        "rules"
+      ],
+      "additionalProperties": false
+    },
+    "CreateEvaluation": {
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "ruleSetVersionId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "facts": {
+          "$ref": "#/$defs/Facts"
+        }
+      },
+      "required": [
+        "tenantId",
+        "ruleSetId",
+        "ruleSetVersionId",
+        "facts"
+      ],
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "tenants": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Tenant"
+              }
+            },
+            "ruleSets": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RuleSet"
+              }
+            },
+            "ruleSetVersions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RuleSetVersion"
+              }
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Rule"
+              }
+            },
+            "evaluations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Evaluation"
+              }
+            },
+            "explanationNodes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExplanationNode"
+              }
+            },
+            "replayRuns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ReplayRun"
+              }
+            },
+            "conflictReports": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ConflictReport"
+              }
+            },
+            "comparisonRuns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ComparisonRun"
+              }
+            },
+            "comparisonResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ComparisonResult"
+              }
+            }
+          },
+          "required": [
+            "tenants",
+            "ruleSets",
+            "ruleSetVersions",
+            "rules",
+            "evaluations",
+            "explanationNodes",
+            "replayRuns",
+            "conflictReports",
+            "comparisonRuns",
+            "comparisonResults"
+          ],
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Work"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DomainEvent"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "resources",
+        "work",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": [
+    {
+      "id": "createTenant",
+      "method": "POST",
+      "path": "/api/v1/tenants",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "name": "Another Public Tenant"
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-tenant"
+        }
+      }
+    },
+    {
+      "id": "createRuleSet",
+      "method": "POST",
+      "path": "/api/v1/rule-sets",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "tenantId",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RuleSet"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0002-1030-4030-8030-000000000001",
+          "name": "Another Public RuleSet"
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-set"
+        }
+      }
+    },
+    {
+      "id": "createVersion",
+      "method": "POST",
+      "path": "/api/v1/rule-sets/:ruleSetId/versions",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "$ref": "#/$defs/CreateVersion"
+      },
+      "response": {
+        "$ref": "#/$defs/RuleSetVersion"
+      },
+      "parameters": [
+        {
+          "name": "ruleSetId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "ruleSetId": "c42a0002-1030-4030-8030-000000000002"
+        },
+        "body": {
+          "defaultDecision": "REVIEW",
+          "rules": [
+            {
+              "ruleId": "c42a0002-1030-4030-8030-000000000010",
+              "priority": 10,
+              "name": "Public named document",
+              "condition": {
+                "op": "eq",
+                "path": "$.kind",
+                "value": "document"
+              },
+              "effect": {
+                "decision": "ALLOW",
+                "tags": [
+                  "document"
+                ]
+              },
+              "terminal": true
+            }
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-version"
+        }
+      }
+    },
+    {
+      "id": "validateVersion",
+      "method": "POST",
+      "path": "/api/v1/rule-set-versions/:versionId/validate",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Rule language and deterministic semantics",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RuleSetVersion"
+      },
+      "parameters": [
+        {
+          "name": "versionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "versionId": "c42a0002-1030-4030-8030-000000000003"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "rule-example-validate"
+        }
+      }
+    },
+    {
+      "id": "publishVersion",
+      "method": "POST",
+      "path": "/api/v1/rule-set-versions/:versionId/publish",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Rule language and deterministic semantics",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/RuleSetVersion"
+      },
+      "parameters": [
+        {
+          "name": "versionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "versionId": "c42a0002-1030-4030-8030-000000000003"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "rule-example-publish"
+        }
+      }
+    },
+    {
+      "id": "getConflicts",
+      "method": "GET",
+      "path": "/api/v1/rule-set-versions/:versionId/conflicts",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Public HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ConflictReport"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "versionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "versionId": "c42a0002-1030-4030-8030-000000000003"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "createEvaluation",
+      "method": "POST",
+      "path": "/api/v1/evaluations",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "request": {
+        "$ref": "#/$defs/CreateEvaluation"
+      },
+      "response": {
+        "$ref": "#/$defs/Evaluation"
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0002-1030-4030-8030-000000000001",
+          "ruleSetId": "c42a0002-1030-4030-8030-000000000002",
+          "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+          "facts": {
+            "kind": "document"
+          }
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-evaluation"
+        }
+      }
+    },
+    {
+      "id": "getEvaluation",
+      "method": "GET",
+      "path": "/api/v1/evaluations/:evaluationId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Public HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Evaluation"
+      },
+      "parameters": [
+        {
+          "name": "evaluationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "evaluationId": "c42a0002-1030-4030-8030-000000000005"
+        }
+      }
+    },
+    {
+      "id": "getExplanation",
+      "method": "GET",
+      "path": "/api/v1/evaluations/:evaluationId/explanation",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Public HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ExplanationNode"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "evaluationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        {
+          "name": "cursor",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "evaluationId": "c42a0002-1030-4030-8030-000000000005"
+        },
+        "query": {
+          "limit": 20
+        }
+      }
+    },
+    {
+      "id": "createReplay",
+      "method": "POST",
+      "path": "/api/v1/evaluations/:evaluationId/replay",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Required behavior and invariants",
+      "request": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "response": {
+        "$ref": "#/$defs/ReplayRun"
+      },
+      "parameters": [
+        {
+          "name": "evaluationId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "evaluationId": "c42a0002-1030-4030-8030-000000000005"
+        },
+        "body": {},
+        "headers": {
+          "Idempotency-Key": "rule-example-replay"
+        }
+      }
+    },
+    {
+      "id": "getReplay",
+      "method": "GET",
+      "path": "/api/v1/replay-runs/:replayRunId",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Public HTTP surface",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/ReplayRun"
+      },
+      "parameters": [
+        {
+          "name": "replayRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "replayRunId": "c42a0002-1030-4030-8030-000000000007"
+        }
+      }
+    },
+    {
+      "id": "createComparison",
+      "method": "POST",
+      "path": "/api/v1/comparison-runs",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "ruleSetId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "baselineVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "candidateVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "evaluationIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "minItems": 1,
+            "maxItems": 100000
+          }
+        },
+        "required": [
+          "tenantId",
+          "ruleSetId",
+          "baselineVersionId",
+          "candidateVersionId",
+          "evaluationIds"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/$defs/ComparisonRun"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "body": {
+          "tenantId": "c42a0002-1030-4030-8030-000000000001",
+          "ruleSetId": "c42a0002-1030-4030-8030-000000000002",
+          "baselineVersionId": "c42a0002-1030-4030-8030-000000000003",
+          "candidateVersionId": "c42a0002-1030-4030-8030-000000000008",
+          "evaluationIds": [
+            "c42a0002-1030-4030-8030-000000000005"
+          ]
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-comparison"
+        }
+      }
+    },
+    {
+      "id": "startComparison",
+      "method": "POST",
+      "path": "/api/v1/comparison-runs/:comparisonRunId/start",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/$defs/ComparisonRun"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "comparisonRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "comparisonRunId": "c42a0002-1030-4030-8030-000000000006"
+        },
+        "body": {
+          "expectedRevision": 0
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-comparison-start"
+        }
+      }
+    },
+    {
+      "id": "cancelComparison",
+      "method": "POST",
+      "path": "/api/v1/comparison-runs/:comparisonRunId/cancel",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/$defs/ComparisonRun"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "comparisonRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "comparisonRunId": "c42a0002-1030-4030-8030-000000000006"
+        },
+        "body": {
+          "expectedRevision": 0
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-comparison-cancel"
+        }
+      }
+    },
+    {
+      "id": "promoteComparison",
+      "method": "POST",
+      "path": "/api/v1/comparison-runs/:comparisonRunId/promote",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "request": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/$defs/ComparisonRun"
+          },
+          "ruleSet": {
+            "$ref": "#/$defs/RuleSet"
+          }
+        },
+        "required": [
+          "run",
+          "ruleSet"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "comparisonRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "comparisonRunId": "c42a0002-1030-4030-8030-000000000006"
+        },
+        "body": {
+          "expectedRevision": 0
+        },
+        "headers": {
+          "Idempotency-Key": "rule-example-comparison-promote"
+        }
+      }
+    },
+    {
+      "id": "getComparison",
+      "method": "GET",
+      "path": "/api/v1/comparison-runs/:comparisonRunId",
+      "status": 200,
+      "source": "docs/frontal-legacy/manager-requirements.md",
+      "requestBody": "none",
+      "response": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/$defs/ComparisonRun"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ComparisonResult"
+            }
+          }
+        },
+        "required": [
+          "run",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "parameters": [
+        {
+          "name": "comparisonRunId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        }
+      ],
+      "example": {
+        "params": {
+          "comparisonRunId": "c42a0002-1030-4030-8030-000000000006"
+        }
+      }
+    },
+    {
+      "id": "snapshot",
+      "method": "GET",
+      "path": "/api/v1/verification-snapshot",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — Seed and snapshot",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Snapshot"
+      },
+      "parameters": [
+        {
+          "name": "Authorization",
+          "in": "header",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "example": {
+        "headers": {
+          "Authorization": "Bearer ${ADMIN_TOKEN}"
+        }
+      }
+    },
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/Health"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "openapi",
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "source": "docs/frontal-legacy/README.md — HTTP contract",
+      "requestBody": "none",
+      "response": {
+        "$ref": "#/$defs/OpenApi"
+      },
+      "parameters": [],
+      "example": {}
+    },
+    {
+      "id": "productionUi",
+      "method": "GET",
+      "path": "/",
+      "status": 200,
+      "source": "contract/README.md — explicit V2 public wire clarification",
+      "requestBody": "none",
+      "response": {
+        "type": "string",
+        "minLength": 1,
+        "contentMediaType": "text/html"
+      },
+      "parameters": [],
+      "example": {}
+    }
+  ],
+  "smoke": [
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "ruleSets"
+          ],
+          "match": {
+            "ruleSetId": "c42a0002-1030-4030-8030-000000000002",
+            "currentPublishedVersionId": "c42a0002-1030-4030-8030-000000000003"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "ruleSetVersions"
+          ],
+          "match": {
+            "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+            "state": "PUBLISHED"
+          }
+        },
+        {
+          "path": [
+            "resources",
+            "rules"
+          ],
+          "match": {
+            "ruleId": "c42a0002-1030-4030-8030-000000000004",
+            "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+            "priority": 10,
+            "name": "Public named document",
+            "condition": {
+              "op": "eq",
+              "path": "$.kind",
+              "value": "document"
+            },
+            "effect": {
+              "decision": "ALLOW",
+              "tags": [
+                "document"
+              ]
+            },
+            "terminal": true
+          }
+        }
+      ],
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createEvaluation",
+      "body": {
+        "tenantId": "c42a0002-1030-4030-8030-000000000001",
+        "ruleSetId": "c42a0002-1030-4030-8030-000000000002",
+        "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+        "facts": {
+          "kind": "document"
+        }
+      },
+      "headers": {
+        "Idempotency-Key": "rule-smoke-evaluation"
+      },
+      "capture": {
+        "newEvaluationId": [
+          "evaluationId"
+        ]
+      },
+      "expectBody": {
+        "tenantId": "c42a0002-1030-4030-8030-000000000001",
+        "ruleSetId": "c42a0002-1030-4030-8030-000000000002",
+        "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+        "factsDigest": "34444fe0e6bdbf3927a579fe3286859d204ea0882a381b7769ffd4905551d24f"
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "getEvaluation",
+      "params": {
+        "evaluationId": "${newEvaluationId}"
+      },
+      "expectBody": {
+        "evaluationId": "${newEvaluationId}",
+        "tenantId": "c42a0002-1030-4030-8030-000000000001",
+        "ruleSetVersionId": "c42a0002-1030-4030-8030-000000000003",
+        "factsDigest": "34444fe0e6bdbf3927a579fe3286859d204ea0882a381b7769ffd4905551d24f"
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "createRuleSet",
+      "body": {
+        "tenantId": "c42a0002-1030-4030-8030-000000000001",
+        "name": "Smoke Created RuleSet"
+      },
+      "headers": {
+        "Idempotency-Key": "rule-smoke-set"
+      },
+      "capture": {
+        "newRuleSetId": [
+          "ruleSetId"
+        ]
+      },
+      "expectBody": {
+        "currentRevision": 0,
+        "currentPublishedVersionId": null,
+        "publicationRevision": 0
+      },
+      "expectStatus": 200
+    },
+    {
+      "operationId": "snapshot",
+      "headers": {
+        "Authorization": "Bearer ${ADMIN_TOKEN}"
+      },
+      "expectContains": [
+        {
+          "path": [
+            "resources",
+            "ruleSets"
+          ],
+          "match": {
+            "ruleSetId": "${newRuleSetId}",
+            "tenantId": "c42a0002-1030-4030-8030-000000000001",
+            "name": "Smoke Created RuleSet"
+          }
+        }
+      ],
+      "expectStatus": 200
+    }
+  ],
+  "notes": [
+    "V2 public wire clarification (new protocol, not a claim about the original specification): object schemas are closed; server-generated identities, counters and timestamps are omitted from creation inputs. Empty command bodies are {}. Tenant is exactly {tenantId,name}; no createdAt is added to it.",
+    "V2 public wire clarification: snapshot is exactly {schemaVersion:1,resources,work,events}; every listed collection is complete and sorted lexicographically by its public identity (composite identities by listed component order). Manager resource collections extend resources. Snapshot requires Authorization: Bearer ADMIN_TOKEN. Health is {status:\"ok\"}; production UI is HTML at /. Error.details is exactly {}. DomainEvent uses the fixed redacted envelope declared in schemas; payload contains only the published resource references/state/digests, never credentials or raw sensitive content.",
+    "V2 public wire clarification: seed is metadata, validated atomically including references and invariants; missing required fields are errors, not adapter defaults. Seed replay follows the original version+canonical digest no-op rule. JSON schema validates wire shape; business checks such as uniqueness, reference ownership, ordering, digest correctness and CAS remain implementation responsibilities.",
+    "Every listed operation has an independent public request example. Examples containing resource IDs from later lifecycle stages illustrate wire shape, not a promise that they can all be called in isolation. Only smoke is an executable ordered scenario; it verifies real seed/read and write/read behavior, not full business acceptance.",
+    "V2 public wire clarification: RuleSet is the exact declared schema, with currentRevision the highest allocated version revision; new sets initialize currentRevision=0, currentPublishedVersionId=null and publicationRevision=0. Publishing a version changes its state and the current published pointer atomically; promotion changes only the pointer and publicationRevision. CreateVersion accepts {defaultDecision,rules}; each RuleInput supplies its ruleId, and the server supplies ruleSetVersionId and the next revision.",
+    "V2 public wire clarification: rulesDigest is SHA-256 of RFC 8785-compatible canonical JSON of the complete Rule objects sorted by (priority,ruleId); factsDigest is SHA-256 of canonical facts. Explanation digest is SHA-256 of the ordered complete ExplanationNode array. Replay resultDigest is SHA-256 of canonical {decision,tags,matchedRuleIds,explanationDigest}; comparison corpus/result digests retain the Manager definitions. These byte definitions were absent from the original V1 prose and are now public, not inferred from an oracle.",
+    "V2 public wire clarification: ConflictReport is one declared conflict row; /conflicts returns its paginated rows sorted by (priority,ruleId,code,conflictReportId). Validate returns the current RuleSetVersion on success and persists deterministic reports for inspection; semantic conflicts return RULE_CONFLICT. Explanation ordinal is zero-based and contiguous. A pending explanation is an empty page, never fabricated terminal nodes.",
+    "V2 language clarification: exists requires a boolean value, true tests presence and false tests absence; eq/neq compare canonical JSON without coercion; ordering requires safe integers on both sides; in requires an array value. Missing never equals null and non-exists comparisons with missing yield false. Runtime expression depth and 256 KiB facts limit remain business checks beyond structural schema.",
+    "V2 public wire clarification: seed adds comparisonRuns/comparisonResults and seed-only evaluationInputs:[{evaluationId,facts}]. Each imported Evaluation requires exactly one matching input with the declared factsDigest; orphan inputs are invalid. Inputs are stored privately for replay/comparison and never added to public Evaluation or snapshots. This resolves the original omission of restorable facts without exposing them through reads. The independent populated published-rule seed uses empty evaluationInputs and creates its evaluation through real HTTP.",
+    "The smoke checks actual acceptance, frozen version and digest, plus persisted write/read. It does not claim asynchronous terminal decision, replay, Shadow ComparisonRun or recovery acceptance. All 14 README routes and 5 Manager routes are declared.",
+    "learning-final-system-2026-09-08.1: Build one complete system from the start. Base features and the formerly named Manager features are required together; there is no intermediate submission, old program, historical workspace, or cross-version upgrade assessment.",
+    "learning-final-system-2026-09-08.1: V1 in an API or source description denotes the base feature contract, not a separately running program. The published /api/v1 paths and schemaVersion values do not change.",
+    "learning-final-system-2026-09-08.1: Cross-version-only duties are withdrawn: importing an unspecified historical physical database, upgrading an earlier binary, migration-time availability of an earlier binary, and synthesizing migration-only legacy wrappers. Current public resource shapes, base APIs, additional features and their ordinary business relationships remain required.",
+    "learning-final-system-2026-09-08.1: Initialize an empty database using the published commands. db:migrate is current-system schema initialization, not an obligation to recognize a hidden old schema. Preserve the original current-system seed validation, atomicity and replay rules.",
+    "learning-final-system-2026-09-08.1: Evaluation creates fresh data through the published seed or APIs, then checks actual behavior and durable state. Restart and recovery assertions use this same final system. A snapshot is a read-only observation, not a database backup format.",
+    "learning-final-system-2026-09-08.1: Persistence, transactionality, idempotency, concurrency, authorization, real UI, OpenAPI, recovery and explicitly specified performance requirements remain in scope. This policy does not remove an otherwise explicit business or security requirement.",
+    "learning-final-system-2026-09-08.1: No external legacy service is required. An isolated receiver or provider simulator is used only for an external interaction actually required by the public product contract; no real account or production service is required.",
+    "learning-final-system-2026-09-08.1: Hidden assertions must use published inputs and observable requirements. Unspecified algorithms, exact error strings, control points or performance thresholds cannot silently become requirements. Code defects fail; invalid author fixtures and infrastructure faults are evaluator errors, not zero-score business outcomes."
+  ],
+  "benchmarkVersion": 2,
+  "publicScaffoldRevision": "2026-09-08.final-system.1",
+  "policyRevisions": [
+    "learning-final-system-2026-09-08.1"
+  ],
+  "policyRevision": "learning-final-system-2026-09-08.1",
+  "evaluationScope": "final-system",
+  "transportErrors": {}
+}

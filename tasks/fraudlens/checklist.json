@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "personaId": "fraudlens-risk-lead",
+  "taskId": "fraudlens",
+  "items": [
+    {"id":"clean-operation","category":"correctness","requirement":"Clean checkout migrates, atomically seeds, builds, and starts API, worker, dispatcher, and production UI using only published commands.","weight":5,"testGates":["H-01"]},
+    {"id":"contract-and-scoring","category":"correctness","requirement":"OpenAPI, strict validation, deterministic scoring, thresholds, frozen RuleVersion, RuleHits, and tenant isolation match the public contract.","weight":10,"testGates":["H-02","H-03","H-04"]},
+    {"id":"durable-idempotency","category":"correctness","requirement":"External identity and idempotency survive response loss, concurrent replay, API restart, and payload conflict with one effect.","weight":13,"testGates":["H-04","H-05","H-06"]},
+    {"id":"review-concurrency","category":"correctness","requirement":"Review leases and competing human decisions produce one terminal outcome without rewriting frozen assessment evidence.","weight":12,"testGates":["H-03","H-06","H-07"]},
+    {"id":"rollback-versioning","category":"correctness","requirement":"Activation and rollback serialize, preserve historical assessments, and switch future scoring at one observable commit boundary.","weight":10,"testGates":["H-06","H-09"]},
+    {"id":"recovery-and-audit","category":"correctness","requirement":"Worker and outbox recovery preserve fenced effects, stable event identity and body, terminal Work, and an immutable tenant audit chain.","weight":11,"testGates":["H-07","H-08","H-09"]},
+    {"id":"manager-remediation","category":"correctness","requirement":"Manager remediation freezes its affected set, appends at most one correction per assessment, preserves history, and survives cancel and worker races.","weight":12,"testGates":["H-09","H-10","H-11"]},
+    {"id":"performance","category":"correctness","requirement":"All three sustained scenarios meet throughput, latency, recovery, and post-load scoring, uniqueness, and audit invariants.","weight":10,"testGates":["H-12"]},
+    {"id":"project-tests","category":"correctness","requirement":"The project owns meaningful unit, real integration, production Chromium, multi-process concurrency, SIGKILL recovery, aggregate, and performance commands.","weight":7,"testGates":["H-13"]},
+    {"id":"security-isolation","category":"correctness","requirement":"Tenant data, private signals, credentials, hidden paths, and provider payloads never cross scope or leak.","weight":4,"testGates":["H-02","H-06","H-12"]},
+    {"id":"explanation-quality","category":"persona","requirement":"Codex explains rule ownership, scoring, review, rollback, atomic boundaries, and findings clearly.","weight":3},
+    {"id":"evidence-quality","category":"persona","requirement":"Every stage and final handoff reports actual commands, results, risks, and checks not run accurately.","weight":3}
+  ]
+}
