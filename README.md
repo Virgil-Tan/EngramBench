@@ -6,6 +6,8 @@
 
 **Long-horizon software engineering, from historical experience to transferable skills.**
 
+**Paper:** [EngramBench: A Capability-Grounded Benchmark for Skill-Evolution Harnesses](https://arxiv.org/abs/2609.39284)
+
 EngramBench evaluates whether experience from past projects helps a coding agent build a different, complete software system. Tasks go beyond isolated functions: agents must connect public APIs, persistent state, background workers, recovery, OpenAPI, and browser interfaces under explicit business constraints.
 
 The benchmark contains **30 Learning tasks** and **13 Transfer tasks**. This is the standalone, contract-first **V2** implementation, formerly developed as Frontal Benchmark V2.
